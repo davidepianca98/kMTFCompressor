@@ -1,0 +1,14 @@
+project(Tests)
+
+
+add_executable(test_compression_ratio test_compression_ratio.cpp)
+target_link_libraries(test_compression_ratio MTF_lib)
+add_test(compression_ratio test_compression_ratio)
+
+add_executable(test_compress_decompress test_compress_decompress.cpp)
+target_link_libraries(test_compress_decompress MTF_lib)
+add_test(compress_decompress test_compress_decompress)
+
+add_executable(test_mtf_compress_decompress test_mtf_compress_decompress.cpp)
+target_link_libraries(test_mtf_compress_decompress MTF_lib)
+add_test(mtf_compress_decompress test_mtf_compress_decompress)
