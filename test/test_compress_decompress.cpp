@@ -5,7 +5,7 @@
 #include <fstream>
 #include "MTFHash.h"
 
-int test_file(const std::string path) {
+int test_file(const std::string path) { // around 20MB/s compression, 108MB/s decompression
     std::cout << path << std::endl;
     MTFHash::compress(path, path + ".mtf", 3);
     std::filesystem::path compressed(path + ".mtf");

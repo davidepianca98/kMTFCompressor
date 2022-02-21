@@ -4,6 +4,7 @@ project(MTF)
 set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCE_FILES
+        src/Core.cpp
         src/MTF.cpp
         src/MTFHash.cpp
         src/MTFHashTable.cpp
@@ -14,6 +15,7 @@ set(SOURCE_FILES
         src/hash/VectorHash.cpp)
 
 set(HEADER_FILES
+        src/Core.h
         src/MTF.h
         src/MTFHash.h
         src/MTFHashTable.h
@@ -33,6 +35,7 @@ include_directories(src/hash)
 target_link_directories(MTF_lib PUBLIC /usr/local/lib)
 target_include_directories(MTF_lib PUBLIC /usr/local/include/fastpfor)
 target_link_libraries(MTF_lib FastPFOR)
+target_link_libraries(MTF_lib pthread)
 
 add_subdirectory(test)
 
