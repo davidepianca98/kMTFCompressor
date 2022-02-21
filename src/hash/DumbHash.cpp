@@ -1,7 +1,7 @@
 
 #include "DumbHash.h"
 
-DumbHash::DumbHash(int k, const std::vector<uint8_t>& start): k(k), kmer(k) {
+DumbHash::DumbHash(int k, const std::vector<uint8_t>& start): Hash(10000), k(k), kmer(k) {
     // First k-mer
     for (i = 0; i < k; i++) {
         kmer.at(i) = start.at(i);

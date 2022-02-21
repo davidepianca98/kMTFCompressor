@@ -1,11 +1,8 @@
 
-#include <ctime>
-#include <cstdlib>
-#include <iostream>
 #include "RabinFingerprint.h"
 
 
-RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t>& start): k(k), kmer(k) {
+RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t> &start) : Hash(RabinFingerprint::q), k(k), kmer(k) {
     //srand(time(nullptr));
     // Multiplier
     //x = rand() % q;

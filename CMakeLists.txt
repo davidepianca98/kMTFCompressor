@@ -12,6 +12,7 @@ set(SOURCE_FILES
         src/hash/DumbHash.cpp
         src/hash/MinimiserHash.cpp
         src/hash/RabinFingerprint.cpp
+        src/hash/SimHash.cpp
         src/hash/VectorHash.cpp)
 
 set(HEADER_FILES
@@ -24,6 +25,7 @@ set(HEADER_FILES
         src/hash/Hash.h
         src/hash/MinimiserHash.h
         src/hash/RabinFingerprint.h
+        src/hash/SimHash.h
         src/hash/VectorHash.h)
 
 enable_testing()

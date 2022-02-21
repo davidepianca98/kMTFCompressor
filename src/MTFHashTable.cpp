@@ -5,6 +5,7 @@
 #include "hash/DumbHash.h"
 #include "hash/MinimiserHash.h"
 #include "VectorHash.h"
+#include "SimHash.h"
 
 
 void MTFHashTable::mtfShift(uint64_t& buf, uint8_t c, uint8_t i) {

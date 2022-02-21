@@ -15,8 +15,6 @@ class DumbHash : public Hash {
 
     int i = 0;
 
-    static constexpr int size = 10000;
-
 public:
     DumbHash(int k, const std::vector<uint8_t> &start);
 

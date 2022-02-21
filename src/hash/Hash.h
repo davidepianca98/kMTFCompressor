@@ -11,7 +11,13 @@
 class Hash {
 protected:
     uint64_t hash = 0;
+    uint32_t size = 0;
 public:
+
+    explicit Hash(uint32_t size) : size(size) {
+
+    }
+
     virtual ~Hash() = default;
 
     virtual void update(uint8_t c) {};

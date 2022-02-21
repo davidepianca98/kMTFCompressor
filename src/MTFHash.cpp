@@ -41,8 +41,10 @@ uint32_t compressBlock(const uint8_t *block, long size, int k, uint8_t *final_bl
     MTFHashTable mtf(k);
     mtf.encode(block, size, out_block);
 
+    mtf.print_stats();
+
     for (int i = 0; i < size; i++) {
-        std::cout << uint64_t(out_block[i]) << " ";
+        //std::cout << uint64_t(out_block[i]) << " ";
     }
 
     // TODO probably do this in mtf step
@@ -62,8 +64,6 @@ int get_cores() {
     }
     return (int) processor_count;
 }
-
-// TODO provare TLSH e Random Projection
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);

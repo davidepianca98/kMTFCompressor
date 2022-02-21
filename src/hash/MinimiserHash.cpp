@@ -10,7 +10,17 @@ uint32_t MinimiserHash::fnv1a() {
     return hash % size;
 }
 
-MinimiserHash::MinimiserHash(int k, int window_size, const std::vector<uint8_t>& start): k(k), window_size(window_size), rf(k, start), kmer(k), window_hashes(window_size) {
+MinimiserHash::MinimiserHash(
+        int k,
+        int window_size,
+        const std::vector<uint8_t>& start
+        ):
+        Hash(RabinFingerprint::q),
+        k(k),
+        window_size(window_size),
+        rf(k, start),
+        kmer(k),
+        window_hashes(window_size) {
     hash = UINT64_MAX;
     // The window contains the k-mer hashes
     for (i = 0; i < window_size - k; i++) {
