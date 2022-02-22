@@ -18,7 +18,7 @@ private:
     int k;
 
     // Statistics
-    double full_cells = 0;
+    double used_cells = 0;
 
     static void mtfShift(uint64_t& buf, uint8_t c, uint8_t i);
 
@@ -26,9 +26,9 @@ private:
 
     static uint8_t mtfExtract(uint64_t buf, uint8_t i);
 
-    static uint8_t mtfEncode(uint64_t& buf, uint8_t c);
+    static uint32_t mtfEncode(uint64_t& buf, uint8_t c);
 
-    static uint8_t mtfDecode(uint64_t& buf, uint8_t c);
+    static uint8_t mtfDecode(uint64_t& buf, uint32_t c);
 
     void keep_track(uint64_t hash);
 
@@ -37,9 +37,9 @@ public:
 
     void print_stats() const;
 
-    void encode(const uint8_t *block, long size, uint8_t *out_block);
+    void encode(const uint8_t *block, long size, uint32_t *out_block);
 
-    void decode(const uint8_t *block, long size, uint8_t *out_block);
+    void decode(const uint32_t *block, long size, uint8_t *out_block);
 };
 
 

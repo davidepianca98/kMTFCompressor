@@ -35,8 +35,7 @@ void reduce(const uint8_t *block, long size, uint8_t *out_block) {
 }
 
 uint32_t compressBlock(const uint8_t *block, long size, int k, uint8_t *final_block) {
-    uint8_t out_block[size];
-    auto *out_block2 = new uint8_t[size * 4]; // TODO handle differently, maybe use vector.data()
+    uint32_t out_block[size];
 
     MTFHashTable mtf(k);
     mtf.encode(block, size, out_block);
@@ -44,16 +43,12 @@ uint32_t compressBlock(const uint8_t *block, long size, int k, uint8_t *final_bl
     mtf.print_stats();
 
     for (int i = 0; i < size; i++) {
-        //std::cout << uint64_t(out_block[i]) << " ";
+        //std::cout << out_block[i] << " ";
     }
-
-    // TODO probably do this in mtf step
-    enlarge(out_block, size, out_block2);
 
     size_t compressed_size = size * 4 + 1024; // TODO probably pass as parameter
 
-    compress_final(reinterpret_cast<const uint32_t *>(out_block2), size, reinterpret_cast<uint32_t *>(final_block), compressed_size);
-    delete[] out_block2;
+    compress_final(out_block, size, reinterpret_cast<uint32_t *>(final_block), compressed_size);
     return (uint32_t) compressed_size;
 }
 
@@ -116,16 +111,11 @@ void decompress_final(const uint32_t *data, size_t size, uint32_t *out_block, si
 
 uint32_t decompressBlock(const uint8_t *block, long size, int k, uint8_t *final_block) {
     size_t decompressed_size = ((uint32_t *) block)[0] * 4 * 32 + 1024; // TODO probably move in final
-    uint8_t out_block[decompressed_size * 4];
-    decompress_final(reinterpret_cast<const uint32_t *>(block), size / 4, reinterpret_cast<uint32_t *>(out_block), decompressed_size);
-
-    // TODO probably do this in mtf step
-    auto *out_block2 = new uint8_t[decompressed_size]; // TODO find other way, on stack gives seg fault, maybe use vector.data()
-    reduce(out_block, decompressed_size * 4, out_block2);
+    uint32_t out_block[decompressed_size];
+    decompress_final(reinterpret_cast<const uint32_t *>(block), size / 4, out_block, decompressed_size);
 
     MTFHashTable mtf(k);
-    mtf.decode(out_block2, decompressed_size, final_block);
-    delete[] out_block2;
+    mtf.decode(out_block, decompressed_size, final_block);
 
     return (uint32_t) decompressed_size;
 }

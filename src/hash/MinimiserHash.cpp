@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include "MinimiserHash.h"
 
 uint32_t MinimiserHash::fnv1a() {
@@ -10,11 +11,7 @@ uint32_t MinimiserHash::fnv1a() {
     return hash % size;
 }
 
-MinimiserHash::MinimiserHash(
-        int k,
-        int window_size,
-        const std::vector<uint8_t>& start
-        ):
+MinimiserHash::MinimiserHash(int k, int window_size, const std::vector<uint8_t>& start):
         Hash(RabinFingerprint::q),
         k(k),
         window_size(window_size),
