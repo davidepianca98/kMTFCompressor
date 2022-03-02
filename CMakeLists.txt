@@ -5,10 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 set(SOURCE_FILES
         src/Core.cpp
-        src/MTF.cpp
         src/MTFHash.cpp
         src/MTFHashTable.cpp
-        src/RLE.cpp
         src/hash/DumbHash.cpp
         src/hash/MinimiserHash.cpp
         src/hash/RabinFingerprint.cpp
@@ -25,6 +23,7 @@ set(HEADER_FILES
         src/hash/Hash.h
         src/hash/MinimiserHash.h
         src/hash/RabinFingerprint.h
+        src/SPSCQueue.h
         src/hash/SimHash.h
         src/hash/VectorHash.h)
 
@@ -33,6 +32,10 @@ enable_testing()
 add_library(MTF_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 include_directories(src)
 include_directories(src/hash)
+
+
+FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
+TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
 
 target_link_directories(MTF_lib PUBLIC /usr/local/lib)
 target_include_directories(MTF_lib PUBLIC /usr/local/include/fastpfor)

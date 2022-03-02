@@ -7,10 +7,10 @@
 
 int test_file(const std::string path) { // around 20MB/s compression, 108MB/s decompression
     std::cout << path << std::endl;
-    MTFHash::compress(path, path + ".mtf", 3);
+    MTFHash::compress_stream(path, path + ".mtf", 3);
     std::filesystem::path compressed(path + ".mtf");
 
-    MTFHash::decompress(compressed.string(), compressed.string() + ".orig");
+    MTFHash::decompress(compressed.string(), compressed.string() + ".orig", 3);
 
     std::ifstream f1(path, std::ifstream::binary);
     std::ifstream f2(compressed.string() + ".orig", std::ifstream::binary);
@@ -28,8 +28,8 @@ int test_file(const std::string path) { // around 20MB/s compression, 108MB/s de
 }
 
 int main() {
-    std::string path = "../../test/resources/calgarycorpus";
-    //std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/calgarycorpus";
+    std::string path = "../../test/resources/pizzachili";
 
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {

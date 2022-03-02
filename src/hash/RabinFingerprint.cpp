@@ -10,8 +10,8 @@ RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t> &start) : H
 
     // First k-mer
     for (int i = 0; i < k; i++) {
-        uint8_t c = start.at(i);
-        kmer.at(i) = c;
+        uint8_t c = start[i];
+        kmer[i] = c;
 
         // Multiply the hash by the multiplier to "shift left"
         hash = (hash * x) % q;
@@ -27,8 +27,8 @@ RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t> &start) : H
 
 void RabinFingerprint::update(uint8_t c) {
     // Update k-mer
-    uint8_t old = kmer.at(i);
-    kmer.at(i) = c;
+    uint8_t old = kmer[i];
+    kmer[i] = c;
     i = (i + 1) % k;
 
 

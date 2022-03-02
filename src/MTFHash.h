@@ -8,7 +8,9 @@ class MTFHash {
 public:
     static int compress(const std::string& path, const std::string& out_path, int k);
 
-    static int decompress(const std::string& path, const std::string& out_path);
+    static int compress_stream(const std::string& path, const std::string& out_path, int k);
+
+    static int decompress(const std::string& path, const std::string& out_path, int k);
 };
 
 

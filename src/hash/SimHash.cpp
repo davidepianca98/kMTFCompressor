@@ -20,7 +20,7 @@ SimHash::SimHash(int k, const std::vector<uint8_t> &start) : Hash(10000), k(k), 
     srand(time(nullptr)); // TODO should be generated once and then hardcoded
 
     for (int i = 0; i < k; i++) {
-        kmer.at(i) = start.at(i);
+        kmer[i] = start[i];
     }
 
     int bit_count = (int) log2(size);// + 1;

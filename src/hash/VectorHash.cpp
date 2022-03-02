@@ -23,7 +23,7 @@ VectorHash::VectorHash(int k, const std::vector<uint8_t> &start) : Hash(10000), 
     b = dot(v, v);
 
     for (int i = 0; i < k; i++) {
-        kmer.at(i) = start.at(i);
+        kmer[i] = start[i];
     }
     compute();
 }

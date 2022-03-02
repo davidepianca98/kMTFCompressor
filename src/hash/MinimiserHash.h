@@ -11,22 +11,23 @@
 class MinimiserHash : public Hash {
     int k;
     int window_size;
-    int last_update;
+
+    std::vector<uint8_t> window;
+    std::vector<uint32_t> window_hashes;
 
     RabinFingerprint rf;
 
-    // Rolling k-mer
-    std::vector<uint8_t> kmer;
-    std::vector<uint32_t> window_hashes;
-
     int i = 0;
+    int j = 0;
 
     static constexpr int size = 10000;
 
-    uint32_t fnv1a();
+    uint32_t fnv1a(int start, int len);
+
+    void compute();
 
 public:
-    MinimiserHash(int k, int window_size, const std::vector<uint8_t> &start);
+    MinimiserHash(int k, int window_size, const std::vector<uint8_t>& start);
 
     void update(uint8_t c) override;
 };

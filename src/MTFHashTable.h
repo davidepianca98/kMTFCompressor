@@ -5,11 +5,13 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
+#include <queue>
+#include "SPSCQueue.h"
 
 class MTFHashTable {
 private:
     // Hash table of MTF buffers
-    std::vector<uint64_t> H;
+    std::vector<uint64_t> hash_table;
 
     // Keep track of visited MTF buffers
     std::vector<bool> visited;
@@ -32,12 +34,18 @@ private:
 
     void keep_track(uint64_t hash);
 
+    void thread_f(rigtorp::SPSCQueue<std::tuple<uint8_t, uint64_t, uint32_t *>> *q);
+
 public:
     explicit MTFHashTable(int k);
 
     void print_stats() const;
 
     void encode(const uint8_t *block, long size, uint32_t *out_block);
+
+    void encode2(std::istream& in, std::ostream& out);
+
+    void encode3(std::istream& in, std::ostream& out);
 
     void decode(const uint32_t *block, long size, uint8_t *out_block);
 };
