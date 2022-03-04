@@ -7,6 +7,8 @@ set(SOURCE_FILES
         src/Core.cpp
         src/MTFHash.cpp
         src/MTFHashTable.cpp
+        src/MTFHashTableBlock.cpp
+        src/MTFHashTableStream.cpp
         src/hash/DumbHash.cpp
         src/hash/MinimiserHash.cpp
         src/hash/RabinFingerprint.cpp
@@ -18,6 +20,8 @@ set(HEADER_FILES
         src/MTF.h
         src/MTFHash.h
         src/MTFHashTable.h
+        src/MTFHashTableBlock.h
+        src/MTFHashTableStream.h
         src/RLE.h
         src/hash/DumbHash.h
         src/hash/Hash.h
@@ -34,8 +38,8 @@ include_directories(src)
 include_directories(src/hash)
 
 
-FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
-TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
+#FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
+#TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
 
 target_link_directories(MTF_lib PUBLIC /usr/local/lib)
 target_include_directories(MTF_lib PUBLIC /usr/local/include/fastpfor)

@@ -5,13 +5,15 @@
 
 #include <vector>
 #include <cstdint>
+#include <future>
 #include "MTFHashTable.h"
+#include "MTFHashTableBlock.h"
 
 class Core {
 
     bool valid = false;
     std::future<uint32_t> future;
-    MTFHashTable mtf;
+    MTFHashTableBlock mtf;
 
     uint32_t compressBlock(const uint8_t *in_block, long size, uint8_t *final_block);
 

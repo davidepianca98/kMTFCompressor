@@ -7,6 +7,7 @@
 #include "MTFHash.h"
 #include "MTFHashTable.h"
 #include "Core.h"
+#include "MTFHashTableStream.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -56,8 +57,8 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    MTFHashTable mtf(k);
-    mtf.encode3(in_file, out_file);
+    MTFHashTableStream mtf(k, 1024 * 1024); // 1 MB block size
+    mtf.encode(in_file, out_file);
 
     in_file.close();
     out_file.close();
@@ -100,6 +101,22 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
             }
         }
     }
+
+    in_file.close();
+    out_file.close();
+
+    return 0;
+}
+
+int MTFHash::decompress_stream(const std::string& path, const std::string& out_path, int k) {
+    std::ifstream in_file(path, std::ios::binary);
+    if (in_file.fail()) {
+        return 1;
+    }
+    std::ofstream out_file(out_path, std::ios::binary);
+
+    MTFHashTableStream mtf(k, 1024 * 1024); // 1 MB block size
+    mtf.decode(in_file, out_file);
 
     in_file.close();
     out_file.close();

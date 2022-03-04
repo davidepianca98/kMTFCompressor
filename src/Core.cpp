@@ -4,8 +4,9 @@
 #include <fastpfor/codecfactory.h>
 #include <thread>
 #include "Core.h"
+#include "MTFHashTableBlock.h"
 
-Core::Core(int k, int in_block_size, int out_block_size) : mtf(k), block(in_block_size), out_block(out_block_size) {}
+Core::Core(int k, int in_block_size, int out_block_size) : mtf(k, in_block_size), block(in_block_size), out_block(out_block_size) {}
 
 
 void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_block, size_t& compressed_size) {
@@ -21,7 +22,7 @@ void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_bloc
 uint32_t Core::compressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
     uint32_t out_block1[size];
 
-    MTFHashTable mtf(3); // TODO remove if want to use same mtf table in thread
+    //MTFHashTableBlock mtf(3, size); // TODO remove if want to use same mtf table in thread
     mtf.encode(in_block, size, out_block1);
 
     //mtf.print_stats();

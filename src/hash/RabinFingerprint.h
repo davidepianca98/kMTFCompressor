@@ -26,7 +26,7 @@ private:
     static constexpr uint64_t P100M = 100000007;
 
 public:
-    static constexpr uint64_t q = 10007; // This gets around 50% hash table usage
+    static constexpr uint64_t q = P10M;
 
     RabinFingerprint(int k, const std::vector<uint8_t> &start);
 
