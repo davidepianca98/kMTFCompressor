@@ -9,15 +9,14 @@
 
 class RabinFingerprint : public Hash {
 private:
-    uint64_t x;
+    // Random number
+    uint64_t x = 0;
+    // Multiplier to shift left
     uint64_t xk = 1;
 
-    int k;
-
-    // Rolling k-mer
-    std::vector<uint8_t> kmer;
-
     uint64_t i = 0;
+
+
 
     //constexpr uint64_t M19 = (uint64_t(1)<<19)-1;
     //constexpr uint64_t M31 = (uint64_t(1)<<31)-1;
@@ -25,12 +24,20 @@ private:
     static constexpr uint64_t P10M = 10000019;
     static constexpr uint64_t P100M = 100000007;
 
-public:
-    static constexpr uint64_t q = P10M;
+    static constexpr uint64_t q = 100000007; // 2^31 - 1
 
-    RabinFingerprint(int k, const std::vector<uint8_t> &start);
+public:
+    explicit RabinFingerprint(int k);
+
+    void init(const std::vector<uint8_t> &start) override;
+
+    void resize(uint64_t size) override;
 
     void update(uint8_t c) override;
+
+    void increment_k(uint8_t c);
+
+    void decrement_k();
 };
 
 

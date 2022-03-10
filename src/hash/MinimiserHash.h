@@ -20,14 +20,16 @@ class MinimiserHash : public Hash {
     int i = 0;
     int j = 0;
 
-    static constexpr int size = 10000;
-
     uint32_t fnv1a(int start, int len);
 
     void compute();
 
 public:
-    MinimiserHash(int k, int window_size, const std::vector<uint8_t>& start);
+    MinimiserHash(int k, int window_size);
+
+    void init(const std::vector<uint8_t> &start) override;
+
+    void resize(uint64_t size) override;
 
     void update(uint8_t c) override;
 };

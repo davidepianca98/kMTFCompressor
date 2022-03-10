@@ -16,7 +16,17 @@ void SimHash::compute() {
 }
 
 // TODO only works for k=2 for now
-SimHash::SimHash(int k, const std::vector<uint8_t> &start) : Hash(10000), k(k), kmer(k) {
+SimHash::SimHash(int k) : Hash(10000, k) {}
+
+void SimHash::update(uint8_t c) {
+    for (int i = 0; i < kmer.size() - 1; i++) {
+        kmer[i] = kmer[i + 1];
+    }
+    kmer[kmer.size() - 1] = c;
+    compute();
+}
+
+void SimHash::init(const std::vector<uint8_t> &start) {
     srand(time(nullptr)); // TODO should be generated once and then hardcoded
 
     for (int i = 0; i < k; i++) {
@@ -45,10 +55,6 @@ SimHash::SimHash(int k, const std::vector<uint8_t> &start) : Hash(10000), k(k), 
     compute();
 }
 
-void SimHash::update(uint8_t c) {
-    for (int i = 0; i < kmer.size() - 1; i++) {
-        kmer[i] = kmer[i + 1];
-    }
-    kmer[kmer.size() - 1] = c;
-    compute();
+void SimHash::resize(uint64_t size) {
+    // TODO
 }

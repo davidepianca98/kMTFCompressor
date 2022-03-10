@@ -1,56 +1,42 @@
 
+#include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTableBlock.h"
 #include "RabinFingerprint.h"
 
-MTFHashTableBlock::MTFHashTableBlock(int k, int block_size) : MTFHashTable(k, block_size) {}
+template <typename T>
+MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash hash) : MTFHashTable<T>(k, block_size, hash) {}
 
-void MTFHashTableBlock::encode(const uint8_t *block, long size, uint32_t *out_block) {
-    uint8_t c;
-
-    std::vector<uint8_t> start(k);
+template <typename T>
+void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out_block) {
+    std::vector<uint8_t> start(this->k);
     int i;
-    for (i = 0; i < k; i++) {
-        c = block[i];
-        start[i] = c;
-        out_block[i] = (uint32_t) c + 8;
+    for (i = 0; i < this->k; i++) {
+        start[i] = block[i];
+        out_block[i] = (uint32_t) block[i] + 8;
     }
 
-    // Rolling hash to access the table
-    RabinFingerprint hash(k, start);
+    this->hash_function.init(start);
 
-    while (i < size) {
-        c = block[i];
-        keep_track(hash.get_hash());
-
-        uint32_t pos = mtfEncode(hash_table[hash.get_hash()], c);
-        out_block[i] = pos;
-        hash.update(c);
-        i++;
+    for (; i < size; i++) {
+        out_block[i] = this->mtfEncode(block[i]);
     }
 }
 
-void MTFHashTableBlock::decode(const uint32_t *block, long size, uint8_t *out_block) {
-    uint32_t c;
-
-    std::vector<uint8_t> start(k);
+template <typename T>
+void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out_block) {
+    std::vector<uint8_t> start(this->k);
     int i;
-    for (i = 0; i < k; i++) {
-        c = block[i];
-        start[i] = (uint8_t) (c - 8);
+    for (i = 0; i < this->k; i++) {
+        start[i] = (uint8_t) (block[i] - 8);
         out_block[i] = start[i];
     }
 
-    // Rolling hash to access the table
-    RabinFingerprint hash(k, start);
+    this->hash_function.init(start);
 
-    while (i < size) {
-        c = block[i];
-        uint8_t ca = mtfDecode(hash_table[hash.get_hash()], c);
-        out_block[i] = ca;
-
-        hash.update(ca);
-        i++;
+    for (; i < size; i++) {
+        out_block[i] = this->mtfDecode(block[i]);
     }
 }
 
-
+template class MTFHashTableBlock<uint64_t>;
+template class MTFHashTableBlock<boost::multiprecision::uint1024_t>;

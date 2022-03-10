@@ -16,16 +16,11 @@ void VectorHash::compute() {
     hash = (uint64_t) (((double) a / (double) b) * size);
 }
 
-VectorHash::VectorHash(int k, const std::vector<uint8_t> &start) : Hash(10000), v(k), kmer(k) {
+VectorHash::VectorHash(int k) : Hash(10000, k), v(k) {
     for (uint8_t& c: v) {
         c = 255;
     }
     b = dot(v, v);
-
-    for (int i = 0; i < k; i++) {
-        kmer[i] = start[i];
-    }
-    compute();
 }
 
 void VectorHash::update(uint8_t c) {
@@ -34,4 +29,15 @@ void VectorHash::update(uint8_t c) {
     }
     kmer[kmer.size() - 1] = c;
     compute();
+}
+
+void VectorHash::init(const std::vector<uint8_t> &start) {
+    for (int i = 0; i < k; i++) {
+        kmer[i] = start[i];
+    }
+    compute();
+}
+
+void VectorHash::resize(uint64_t size) {
+    // TODO
 }

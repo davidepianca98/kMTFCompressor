@@ -6,7 +6,7 @@
 #include "Core.h"
 #include "MTFHashTableBlock.h"
 
-Core::Core(int k, int in_block_size, int out_block_size) : mtf(k, in_block_size), block(in_block_size), out_block(out_block_size) {}
+Core::Core(int k, int in_block_size, int out_block_size, Hash& hash) : mtf(k, in_block_size, hash), block(in_block_size), out_block(out_block_size) {}
 
 
 void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_block, size_t& compressed_size) {

@@ -8,15 +8,14 @@
 
 class DumbHash : public Hash {
 
-    int k;
-
-    // Rolling k-mer
-    std::vector<uint8_t> kmer;
-
     int i = 0;
 
 public:
-    DumbHash(int k, const std::vector<uint8_t> &start);
+    explicit DumbHash(int k);
+
+    void init(const std::vector<uint8_t> &start) override;
+
+    void resize(uint64_t size) override;
 
     void update(uint8_t c) override;
 };

@@ -1,7 +1,9 @@
 
 #include "DumbHash.h"
 
-DumbHash::DumbHash(int k, const std::vector<uint8_t>& start): Hash(100000), k(k), kmer(k) {
+DumbHash::DumbHash(int k): Hash(100000, k) {}
+
+void DumbHash::init(const std::vector<uint8_t> &start) {
     // First k-mer
     for (i = 0; i < k; i++) {
         kmer[i] = start[i];
@@ -9,6 +11,10 @@ DumbHash::DumbHash(int k, const std::vector<uint8_t>& start): Hash(100000), k(k)
     }
 
     hash = hash % size;
+}
+
+void DumbHash::resize(uint64_t size) {
+    // TODO
 }
 
 void DumbHash::update(uint8_t c) {

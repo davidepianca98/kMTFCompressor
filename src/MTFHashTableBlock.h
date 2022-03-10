@@ -4,10 +4,11 @@
 
 #include "MTFHashTable.h"
 
-class MTFHashTableBlock : public MTFHashTable {
+template <typename T>
+class MTFHashTableBlock : public MTFHashTable<T> {
 
 public:
-    MTFHashTableBlock(int k, int block_size);
+    MTFHashTableBlock(int k, int block_size, Hash hash);
 
     void encode(const uint8_t *block, long size, uint32_t *out_block);
 

@@ -6,7 +6,8 @@
 #include "MTFHashTable.h"
 #include "Monitor.h"
 
-class MTFHashTableStream : public MTFHashTable {
+template <typename T>
+class MTFHashTableStream : public MTFHashTable<T> {
 
     Monitor mon;
     std::atomic_bool stop_thread;
@@ -28,14 +29,15 @@ class MTFHashTableStream : public MTFHashTable {
     void stop();
 
 public:
-    MTFHashTableStream(int k, int blockSize);
+    MTFHashTableStream(int k, int blockSize, Hash& hash);
 
     ~MTFHashTableStream();
 
     void encode(std::istream& in, std::ostream& out);
 
-    void decode(std::istream& in, std::ostream& out);
+    void encode_pipeline(std::istream& in, std::ostream& out);
 
+    void decode(std::istream& in, std::ostream& out);
 };
 
 

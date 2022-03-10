@@ -31,12 +31,8 @@ void MinimiserHash::compute() {
     hash = hash % size;
 }
 
-MinimiserHash::MinimiserHash(int k, int window_size, const std::vector<uint8_t>& start) :
-        Hash(10000), rf(k, start), k(k), window(start), window_size(window_size), window_hashes(window_size - k) {
-
-    hash = UINT32_MAX;
-    compute();
-}
+MinimiserHash::MinimiserHash(int k, int window_size) :
+        Hash(10000, k), rf(k), k(k), window_size(window_size), window_hashes(window_size - k) {}
 
 void MinimiserHash::update(uint8_t c) {
     i = (i + 1) % (window_size - k);
@@ -56,4 +52,15 @@ void MinimiserHash::update(uint8_t c) {
     }
     hash = hash | (fnv1a((j + 1) % window_size, window_size) % 256);
     hash = hash % size;
+}
+
+void MinimiserHash::init(const std::vector<uint8_t> &start) {
+    hash = UINT32_MAX;
+    compute();
+    window = start;
+    rf.init(start);
+}
+
+void MinimiserHash::resize(uint64_t size) {
+    // TODO
 }

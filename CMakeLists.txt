@@ -38,8 +38,8 @@ include_directories(src)
 include_directories(src/hash)
 
 
-#FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
-#TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
+FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
+TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
 
 target_link_directories(MTF_lib PUBLIC /usr/local/lib)
 target_include_directories(MTF_lib PUBLIC /usr/local/include/fastpfor)

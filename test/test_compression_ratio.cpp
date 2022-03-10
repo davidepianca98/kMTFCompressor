@@ -6,8 +6,8 @@
 
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";
-    std::string path = "../../test/resources/pizzachili";
-    //std::string path = "../../test/resources/mio";
+    //std::string path = "../../test/resources/pizzachili";
+    std::string path = "../../test/resources/mio";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
@@ -20,7 +20,7 @@ int main() {
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size()
                       << ", Compressed file size: " << file_size(compressed) << ", Ratio: "
                       << ((double) file_size(compressed) / (double) entry.file_size()) * 100 << ", Time elapsed: "
-                      << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
+                      << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl << std::endl;
 
             size_uncompressed += entry.file_size();
             size_compressed += file_size(compressed);

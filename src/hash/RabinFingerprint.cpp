@@ -1,8 +1,11 @@
 
+#include <iostream>
 #include "RabinFingerprint.h"
 
 
-RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t> &start) : Hash(RabinFingerprint::q), k(k), kmer(k) {
+RabinFingerprint::RabinFingerprint(int k) : Hash(q, k) {} // TODO should be passed from table
+
+void RabinFingerprint::init(const std::vector<uint8_t> &start) {
     //srand(time(nullptr));
     // Multiplier
     //x = rand() % q;
@@ -23,6 +26,9 @@ RabinFingerprint::RabinFingerprint(int k, const std::vector<uint8_t> &start) : H
     for (int j = 0; j < k - 1; j++) {
         xk = (xk * x) % q;
     }
+
+    // Resize for the table size
+    //hash %= size;
 }
 
 void RabinFingerprint::update(uint8_t c) {
@@ -39,4 +45,33 @@ void RabinFingerprint::update(uint8_t c) {
     hash = (hash * x) % q;
     // Push the new character to the right
     hash = (hash + c) % q;
+
+    // Resize for the table size
+    //hash %= size;
+}
+
+void RabinFingerprint::resize(uint64_t size) {
+    this->size = size;
+}
+
+void RabinFingerprint::increment_k(uint8_t c) {
+    k++;
+    std::cout << k << std::endl;
+    kmer.resize(k);
+    for (uint64_t j = k - 1; j > i; j--) {
+        kmer[j] = kmer[j - 1];
+    }
+    kmer[i] = c;
+    hash = (hash * x) % size;
+    hash = (hash + c) % size;
+
+    i = (i + 1) % k;
+
+    xk = (xk * x) % size;
+}
+
+void RabinFingerprint::decrement_k() {
+    k--;
+    // TODO
+    xk = (xk / x) % size;
 }

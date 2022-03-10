@@ -1,13 +1,12 @@
 
 #include <iostream>
 
-#include <thread>
-#include <future>
 #include <fstream>
 #include "MTFHash.h"
-#include "MTFHashTable.h"
 #include "Core.h"
 #include "MTFHashTableStream.h"
+#include "RabinFingerprint.h"
+#include "VectorHash.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -20,9 +19,11 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
 
     int block_size = 1024 * 1024; // 1 MB block size
 
+    RabinFingerprint hash(k);
+
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
-        cores.emplace_back(k, block_size, block_size * 4 + 1024);
+        cores.emplace_back(k, block_size, block_size * 4 + 1024, hash);
     }
 
     while (in_file.good()) {
@@ -57,7 +58,8 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    MTFHashTableStream mtf(k, 1024 * 1024); // 1 MB block size
+    RabinFingerprint hash(k);
+    MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.encode(in_file, out_file);
 
     in_file.close();
@@ -78,9 +80,11 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
 
     int max_block_size = 1024 * 1024 * 10; // TODO needs max block size as the block size is read after the allocation of these buffers
 
+    RabinFingerprint hash(k);
+
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
-        cores.emplace_back(k, max_block_size, max_block_size * 4 + 1024);
+        cores.emplace_back(k, max_block_size, max_block_size * 4 + 1024, hash);
     }
 
     while (in_file.good()) {
@@ -115,7 +119,8 @@ int MTFHash::decompress_stream(const std::string& path, const std::string& out_p
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    MTFHashTableStream mtf(k, 1024 * 1024); // 1 MB block size
+    RabinFingerprint hash(k);
+    MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.decode(in_file, out_file);
 
     in_file.close();

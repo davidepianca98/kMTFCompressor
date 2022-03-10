@@ -8,20 +8,19 @@
 
 class SimHash : public Hash {
 private:
-    int k;
-
-    // Rolling k-mer
-    std::vector<uint8_t> kmer;
-
     std::vector<std::vector<uint8_t>> vectors;
+
+    void compute();
 
 public:
 
-    SimHash(int k, const std::vector<uint8_t> &start);
+    explicit SimHash(int k);
 
     void update(uint8_t c) override;
 
-    void compute();
+    void init(const std::vector<uint8_t> &start) override;
+
+    void resize(uint64_t size) override;
 };
 
 
