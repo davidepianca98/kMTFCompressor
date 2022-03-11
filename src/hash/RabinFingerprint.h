@@ -24,7 +24,7 @@ private:
     static constexpr uint64_t P10M = 10000019;
     static constexpr uint64_t P100M = 100000007;
 
-    static constexpr uint64_t q = 100000007; // 2^31 - 1
+    static constexpr uint64_t q = P100M;//2147483647; // 2^31 - 1
 
 public:
     explicit RabinFingerprint(int k);

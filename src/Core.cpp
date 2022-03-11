@@ -13,6 +13,7 @@ void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_bloc
     using namespace FastPForLib;
     // simdoptpfor, simdfastpfor256 are the best
     IntegerCODEC *codec = new CompositeCodec<SIMDOPTPFor<4, Simple16<false>>, VariableByte>();
+    //IntegerCODEC *codec = new CompositeCodec<SIMDFastPFor<8>, VariableByte>();
 
     codec->encodeArray(block, size, out_block, compressed_size);
     compressed_size *= 4;

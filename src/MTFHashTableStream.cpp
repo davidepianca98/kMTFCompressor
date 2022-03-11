@@ -136,17 +136,17 @@ void compress(int bytes, std::ostream& out, uint32_t *in_data, uint8_t *out_data
 
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
-    std::vector<uint8_t> start(this->k);
+    std::vector<uint8_t> start(15); // TODO window size
     auto *out_data = new uint8_t[this->block_size * 4 + 1024];
     uint8_t c;
     int i;
-    for (i = 0; i < this->k; i++) {
+    for (i = 0; i < start.size(); i++) {
         in.read(reinterpret_cast<char *>(&c), 1);
         in_data[i] = c;
         start[i] = c;
         mtf_out_data[i] = (uint32_t) c + 8;
     }
-    read_bytes = this->k;
+    read_bytes = i;
 
     this->hash_function.init(start);
 
@@ -161,6 +161,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
 
         while (i < read_bytes) {
             mtf_out_data[i] = this->mtfEncode(in_data[i]);
+            //std::cout << mtf_out_data[i] << " ";
             i++;
         }
         i = 0;

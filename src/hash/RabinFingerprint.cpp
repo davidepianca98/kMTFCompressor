@@ -6,10 +6,8 @@
 RabinFingerprint::RabinFingerprint(int k) : Hash(q, k) {} // TODO should be passed from table
 
 void RabinFingerprint::init(const std::vector<uint8_t> &start) {
-    //srand(time(nullptr));
-    // Multiplier
-    //x = rand() % q;
-    x = 3980; // TODO choose in another way, it must be always the same, to be able to decompress later, so no random
+    // Prime number slightly bigger than the alphabet size
+    x = 257;
 
     // First k-mer
     for (int i = 0; i < k; i++) {
@@ -37,8 +35,6 @@ void RabinFingerprint::update(uint8_t c) {
     kmer[i] = c;
     i = (i + 1) % k;
 
-
-    hash += q;
     // Remove the leftmost character using the multiplier
     hash = (hash - ((xk * old) % q)) % q;
     // Shift left by the multiplier

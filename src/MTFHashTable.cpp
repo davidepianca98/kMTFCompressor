@@ -88,22 +88,22 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::keep_track(uint64_t hash) {
-    if (!visited[hash]) {
+    if (!visited[hash]) { // TODO visited should be kept in same structure as table so no double miss just to keep track
         used_cells++;
         visited[hash] = true;
 
-        /*if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
+        if (used_cells * 100 / table_size > 50 && table_size < 134217728) {
             table_size *= 2;
-            std::cout << table_size << std::endl;
-            hash_table.resize(table_size);
-            visited.resize(table_size);
+            //std::cout << table_size << " " << stream_length << std::endl;
+            //hash_table.resize(table_size);
+            //visited.resize(table_size);
             hash_function.resize(table_size);
-        }*/
+        }
     }
 }
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int k, int block_size, Hash& hash): table_size(128), hash_table(100000007), visited(100000007, false), k(k), block_size(block_size),
+MTFHashTable<T>::MTFHashTable(int k, int block_size, Hash& hash): table_size(1024), hash_table(134217728), visited(134217728, false), k(k), block_size(block_size),
                                                                   hash_function(hash) {}
 
 template <typename T>

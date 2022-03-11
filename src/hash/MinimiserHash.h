@@ -13,16 +13,14 @@ class MinimiserHash : public Hash {
     int window_size;
 
     std::vector<uint8_t> window;
-    std::vector<uint32_t> window_hashes;
+    std::vector<uint64_t> window_hashes;
 
     RabinFingerprint rf;
 
     int i = 0;
-    int j = 0;
+    int filled = 0;
 
     uint32_t fnv1a(int start, int len);
-
-    void compute();
 
 public:
     MinimiserHash(int k, int window_size);

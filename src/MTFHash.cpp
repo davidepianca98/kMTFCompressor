@@ -7,6 +7,7 @@
 #include "MTFHashTableStream.h"
 #include "RabinFingerprint.h"
 #include "VectorHash.h"
+#include "MinimiserHash.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -58,7 +59,8 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    RabinFingerprint hash(k);
+    MinimiserHash hash(k, 15);
+    //RabinFingerprint hash(k);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.encode(in_file, out_file);
 
