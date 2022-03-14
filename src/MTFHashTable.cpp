@@ -4,6 +4,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTable.h"
 #include "hash/Hash.h"
+#include "RabinKarp.h"
 
 template <typename T>
 void MTFHashTable<T>::mtfShift(T& buf, uint8_t c, uint8_t i) {
@@ -34,8 +35,8 @@ uint8_t MTFHashTable<T>::mtfExtract(const T& buf, uint8_t i) {
  */
 template <typename T>
 uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
-    T& buf = hash_table[hash_function.get_hash()];
     keep_track(hash_function.get_hash());
+    T& buf = hash_table[hash_function.get_hash()];
 
     hash_function.update(c);
     symbols_in[c]++;
@@ -71,8 +72,8 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
 
 template <typename T>
 uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
-    T& buf = hash_table[hash_function.get_hash()];
     keep_track(hash_function.get_hash());
+    T& buf = hash_table[hash_function.get_hash()];
 
     if (i >= 8) {
         mtfAppend(buf, i - 8);
@@ -87,23 +88,26 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
 }
 
 template <typename T>
-void MTFHashTable<T>::keep_track(uint64_t hash) {
+int MTFHashTable<T>::keep_track(uint64_t hash) {
     if (!visited[hash]) { // TODO visited should be kept in same structure as table so no double miss just to keep track
         used_cells++;
         visited[hash] = true;
 
-        if (used_cells * 100 / table_size > 50 && table_size < 134217728) {
+        if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
             table_size *= 2;
-            //std::cout << table_size << " " << stream_length << std::endl;
-            //hash_table.resize(table_size);
-            //visited.resize(table_size);
+            hash_table.resize(table_size);
+            std::fill(hash_table.begin(), hash_table.end(), 0);
+            visited.resize(table_size);
+            std::fill(visited.begin(), visited.end(), false);
             hash_function.resize(table_size);
+            return 1;
         }
     }
+    return 0;
 }
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int k, int block_size, Hash& hash): table_size(1024), hash_table(134217728), visited(134217728, false), k(k), block_size(block_size),
+MTFHashTable<T>::MTFHashTable(int k, int block_size, Hash& hash): table_size(hash.get_size()), hash_table(hash.get_size()), visited(hash.get_size(), false), k(k), block_size(block_size),
                                                                   hash_function(hash) {}
 
 template <typename T>

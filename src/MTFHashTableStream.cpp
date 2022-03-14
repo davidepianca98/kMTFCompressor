@@ -3,7 +3,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTableStream.h"
 #include "Core.h"
-#include "RabinFingerprint.h"
+#include "RabinKarp.h"
 
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash), stop_thread(false) {
@@ -75,7 +75,7 @@ void MTFHashTableStream<T>::encode_pipeline(std::istream& in, std::ostream& out)
     read_bytes = this->k;
 
     // Rolling hash to access the table
-    RabinFingerprint hash(this->k);
+    RabinKarp hash(this->k);
     hash.init(start);
 
     while (read_bytes > 0) {
@@ -97,6 +97,7 @@ void MTFHashTableStream<T>::encode_pipeline(std::istream& in, std::ostream& out)
             i++;
         }
         i = 0;
+        // TODO after block potentially double table
 
         mon.notify(Monitor::READER);
     }
@@ -136,15 +137,18 @@ void compress(int bytes, std::ostream& out, uint32_t *in_data, uint8_t *out_data
 
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
-    std::vector<uint8_t> start(15); // TODO window size
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
     auto *out_data = new uint8_t[this->block_size * 4 + 1024];
     uint8_t c;
     int i;
-    for (i = 0; i < start.size(); i++) {
+    for (i = 0; i < start.size() && in.good(); i++) {
         in.read(reinterpret_cast<char *>(&c), 1);
         in_data[i] = c;
         start[i] = c;
         mtf_out_data[i] = (uint32_t) c + 8;
+    }
+    if (!in.good()) {
+        throw std::runtime_error("Not enough data to run the algorithm");
     }
     read_bytes = i;
 

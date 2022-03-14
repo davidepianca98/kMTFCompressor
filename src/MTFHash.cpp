@@ -5,9 +5,12 @@
 #include "MTFHash.h"
 #include "Core.h"
 #include "MTFHashTableStream.h"
-#include "RabinFingerprint.h"
+#include "RabinKarp.h"
 #include "VectorHash.h"
 #include "MinimiserHash.h"
+#include "ConcatenatedHash.h"
+#include "Fnv1a.h"
+#include "Adler32.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -20,7 +23,7 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
 
     int block_size = 1024 * 1024; // 1 MB block size
 
-    RabinFingerprint hash(k);
+    RabinKarp hash(k);
 
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
@@ -59,8 +62,10 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    MinimiserHash hash(k, 15);
-    //RabinFingerprint hash(k);
+    //MinimiserHash<Fnv1a, Fnv1a, Fnv1a> hash(k, 15, 1024);
+    ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
+    //RabinKarp hash(k, 100000007);
+    //Fnv1a hash(k, 1024);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.encode(in_file, out_file);
 
@@ -82,7 +87,7 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
 
     int max_block_size = 1024 * 1024 * 10; // TODO needs max block size as the block size is read after the allocation of these buffers
 
-    RabinFingerprint hash(k);
+    RabinKarp hash(k);
 
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
@@ -121,7 +126,8 @@ int MTFHash::decompress_stream(const std::string& path, const std::string& out_p
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    RabinFingerprint hash(k);
+    ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
+    //RabinKarp hash(k);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.decode(in_file, out_file);
 

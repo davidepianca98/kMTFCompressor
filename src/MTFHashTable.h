@@ -49,7 +49,7 @@ protected:
 
     uint8_t mtfDecode(uint32_t c);
 
-    void keep_track(uint64_t hash);
+    int keep_track(uint64_t hash);
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {

@@ -9,14 +9,15 @@ class Hash {
 protected:
     uint64_t hash = 0;
     uint64_t size = 0;
+    uint64_t window_size = 0;
 
-    int k;
+    uint64_t k;
 
     // Rolling k-mer
     std::vector<uint8_t> kmer;
 public:
 
-    explicit Hash(uint64_t size, int k) : size(size), k(k), kmer(k) {}
+    explicit Hash(uint64_t k, uint64_t window_size, uint64_t size) : k(k), size(size), window_size(window_size), kmer(k) {}
 
     virtual ~Hash() = default;
 
@@ -24,14 +25,18 @@ public:
 
     virtual void update(uint8_t c) {};
 
-    virtual void resize(uint64_t size) {};
+    virtual void resize(uint64_t new_size) {};
 
-    uint64_t get_hash() const {
+    [[nodiscard]] virtual uint64_t get_hash() const {
         return hash;
     };
 
-    uint64_t get_size() const {
+    [[nodiscard]] uint64_t get_size() const {
         return size;
+    }
+
+    [[nodiscard]] uint64_t get_window_size() const {
+        return window_size;
     }
 };
 

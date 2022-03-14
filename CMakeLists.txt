@@ -9,11 +9,7 @@ set(SOURCE_FILES
         src/MTFHashTable.cpp
         src/MTFHashTableBlock.cpp
         src/MTFHashTableStream.cpp
-        src/hash/DumbHash.cpp
-        src/hash/MinimiserHash.cpp
-        src/hash/RabinFingerprint.cpp
-        src/hash/SimHash.cpp
-        src/hash/VectorHash.cpp)
+        )
 
 set(HEADER_FILES
         src/Core.h
@@ -23,13 +19,16 @@ set(HEADER_FILES
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
         src/RLE.h
+        src/hash/Adler32.h
+        src/hash/ConcatenatedHash.h
         src/hash/DumbHash.h
+        src/hash/Fnv1a.h
         src/hash/Hash.h
         src/hash/MinimiserHash.h
-        src/hash/RabinFingerprint.h
-        src/SPSCQueue.h
+        src/hash/RabinKarp.h
         src/hash/SimHash.h
-        src/hash/VectorHash.h)
+        src/hash/VectorHash.h
+        src/SPSCQueue.h)
 
 enable_testing()
 

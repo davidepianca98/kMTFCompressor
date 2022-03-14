@@ -1,7 +1,7 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTableBlock.h"
-#include "RabinFingerprint.h"
+#include "RabinKarp.h"
 
 template <typename T>
 MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash hash) : MTFHashTable<T>(k, block_size, hash) {}
