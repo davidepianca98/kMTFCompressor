@@ -200,7 +200,7 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) { // TOD
     in.read(reinterpret_cast<char *>(&block_size), 4);
     in.read(reinterpret_cast<char *>(mtf_out_data), block_size);
     long read_bytes = in.gcount();
-    if (read_bytes < this->k) {
+    if (read_bytes < this->hash_function.get_window_size()) {
         throw std::runtime_error("Not enough data to read");
     }
 
@@ -210,9 +210,9 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) { // TOD
 
 
 
-    std::vector<uint8_t> start(this->k);
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
     int i;
-    for (i = 0; i < this->k; i++) { // TODO incorporate in mtfDecode
+    for (i = 0; i < start.size(); i++) { // TODO incorporate in mtfDecode
         c = out_block1[i];
         start[i] = (uint8_t) (c - 8);
         in_data[i] = start[i];

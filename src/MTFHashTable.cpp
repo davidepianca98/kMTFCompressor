@@ -94,6 +94,7 @@ int MTFHashTable<T>::keep_track(uint64_t hash) {
         visited[hash] = true;
 
         if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
+            //used_cells = 0; TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
             table_size *= 2;
             hash_table.resize(table_size);
             std::fill(hash_table.begin(), hash_table.end(), 0);
