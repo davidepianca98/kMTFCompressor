@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstring>
 #include "MTFHashTable.h"
+#include "MTFHashTableStream.h"
 
 
 void test() {
@@ -36,7 +37,7 @@ void test2() {
 
     std::vector<uint32_t> out_data(file_size);
 
-    MTFHashTable mtf(3);
+    MTFHashTableStream mtf(3);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     mtf.encode3(reinterpret_cast<const uint8_t *>(data.data()), file_size, out_data.data());
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

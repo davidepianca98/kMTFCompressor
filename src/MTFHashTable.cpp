@@ -64,10 +64,10 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
         runs++;
     }
     last_symbol_out = c;
-    symbols_out[c + 8]++;
+    symbols_out[c + byte_size()]++;
 
     // Sum 8 to differentiate between indexes on the MTF buffer and characters
-    return c + 8;
+    return c + byte_size();
 }
 
 template <typename T>
@@ -75,10 +75,10 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
     keep_track(hash_function.get_hash());
     T& buf = hash_table[hash_function.get_hash()];
 
-    if (i >= 8) {
-        mtfAppend(buf, i - 8);
-        hash_function.update(i - 8);
-        return i - 8;
+    if (i >= byte_size()) {
+        mtfAppend(buf, i - byte_size());
+        hash_function.update(i - byte_size());
+        return i - byte_size();
     } else {
         uint8_t ca = mtfExtract(buf, i);
         mtfShift(buf, ca, i);
@@ -93,7 +93,7 @@ int MTFHashTable<T>::keep_track(uint64_t hash) {
         used_cells++;
         visited[hash] = true;
 
-        if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
+        /*if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
             //used_cells = 0; TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
             table_size *= 2;
             hash_table.resize(table_size);
@@ -102,7 +102,7 @@ int MTFHashTable<T>::keep_track(uint64_t hash) {
             std::fill(visited.begin(), visited.end(), false);
             hash_function.resize(table_size);
             return 1;
-        }
+        }*/
     }
     return 0;
 }
@@ -133,7 +133,7 @@ void MTFHashTable<T>::calculate_entropy() {
             entropy_in -= p1 * log2(p1);
         }
     }
-    for (int i = 0; i < 256 + 8; i++) {
+    for (int i = 0; i < 256 + byte_size(); i++) {
         double p2 = (double) symbols_out[i] / stream_length;
         if (p2 > 0) {
             entropy_out -= p2 * log2(p2);
@@ -141,5 +141,10 @@ void MTFHashTable<T>::calculate_entropy() {
     }
 }
 
+template class MTFHashTable<uint16_t>;
+template class MTFHashTable<uint32_t>;
 template class MTFHashTable<uint64_t>;
+template class MTFHashTable<boost::multiprecision::uint128_t>;
+template class MTFHashTable<boost::multiprecision::uint256_t>;
+template class MTFHashTable<boost::multiprecision::uint512_t>;
 template class MTFHashTable<boost::multiprecision::uint1024_t>;

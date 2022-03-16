@@ -70,7 +70,7 @@ void MTFHashTableStream<T>::encode_pipeline(std::istream& in, std::ostream& out)
         in.read(reinterpret_cast<char *>(&c), 1);
         in_data[i] = c;
         start[i] = c;
-        mtf_out_data[i] = (uint32_t) c + 8;
+        mtf_out_data[i] = (uint32_t) c + this->byte_size();
     }
     read_bytes = this->k;
 
@@ -145,7 +145,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
         in.read(reinterpret_cast<char *>(&c), 1);
         in_data[i] = c;
         start[i] = c;
-        mtf_out_data[i] = (uint32_t) c + 8;
+        mtf_out_data[i] = (uint32_t) c + this->byte_size();
     }
     if (!in.good()) {
         throw std::runtime_error("Not enough data to run the algorithm");
@@ -214,7 +214,7 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) { // TOD
     int i;
     for (i = 0; i < start.size(); i++) { // TODO incorporate in mtfDecode
         c = out_block1[i];
-        start[i] = (uint8_t) (c - 8);
+        start[i] = (uint8_t) (c - this->byte_size());
         in_data[i] = start[i];
     }
 
@@ -242,5 +242,10 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) { // TOD
     } while (read_bytes > 0);
 }
 
+template class MTFHashTableStream<uint16_t>;
+template class MTFHashTableStream<uint32_t>;
 template class MTFHashTableStream<uint64_t>;
+template class MTFHashTableStream<boost::multiprecision::uint128_t>;
+template class MTFHashTableStream<boost::multiprecision::uint256_t>;
+template class MTFHashTableStream<boost::multiprecision::uint512_t>;
 template class MTFHashTableStream<boost::multiprecision::uint1024_t>;

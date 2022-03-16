@@ -11,9 +11,9 @@
 
 class Core {
 
+    int k;
     bool valid = false;
     std::future<uint32_t> future;
-    MTFHashTableBlock<uint64_t> mtf;
 
     uint32_t compressBlock(const uint8_t *in_block, long size, uint8_t *final_block);
 
@@ -23,7 +23,7 @@ public:
     std::vector<uint8_t> block;
     std::vector<uint8_t> out_block;
 
-    Core(int k, int in_block_size, int out_block_size, Hash& hash);
+    Core(int k, int in_block_size, int out_block_size);
 
     static void compress_final(const uint32_t *block, size_t size, uint32_t *out_block, size_t& compressed_size);
 

@@ -5,12 +5,12 @@
 #include <fstream>
 #include "MTFHash.h"
 
-int test_file(const std::string path) { // around 20MB/s compression, 108MB/s decompression
+int test_file(const std::string path) {
     std::cout << path << std::endl;
-    MTFHash::compress_stream(path, path + ".mtf", 3);
+    MTFHash::compress(path, path + ".mtf", 3);
     std::filesystem::path compressed(path + ".mtf");
 
-    MTFHash::decompress_stream(compressed.string(), compressed.string() + ".orig", 3);
+    MTFHash::decompress(compressed.string(), compressed.string() + ".orig", 3);
 
     std::ifstream f1(path, std::ifstream::binary);
     std::ifstream f2(compressed.string() + ".orig", std::ifstream::binary);

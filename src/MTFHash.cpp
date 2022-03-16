@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include <fstream>
+#include <random>
 #include "MTFHash.h"
 #include "Core.h"
 #include "MTFHashTableStream.h"
@@ -11,6 +12,8 @@
 #include "ConcatenatedHash.h"
 #include "Fnv1a.h"
 #include "Adler32.h"
+#include "CRC.h"
+#include "Identity.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -19,15 +22,18 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    int core_number = 1;//Core::get_cores() - 1;
+    int core_number = Core::get_cores() - 2;
 
-    int block_size = 1024 * 1024; // 1 MB block size
+    //int block_size = 1024 * 1024; // 1 MB block size
 
-    RabinKarp hash(k);
+    std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist(5, 21);
 
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
-        cores.emplace_back(k, block_size, block_size * 4 + 1024, hash);
+        int block_size = dist(mt) * 100 * 1024;
+        cores.emplace_back(k, block_size, block_size * 4 + 1024);
     }
 
     while (in_file.good()) {
@@ -35,7 +41,6 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
             in_file.read(reinterpret_cast<char *>(core.block.data()), core.block.size());
             long read_bytes = in_file.gcount();
 
-            // TODO spawn threads that compress, maybe spawn with different k, and save in block header the best k and the compressed data
             core.startCompression(read_bytes);
         }
 
@@ -63,9 +68,12 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     std::ofstream out_file(out_path, std::ios::binary);
 
     //MinimiserHash<Fnv1a, Fnv1a, Fnv1a> hash(k, 15, 1024);
-    ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
-    //RabinKarp hash(k, 100000007);
+    //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
+    //ConcatenatedHash<RabinKarp, CRC> hash(k, 15, 1024);
+    RabinKarp hash(k, 100000007);
+    //CRC hash(k, 100000007);
     //Fnv1a hash(k, 1024);
+    //Identity hash(1, 256);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.encode(in_file, out_file);
 
@@ -83,15 +91,14 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    int core_number = 1;//Core::get_cores(); // TODO doesn't work if the number of cores doesn't match in comp and decomp
+    int core_number = Core::get_cores() - 2;
 
-    int max_block_size = 1024 * 1024 * 10; // TODO needs max block size as the block size is read after the allocation of these buffers
-
-    RabinKarp hash(k);
+    // Needs max block size as the block size is read after the allocation of these buffers
+    int max_block_size = 1024 * 1024 * 10;
 
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
-        cores.emplace_back(k, max_block_size, max_block_size * 4 + 1024, hash);
+        cores.emplace_back(k, max_block_size, max_block_size * 4 + 1024);
     }
 
     while (in_file.good()) {

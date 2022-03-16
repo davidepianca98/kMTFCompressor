@@ -19,7 +19,7 @@ public:
     explicit Fnv1a(int k, int size) : Hash(k, k, size) {}
 
     void init(const std::vector <uint8_t> &start) override {
-        hash = BASE;
+        uint32_t hash = BASE;
 
         // First k-mer
         for (int j = 0; j < k; j++) {
@@ -28,6 +28,7 @@ public:
 
             hash = (hash ^ c) * PRIME;
         }
+        this->hash = hash;
     }
 
     void resize(uint64_t size) override {
@@ -41,10 +42,11 @@ public:
         i = (i + 1) % k;
 
         // TODO rolling if possible
-        hash = BASE;
+        uint32_t hash = BASE;
         for (int j = 0; j < k; j++) {
             hash = (hash ^ kmer[(i + j + 1) % k]) * PRIME;
         }
+        this->hash = hash;
     }
 
     [[nodiscard]] uint64_t get_hash() const override {

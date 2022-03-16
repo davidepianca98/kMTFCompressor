@@ -14,7 +14,7 @@ int main() {
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-            MTFHash::compress_stream(entry.path().string(), entry.path().string() + ".mtf", 3);
+            MTFHash::compress(entry.path().string(), entry.path().string() + ".mtf", 3);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
             std::filesystem::path compressed(entry.path().string() + ".mtf");

@@ -30,7 +30,7 @@ protected:
     std::vector<bool> visited;
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
-    uint64_t symbols_out[256 + 8] = { 0 };
+    uint64_t symbols_out[256 + 128] = { 0 }; // TODO should be + byte_size()
     uint64_t stream_length = 0;
     double entropy_in = 0;
     double entropy_out = 0;
@@ -52,7 +52,13 @@ protected:
     int keep_track(uint64_t hash);
 
     constexpr static uint8_t byte_size() noexcept {
-        if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
+        if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
+            return 16;
+        } else if (std::is_same<T, boost::multiprecision::uint256_t>::value) {
+            return 32;
+        } else if (std::is_same<T, boost::multiprecision::uint512_t>::value) {
+            return 64;
+        } else if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
             return 128;
         } else {
             return sizeof(T);

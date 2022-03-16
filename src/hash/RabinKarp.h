@@ -9,8 +9,8 @@
 
 class RabinKarp : public Hash {
 private:
-    // Random number
-    uint64_t x = 0;
+    // Prime number slightly bigger than the alphabet size
+    uint64_t x = 257;
     // Multiplier to shift left
     uint64_t xk = 1;
 
@@ -28,21 +28,20 @@ public:
     explicit RabinKarp(int k, int size = P100M) : Hash(k, k, size) {}
 
     void init(const std::vector<uint8_t> &start) override {
-        // Prime number slightly bigger than the alphabet size
-        x = 257;
-
+        hash = 0;
         // First k-mer
         for (int j = 0; j < k; j++) {
             uint8_t c = start[j];
             kmer[j] = c;
 
-            // Multiply the hash by the multiplier to "shift left"
-            hash = (hash * x) % q;
-            // Add the new character (push right)
-            hash = (hash + c) % q;
+            // Multiply the hash by the multiplier to "shift left" and add the new character (push right)
+            hash = (hash * x) + c;
         }
+        hash %= q;
+        i = 0;
 
         // Build the multiplier (power) for the leftmost character, needed to remove it when updating
+        xk = 1;
         for (int j = 0; j < k - 1; j++) {
             xk = (xk * x) % q;
         }
@@ -59,11 +58,9 @@ public:
         i = (i + 1) % k;
 
         // Remove the leftmost character using the multiplier
-        hash = (hash - ((xk * old) % q)) % q;
         // Shift left by the multiplier
-        hash = (hash * x) % q;
         // Push the new character to the right
-        hash = (hash + c) % q;
+        hash = (((hash - (xk * old)) * x) + c) % q;
     }
 
     [[nodiscard]] uint64_t get_hash() const override {

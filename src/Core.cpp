@@ -5,8 +5,9 @@
 #include <thread>
 #include "Core.h"
 #include "MTFHashTableBlock.h"
+#include "RabinKarp.h"
 
-Core::Core(int k, int in_block_size, int out_block_size, Hash& hash) : mtf(k, in_block_size, hash), block(in_block_size), out_block(out_block_size) {}
+Core::Core(int k, int in_block_size, int out_block_size) : k(k), block(in_block_size), out_block(out_block_size) {}
 
 
 void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_block, size_t& compressed_size) {
@@ -21,9 +22,10 @@ void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_bloc
 }
 
 uint32_t Core::compressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
-    uint32_t out_block1[size];
+    uint32_t *out_block1 = new uint32_t[size];
 
-    //MTFHashTableBlock mtf(3, size); // TODO remove if want to use same mtf table in thread
+    RabinKarp hash(k, 10000007);
+    MTFHashTableBlock<uint64_t> mtf(k, size, hash);
     mtf.encode(in_block, size, out_block1);
 
     //mtf.print_stats();
@@ -32,9 +34,9 @@ uint32_t Core::compressBlock(const uint8_t *in_block, long size, uint8_t *final_
         //std::cout << out_block[i] << " ";
     //}
 
-    size_t compressed_size = size * 4 + 1024; // TODO probably pass as parameter
-
+    size_t compressed_size = size * 4 + 1024;
     compress_final(out_block1, size, reinterpret_cast<uint32_t *>(final_block), compressed_size);
+    delete[] out_block1;
     return (uint32_t) compressed_size;
 }
 
@@ -48,11 +50,14 @@ void Core::decompress_final(const uint32_t *data, size_t size, uint32_t *out_blo
 
 uint32_t Core::decompressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
     size_t decompressed_size = ((uint32_t *) in_block)[0] * 4 * 32 + 1024; // TODO probably move in final
-    uint32_t out_block1[decompressed_size];
+    uint32_t *out_block1 = new uint32_t[decompressed_size];
     decompress_final(reinterpret_cast<const uint32_t *>(in_block), size / 4, out_block1, decompressed_size);
 
+    RabinKarp hash(k, 10000007);
+    MTFHashTableBlock<uint64_t> mtf(k, size, hash);
     mtf.decode(out_block1, decompressed_size, final_block);
 
+    delete[] out_block1;
     return (uint32_t) decompressed_size;
 }
 

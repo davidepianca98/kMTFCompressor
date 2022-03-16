@@ -4,7 +4,7 @@
 #include "RabinKarp.h"
 
 template <typename T>
-MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash hash) : MTFHashTable<T>(k, block_size, hash) {}
+MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash& hash) : MTFHashTable<T>(k, block_size, hash) {}
 
 template <typename T>
 void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out_block) {
@@ -12,7 +12,7 @@ void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out
     int i;
     for (i = 0; i < this->k; i++) {
         start[i] = block[i];
-        out_block[i] = (uint32_t) block[i] + 8;
+        out_block[i] = (uint32_t) block[i] + this->byte_size();
     }
 
     this->hash_function.init(start);
@@ -27,7 +27,7 @@ void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out
     std::vector<uint8_t> start(this->k);
     int i;
     for (i = 0; i < this->k; i++) {
-        start[i] = (uint8_t) (block[i] - 8);
+        start[i] = (uint8_t) (block[i] - this->byte_size());
         out_block[i] = start[i];
     }
 
@@ -38,5 +38,10 @@ void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out
     }
 }
 
+template class MTFHashTableBlock<uint16_t>;
+template class MTFHashTableBlock<uint32_t>;
 template class MTFHashTableBlock<uint64_t>;
+template class MTFHashTableBlock<boost::multiprecision::uint128_t>;
+template class MTFHashTableBlock<boost::multiprecision::uint256_t>;
+template class MTFHashTableBlock<boost::multiprecision::uint512_t>;
 template class MTFHashTableBlock<boost::multiprecision::uint1024_t>;
