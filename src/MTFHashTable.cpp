@@ -41,19 +41,14 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     T& buf = hash_table[hash_function.get_hash()];
 
     hash_function.update(c);
-    symbols_in[c]++;
-    stream_length++;
+    count_symbol_in(c);
 
     for (uint8_t i = 0; i < byte_size(); i++) {
         uint8_t extracted = mtfExtract(buf, i);
         if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
             mtfShift(buf, c, i);
 
-            if (i != last_symbol_out) {
-                runs++;
-            }
-            last_symbol_out = i;
-            symbols_out[i]++;
+            count_symbol_out(i);
 
             return i;
         }
@@ -62,11 +57,7 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     // Not found so shift left and put character in first position
     mtfAppend(buf, c);
 
-    if (c != last_symbol_out) {
-        runs++;
-    }
-    last_symbol_out = c;
-    symbols_out[c + byte_size()]++;
+    count_symbol_out(c + byte_size());
 
     // Sum 8 to differentiate between indexes on the MTF buffer and characters
     return c + byte_size();
@@ -90,23 +81,39 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
 }
 
 template <typename T>
-int MTFHashTable<T>::keep_track(uint64_t hash) {
+void MTFHashTable<T>::keep_track(uint64_t hash) {
     if (!visited[hash]) { // TODO visited should be kept in same structure as table so no double miss just to keep track
         used_cells++;
         visited[hash] = true;
-
-        if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
-            used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
-            table_size *= 2;
-            hash_table.resize(table_size);
-            std::fill(hash_table.begin(), hash_table.end(), 0);
-            visited.resize(table_size);
-            std::fill(visited.begin(), visited.end(), false);
-            hash_function.resize(table_size);
-            return 1;
-        }
     }
-    return 0;
+}
+
+template <typename T>
+void MTFHashTable<T>::count_symbol_in(uint8_t c) {
+    symbols_in[c]++;
+    stream_length++;
+}
+
+template <typename T>
+void MTFHashTable<T>::count_symbol_out(uint32_t i) {
+    symbols_out[i]++;
+    if (i != last_symbol_out) {
+        runs++;
+    }
+    last_symbol_out = i;
+}
+
+template <typename T>
+void MTFHashTable<T>::double_table() {
+    if (used_cells * 10 / table_size > 2 && table_size < 100000000) {
+        used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
+        table_size *= 2;
+        hash_table.resize(table_size);
+        std::fill(hash_table.begin(), hash_table.end(), 0);
+        visited.resize(table_size);
+        std::fill(visited.begin(), visited.end(), false);
+        hash_function.resize(table_size);
+    }
 }
 
 template <typename T>

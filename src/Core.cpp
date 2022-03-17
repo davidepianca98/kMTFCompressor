@@ -24,7 +24,8 @@ void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_bloc
 uint32_t Core::compressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
     uint32_t *out_block1 = new uint32_t[size];
 
-    RabinKarp hash(k, 10000007);
+    //RabinKarp hash(k, 10000007);
+    RabinKarp hash(k, 4096);
     MTFHashTableBlock<uint64_t> mtf(k, size, hash);
     mtf.encode(in_block, size, out_block1);
 

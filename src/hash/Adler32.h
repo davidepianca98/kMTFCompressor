@@ -7,11 +7,6 @@
 
 class Adler32 : public Hash {
 private:
-    // Random number
-    uint64_t x = 0;
-    // Multiplier to shift left
-    uint64_t xk = 1;
-
     uint64_t i = 0;
     uint32_t a;
     uint32_t b;

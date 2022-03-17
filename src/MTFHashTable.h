@@ -49,7 +49,13 @@ protected:
 
     uint8_t mtfDecode(uint32_t c);
 
-    int keep_track(uint64_t hash);
+    void keep_track(uint64_t hash);
+
+    void count_symbol_in(uint8_t c);
+
+    void count_symbol_out(uint32_t i);
+
+    void double_table();
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
