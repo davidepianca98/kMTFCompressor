@@ -29,8 +29,8 @@ int test_file(const std::string path) {
 
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";
-    //std::string path = "../../test/resources/pizzachili";
-    std::string path = "../../test/resources/mio";
+    std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/mio";
 
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {

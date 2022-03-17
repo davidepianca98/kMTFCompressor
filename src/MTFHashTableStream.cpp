@@ -138,7 +138,7 @@ void compress(int bytes, std::ostream& out, uint32_t *in_data, uint8_t *out_data
     Core::compress_final(in_data, bytes, reinterpret_cast<uint32_t *>(out_data), compressed_size);
 
     out.write(reinterpret_cast<const char *>(&compressed_size), 4);
-    out.write(reinterpret_cast<const char *>(out_data), compressed_size);
+    out.write(reinterpret_cast<const char *>(out_data), (long) compressed_size);
 }
 
 template <typename T>
@@ -175,6 +175,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
         // Apply transformation
         while (i < read_bytes) {
             mtf_out_data[i] = this->mtfEncode(in_data[i]);
+            this->double_table();
             i++;
         }
         i = 0;
@@ -196,51 +197,58 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
 }
 
 template <typename T>
-void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) { // TODO parallelize
-    uint32_t c;
-
-    uint32_t block_size;
-    in.read(reinterpret_cast<char *>(&block_size), 4);
-    in.read(reinterpret_cast<char *>(mtf_out_data), block_size);
-    long read_bytes = in.gcount();
-    if (read_bytes < this->hash_function.get_window_size()) {
-        throw std::runtime_error("Not enough data to read");
-    }
-
-    size_t decompressed_size = mtf_out_data[0] * 4 * 32 + 1024;
-    uint32_t out_block1[this->block_size];
-    Core::decompress_final(mtf_out_data, read_bytes / 4, out_block1, decompressed_size);
-
-
-
+void MTFHashTableStream<T>::decompress(int decompressed_size, std::ostream& out, const uint32_t *in) {
     std::vector<uint8_t> start(this->hash_function.get_window_size());
-    int i;
-    for (i = 0; i < start.size(); i++) {
-        c = out_block1[i];
-        start[i] = (uint8_t) (c - this->byte_size());
-        in_data[i] = start[i];
-    }
 
-    this->hash_function.init(start);
-
-    do {
-        while (i < decompressed_size) {
-            in_data[i] = this->mtfDecode(out_block1[i]);
-            i++;
+    int i = 0;
+    while (i < decompressed_size) {
+        if (!started && i < start.size()) {
+            start[i] = (uint8_t) (in[i] - this->byte_size());
+            in_data[i] = start[i];
+            if (i == start.size() - 1) {
+                started = true;
+                this->hash_function.init(start);
+            }
+        } else {
+            in_data[i] = this->mtfDecode(in[i]);
+            this->double_table();
         }
-        i = 0;
-        out.write(reinterpret_cast<const char *>(in_data), decompressed_size);
+        i++;
+    }
+    out.write(reinterpret_cast<const char *>(in_data), (long) decompressed_size);
+}
 
+template <typename T>
+void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) {
+    started = false;
+
+    auto *out_block1 = new uint32_t[this->block_size];
+    auto *out_block2 = new uint32_t[this->block_size];
+
+    long read_bytes_amount;
+    std::future<void> future;
+    do {
+        uint32_t block_size;
         in.read(reinterpret_cast<char *>(&block_size), 4);
         in.read(reinterpret_cast<char *>(mtf_out_data), block_size);
-        read_bytes = in.gcount();
+        read_bytes_amount = in.gcount();
+        if (read_bytes_amount > 0) {
+            size_t decompressed_size = mtf_out_data[0] * 4 * 32 + 1024;
 
-        if (read_bytes > 0) {
-            decompressed_size = mtf_out_data[0] * 4 * 32 + 1024; // TODO probably move in final
-            Core::decompress_final(reinterpret_cast<const uint32_t *>(mtf_out_data), read_bytes / 4, out_block1,
-                                   decompressed_size);
+            Core::decompress_final(reinterpret_cast<const uint32_t *>(mtf_out_data), read_bytes_amount / 4, out_block1, decompressed_size);
+
+            if (future.valid()) {
+                future.wait();
+            }
+
+            memcpy(out_block2, out_block1, decompressed_size * 4);
+            future = std::async(std::launch::async, &MTFHashTableStream::decompress, this, decompressed_size, std::ref(out), out_block2);
         }
-    } while (read_bytes > 0);
+    } while (read_bytes_amount > 0);
+    future.wait();
+
+    delete[] out_block1;
+    delete[] out_block2;
 }
 
 template class MTFHashTableStream<uint16_t>;

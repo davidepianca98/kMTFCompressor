@@ -16,6 +16,8 @@ class MTFHashTableStream : public MTFHashTable<T> {
     std::thread writer;
     std::vector<uint64_t> hashes;
 
+    bool started;
+
     uint8_t *in_data;
     uint32_t *mtf_out_data;
     int start_hash = 0;
@@ -27,6 +29,8 @@ class MTFHashTableStream : public MTFHashTable<T> {
     void writer_thread(std::ostream& out);
 
     void stop();
+
+    void decompress(int decompressed_size, std::ostream& out, const uint32_t *in);
 
 public:
     MTFHashTableStream(int k, int blockSize, Hash& hash);
