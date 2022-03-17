@@ -28,11 +28,11 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
 
     std::random_device rd;
     std::mt19937 mt(rd());
-    std::uniform_int_distribution<int> dist(5, 21);
+    std::uniform_int_distribution<int> dist(1, 4);
 
     std::vector<Core> cores;
     for (int i = 0; i < core_number; i++) {
-        int block_size = dist(mt) * 100 * 1024;
+        int block_size = dist(mt) * 1024 * 1024;
         cores.emplace_back(k, block_size, block_size * 4 + 1024);
     }
 
@@ -70,9 +70,10 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     //MinimiserHash<Fnv1a, Fnv1a, Fnv1a> hash(k, 15, 1024);
     //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
     //ConcatenatedHash<RabinKarp, CRC> hash(k, 15, 1024);
-    RabinKarp hash(k, 100000007);
+    //RabinKarp hash(k, 100000007);
+    //RabinKarp hash(k, 4096);
     //CRC hash(k, 100000007);
-    //Fnv1a hash(k, 1024);
+    Fnv1a hash(k, 4096);
     //Identity hash(1, 256);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.encode(in_file, out_file);

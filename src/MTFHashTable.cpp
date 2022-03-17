@@ -9,9 +9,11 @@
 template <typename T>
 void MTFHashTable<T>::mtfShift(T& buf, uint8_t c, uint8_t i) {
     // If the position is zero, no need to change the buffer
-    if (i != 0) { // TODO optimize
-        T left = (buf >> ((i + 1) * 8)) << ((i + 1) * 8); // Extract the part to be preserved
-        buf = (buf << (byte_size() - i) * 8) >> ((byte_size() - i - 1) * 8); // Make space for the character in the first position and clean the leftmost bytes
+    if (i != 0) {
+        int bits = (i + 1) * 8;
+        T left = (buf >> bits) << bits; // Extract the part to be preserved
+        bits = (byte_size() - i) * 8;
+        buf = (buf << bits) >> (bits - 8); // Make space for the character in the first position and clean the leftmost bytes
         buf |= left | c; // Put character in the first position
     }
 }
@@ -93,8 +95,8 @@ int MTFHashTable<T>::keep_track(uint64_t hash) {
         used_cells++;
         visited[hash] = true;
 
-        /*if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
-            //used_cells = 0; TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
+        if (used_cells * 100 / table_size > 20 && table_size < 134217728) {
+            used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
             table_size *= 2;
             hash_table.resize(table_size);
             std::fill(hash_table.begin(), hash_table.end(), 0);
@@ -102,7 +104,7 @@ int MTFHashTable<T>::keep_track(uint64_t hash) {
             std::fill(visited.begin(), visited.end(), false);
             hash_function.resize(table_size);
             return 1;
-        }*/
+        }
     }
     return 0;
 }

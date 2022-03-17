@@ -12,3 +12,11 @@ add_test(compress_decompress test_compress_decompress)
 add_executable(test_mtf_compress_decompress test_mtf_compress_decompress.cpp)
 target_link_libraries(test_mtf_compress_decompress MTF_lib)
 add_test(mtf_compress_decompress test_mtf_compress_decompress)
+
+add_executable(test_classic_mtf test_classic_mtf.cpp)
+target_link_libraries(test_classic_mtf MTF_lib)
+add_test(classic_mtf test_classic_mtf)
+
+add_executable(test_mtf_buffer test_mtf_buffer.cpp)
+target_link_libraries(test_mtf_buffer MTF_lib)
+add_test(mtf_buffer test_mtf_buffer)

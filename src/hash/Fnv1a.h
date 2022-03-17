@@ -41,7 +41,6 @@ public:
         kmer[i] = c;
         i = (i + 1) % k;
 
-        // TODO rolling if possible
         uint32_t hash = BASE;
         for (int j = 0; j < k; j++) {
             hash = (hash ^ kmer[(i + j + 1) % k]) * PRIME;

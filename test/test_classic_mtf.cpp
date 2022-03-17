@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include "MTFHash.h"
+#include "MTF.h"
 
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";
@@ -14,10 +15,10 @@ int main() {
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-            MTFHash::compress_stream(entry.path().string(), entry.path().string() + ".mtf", 3);
+            MTF::compress(entry.path().string(), entry.path().string() + ".mtfc");
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-            std::filesystem::path compressed(entry.path().string() + ".mtf");
+            std::filesystem::path compressed(entry.path().string() + ".mtfc");
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size()
                       << ", Compressed file size: " << file_size(compressed) << ", Ratio: "
                       << ((double) file_size(compressed) / (double) entry.file_size()) * 100 << ", Time elapsed: "
@@ -35,4 +36,3 @@ int main() {
 
     return 0;
 }
-
