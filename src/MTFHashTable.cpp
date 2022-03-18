@@ -104,15 +104,19 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 }
 
 template <typename T>
-void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 / table_size > 2 && table_size < 100000000) {
-        used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
-        table_size *= 2;
+void MTFHashTable<T>::double_table(bool clean) {
+    if (used_cells * 10 / table_size > 2 && table_size < 10000000 && table_size_index < 14) {
+        //table_size *= 2;
+        table_size = mersenne_primes[++table_size_index];
         hash_table.resize(table_size);
-        std::fill(hash_table.begin(), hash_table.end(), 0);
         visited.resize(table_size);
-        std::fill(visited.begin(), visited.end(), false);
         hash_function.resize(table_size);
+
+        if (clean) {
+            used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
+            std::fill(hash_table.begin(), hash_table.end(), 0);
+            std::fill(visited.begin(), visited.end(), false);
+        }
     }
 }
 

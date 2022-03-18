@@ -14,6 +14,7 @@
 #include "Adler32.h"
 #include "CRC.h"
 #include "Identity.h"
+#include "JumpConsistent.h"
 
 int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
@@ -70,9 +71,13 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     //MinimiserHash<Fnv1a, Fnv1a, Fnv1a> hash(k, 15, 1024);
     //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
     //ConcatenatedHash<RabinKarp, CRC> hash(k, 15, 1024);
-    RabinKarp hash(k, 100000007);
-    //RabinKarp hash(k, 4096);
-    //CRC hash(k, 100000007);
+    //RabinKarp hash(k, 100000007);
+    //RabinKarp hash(k, 8388617);
+    //JumpConsistent hash(k, 100000007);
+    JumpConsistent hash(k, 4095);
+    //JumpConsistent hash(k, 16777213);
+    //RabinKarp hash(k, 4095);
+    //CRC hash(k, 4095);
     //Fnv1a hash(k, 100000007);
     //Identity hash(1, 256);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size

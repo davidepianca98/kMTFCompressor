@@ -19,6 +19,7 @@ set(HEADER_FILES
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
         src/RLE.h
+        src/SequenceCompressor.h
         src/hash/Adler32.h
         src/hash/ConcatenatedHash.h
         src/hash/CRC.h
@@ -26,11 +27,11 @@ set(HEADER_FILES
         src/hash/Fnv1a.h
         src/hash/Hash.h
         src/hash/Identity.h
+        src/hash/JumpConsistent.h
         src/hash/MinimiserHash.h
         src/hash/RabinKarp.h
         src/hash/SimHash.h
-        src/hash/VectorHash.h
-        src/SPSCQueue.h)
+        src/hash/VectorHash.h)
 
 enable_testing()
 

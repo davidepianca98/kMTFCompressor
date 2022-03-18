@@ -3,6 +3,7 @@
 #define MTF_MTFHASHTABLESTREAM_H
 
 
+#include <atomic>
 #include "MTFHashTable.h"
 #include "Monitor.h"
 

@@ -7,7 +7,6 @@
 #include <vector>
 #include <queue>
 #include <boost/multiprecision/cpp_int.hpp>
-#include "SPSCQueue.h"
 #include "Hash.h"
 
 template <typename T>
@@ -22,7 +21,9 @@ protected:
     // Size of the block for FastPFOR
     int block_size;
 
-    uint64_t table_size = 128;
+    uint64_t mersenne_primes[15] = { 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097143, 4194301, 8388617, 16777213 }; // Last 4 are not mersenne
+    int table_size_index = 2;
+    uint64_t table_size;
 
     // Statistics
     double used_cells = 0;
@@ -55,7 +56,7 @@ protected:
 
     void count_symbol_out(uint32_t i);
 
-    void double_table();
+    void double_table(bool clean = false); // TODO in theory should be false only when using jump consistent hash
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
