@@ -38,6 +38,7 @@ protected:
     // Runs
     uint8_t last_symbol_out = 0;
     uint64_t runs = 0;
+    uint64_t zeros = 0;
 
 
     static void mtfShift(T& buf, uint8_t c, uint8_t i);

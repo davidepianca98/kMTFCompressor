@@ -15,9 +15,9 @@ class Core {
     bool valid = false;
     std::future<uint32_t> future;
 
-    uint32_t compressBlock(const uint8_t *in_block, long size, uint8_t *final_block);
+    uint32_t compressBlock(const uint8_t *in_block, int size, uint8_t *final_block) const;
 
-    uint32_t decompressBlock(const uint8_t *in_block, long size, uint8_t *final_block);
+    uint32_t decompressBlock(const uint8_t *in_block, int size, uint8_t *final_block) const;
 
 public:
     std::vector<uint8_t> block;

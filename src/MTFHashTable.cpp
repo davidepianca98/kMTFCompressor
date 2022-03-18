@@ -101,6 +101,9 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
         runs++;
     }
     last_symbol_out = i;
+    if (i == 0) {
+        zeros++;
+    }
 }
 
 template <typename T>
@@ -129,6 +132,7 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Used hash cells = " << used_cells << std::endl;
     std::cout << "Hash table load = " << used_cells / double(hash_function.get_size()) << std::endl;
     std::cout << "Number of runs = " << runs << std::endl;
+    std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
     std::cout << "Max compression size = " << (uint64_t) (runs + (runs * log2(stream_length / runs) / 8)) << std::endl; // TODO runs iniziale in teoria dovrebbe essere la stringa con solo la prima lettera di ogni run, compressa H0
 
     calculate_entropy();

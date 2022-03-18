@@ -113,7 +113,7 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
             in_file.read(reinterpret_cast<char *>(&block_size), 4);
 
             in_file.read(reinterpret_cast<char *>(core.block.data()), block_size);
-            long read_bytes = in_file.gcount(); // TODO check read_byte is equal to block_size
+            long read_bytes = in_file.gcount();
 
             core.startDecompression(read_bytes);
         }

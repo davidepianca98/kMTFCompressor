@@ -8,9 +8,9 @@
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
-    std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/pizzachilirep";
-    //std::string path = "../../test/resources/mio";
+    std::string path = "../../test/resources/mio";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;
     uint64_t total_time = 0;
@@ -32,7 +32,7 @@ int main() {
             double ratio = ((double) file_size(compressed) / (double) entry.file_size()) * 100;
 
             std::cout << "Compressed file size: " << file_size(compressed) << ", Ratio: " << ratio
-                        << ", Time elapsed: " << time << std::endl << std::endl;
+                        << "%, Time elapsed: " << time << std::endl << std::endl;
 
             size_uncompressed += entry.file_size();
             size_compressed += file_size(compressed);

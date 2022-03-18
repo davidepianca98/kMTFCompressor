@@ -21,8 +21,8 @@ void Core::compress_final(const uint32_t *block, size_t size, uint32_t *out_bloc
     delete codec;
 }
 
-uint32_t Core::compressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
-    uint32_t *out_block1 = new uint32_t[size];
+uint32_t Core::compressBlock(const uint8_t *in_block, int size, uint8_t *final_block) const {
+    auto *out_block1 = new uint32_t[size];
 
     //RabinKarp hash(k, 10000007);
     RabinKarp hash(k, 4096);
@@ -49,14 +49,14 @@ void Core::decompress_final(const uint32_t *data, size_t size, uint32_t *out_blo
     delete codec;
 }
 
-uint32_t Core::decompressBlock(const uint8_t *in_block, long size, uint8_t *final_block) {
-    size_t decompressed_size = ((uint32_t *) in_block)[0] * 4 * 32 + 1024; // TODO probably move in final
-    uint32_t *out_block1 = new uint32_t[decompressed_size];
+uint32_t Core::decompressBlock(const uint8_t *in_block, int size, uint8_t *final_block) const {
+    size_t decompressed_size = ((uint32_t *) in_block)[0] * 4 * 32 + 1024;
+    auto *out_block1 = new uint32_t[decompressed_size];
     decompress_final(reinterpret_cast<const uint32_t *>(in_block), size / 4, out_block1, decompressed_size);
 
     RabinKarp hash(k, 10000007);
     MTFHashTableBlock<uint64_t> mtf(k, size, hash);
-    mtf.decode(out_block1, decompressed_size, final_block);
+    mtf.decode(out_block1, (long) decompressed_size, final_block);
 
     delete[] out_block1;
     return (uint32_t) decompressed_size;

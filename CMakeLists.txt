@@ -3,6 +3,8 @@ project(MTF)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
+
 set(SOURCE_FILES
         src/Core.cpp
         src/MTFHash.cpp
@@ -18,7 +20,6 @@ set(HEADER_FILES
         src/MTFHashTable.h
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
-        src/RLE.h
         src/SequenceCompressor.h
         src/hash/Adler32.h
         src/hash/ConcatenatedHash.h
