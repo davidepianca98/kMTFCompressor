@@ -21,7 +21,9 @@ protected:
     // Size of the block for FastPFOR
     int block_size;
 
-    uint64_t mersenne_primes[15] = { 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097143, 4194301, 8388617, 16777213 }; // Last 4 are not mersenne
+    uint64_t sizes[15] = { 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071,
+                                     262143, 524287, 1048575, 2097143, 4194301, 8388617, 16777213 };
+    uint64_t mersenne[4] = { 127, 8191, 131071,524287 };
     int table_size_index = 2;
     uint64_t table_size;
 
@@ -33,8 +35,6 @@ protected:
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + 128] = { 0 }; // TODO should be + byte_size()
     uint64_t stream_length = 0;
-    double entropy_in = 0;
-    double entropy_out = 0;
     // Runs
     uint8_t last_symbol_out = 0;
     uint64_t runs = 0;
@@ -57,7 +57,7 @@ protected:
 
     void count_symbol_out(uint32_t i);
 
-    void double_table(bool clean = false); // TODO in theory should be false only when using jump consistent hash
+    void double_table();
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
@@ -73,7 +73,7 @@ protected:
         }
     }
 
-    void calculate_entropy();
+    void calculate_entropy(double& entropy_in, double& entropy_out);
 
 public:
     explicit MTFHashTable(int k, int block_size, Hash& hash);

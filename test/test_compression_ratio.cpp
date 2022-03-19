@@ -4,6 +4,7 @@
 #include <iostream>
 #include "MTFHash.h"
 #include "SequenceCompressor.h"
+#include "MTF.h"
 
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";
@@ -20,7 +21,9 @@ int main() {
 
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
+            //MTFHash::compress(entry.path().string(), entry.path().string() + ".mtf", 3);
             MTFHash::compress_stream(entry.path().string(), entry.path().string() + ".mtf", 3);
+            //MTF::compress(entry.path().string(), entry.path().string() + ".mtf");
             //SequenceCompressor::compress_stream(entry.path().string(), entry.path().string() + ".mtf");
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

@@ -6,6 +6,7 @@
 #include "Core.h"
 #include "MTFHashTableBlock.h"
 #include "RabinKarp.h"
+#include "DumbHash.h"
 
 Core::Core(int k, int in_block_size, int out_block_size) : k(k), block(in_block_size), out_block(out_block_size) {}
 
@@ -55,6 +56,7 @@ uint32_t Core::decompressBlock(const uint8_t *in_block, int size, uint8_t *final
     decompress_final(reinterpret_cast<const uint32_t *>(in_block), size / 4, out_block1, decompressed_size);
 
     RabinKarp hash(k, 10000007);
+    //DumbHash hash(k, 4095);
     MTFHashTableBlock<uint64_t> mtf(k, size, hash);
     mtf.decode(out_block1, (long) decompressed_size, final_block);
 

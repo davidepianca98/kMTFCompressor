@@ -8,7 +8,7 @@
 
 class DumbHash : public Hash {
 
-    int i = 0;
+    uint32_t i = 0;
 
 public:
     explicit DumbHash(int k, int size) : Hash(k, k, size) {}
@@ -17,23 +17,31 @@ public:
         // First k-mer
         for (i = 0; i < k; i++) {
             kmer[i] = start[i];
-            hash += kmer[i] << (i * 8);
+            hash = (hash << 8) | kmer[i];
         }
-
-        hash = hash % size;
+        i = 0;
     }
 
     void resize(uint64_t size) override {
-        // TODO
+        this->size = size;
     }
 
     void update(uint8_t c) override {
+        uint8_t old = kmer[i];
         kmer[i] = c;
         i = (i + 1) % k;
 
-        hash >>= 8;
-        hash += c << ((k - 1) * 8); // TODO assumes k <= 8
-        hash = hash % size;
+        hash -= old << (k * 8); // TODO should be k-1, but this works better with larger files
+        hash = (hash << 8) | c;
+    }
+
+    [[nodiscard]] uint64_t get_hash() const override {
+        // Resize for the table size
+        return Hash::get_hash() % size;
+    }
+
+    [[nodiscard]] uint64_t get_hash_full() const {
+        return Hash::get_hash();
     }
 };
 

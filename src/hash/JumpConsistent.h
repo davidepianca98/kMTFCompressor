@@ -51,7 +51,7 @@ public:
         kmer[i] = c;
         i = (i + 1) % k;
 
-        key -= old << (k * 8); // TODO should be k-1, but this works better
+        key -= old << ((k - 1) * 8);
         key = (key << 8) | c;
 
         hash = jump_consistent_hash(key);

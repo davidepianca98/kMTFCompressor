@@ -107,19 +107,16 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 }
 
 template <typename T>
-void MTFHashTable<T>::double_table(bool clean) {
+void MTFHashTable<T>::double_table() {
     if (used_cells * 10 / table_size > 2 && table_size < 10000000 && table_size_index < 14) {
-        //table_size *= 2;
-        table_size = mersenne_primes[++table_size_index];
+        int old_table_size = table_size;
+        table_size = sizes[++table_size_index];
         hash_table.resize(table_size);
         visited.resize(table_size);
         hash_function.resize(table_size);
 
-        if (clean) {
-            used_cells = 0; // TODO this on makes it worse, probably because the table becomes bigger earlier so it has less collisions
-            std::fill(hash_table.begin(), hash_table.end(), 0);
-            std::fill(visited.begin(), visited.end(), false);
-        }
+        std::fill(hash_table.begin() + old_table_size, hash_table.end(), 0);
+        std::fill(visited.begin() + old_table_size, visited.end(), false);
     }
 }
 
@@ -135,15 +132,15 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
     std::cout << "Max compression size = " << (uint64_t) (runs + (runs * log2(stream_length / runs) / 8)) << std::endl; // TODO runs iniziale in teoria dovrebbe essere la stringa con solo la prima lettera di ogni run, compressa H0
 
-    calculate_entropy();
+    double entropy_in;
+    double entropy_out;
+    calculate_entropy(entropy_in, entropy_out);
     std::cout << "Entropy original = " << entropy_in << std::endl;
     std::cout << "Entropy MTF = " << entropy_out << std::endl;
 }
 
 template<typename T>
-void MTFHashTable<T>::calculate_entropy() {
-    entropy_in = 0;
-    entropy_out = 0;
+void MTFHashTable<T>::calculate_entropy(double& entropy_in, double& entropy_out) {
     for (int i = 0; i < 256; i++) {
         double p1 = (double) symbols_in[i] / stream_length;
         if (p1 > 0) {
