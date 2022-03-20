@@ -43,6 +43,7 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     hash_function.update(c);
     count_symbol_in(c);
 
+    bool zero = false;
     for (uint8_t i = 0; i < byte_size(); i++) {
         uint8_t extracted = mtfExtract(buf, i);
         if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
@@ -51,6 +52,17 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
             count_symbol_out(i);
 
             return i;
+        }
+        // If two consecutive zeros are found, it means the remaining part of the buffer is not initialized yet, so
+        // no need to continue iterating
+        if (extracted == 0) {
+            if (!zero) {
+                zero = true;
+            } else {
+                break;
+            }
+        } else {
+            zero = false;
         }
     }
 
@@ -108,7 +120,7 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 / table_size > 2 && table_size < 10000000 && table_size_index < 14) {
+    if (used_cells * 10 / table_size > 2 && table_size < 10000000 && table_size_index < sizes.size() - 1) {
         int old_table_size = table_size;
         table_size = sizes[++table_size_index];
         hash_table.resize(table_size);
@@ -132,8 +144,8 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
     std::cout << "Max compression size = " << (uint64_t) (runs + (runs * log2(stream_length / runs) / 8)) << std::endl; // TODO runs iniziale in teoria dovrebbe essere la stringa con solo la prima lettera di ogni run, compressa H0
 
-    double entropy_in;
-    double entropy_out;
+    double entropy_in = 0.0;
+    double entropy_out = 0.0;
     calculate_entropy(entropy_in, entropy_out);
     std::cout << "Entropy original = " << entropy_in << std::endl;
     std::cout << "Entropy MTF = " << entropy_out << std::endl;

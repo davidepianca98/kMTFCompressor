@@ -177,7 +177,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
 
         auto *run_counter = reinterpret_cast<int8_t *>(&mtf_out_data[out_i]); // TODO rle also in initialization
         uint32_t last_c = UINT32_MAX; // TODO inizialize correctly
-        if (read_bytes > 0) {
+        if (rle && read_bytes > 0) {
             out_i++;
             *run_counter = 0;
         }
