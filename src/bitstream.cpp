@@ -46,13 +46,13 @@ int ibitstream::readBit() {
 
     if (pos == 0 || pos >= bitset.size()) {
         read(reinterpret_cast<char *>(in_vec.data()), in_vec.size());
-        long read_bytes_amount = gcount();
-        if (read_bytes_amount <= 0) {
+        long read_bytes = gcount();
+        if (read_bytes <= 0) {
             return EOF;
         }
 
-        bitset.resize(read_bytes_amount * 8);
-        boost::from_block_range(in_vec.begin(), in_vec.begin() + read_bytes_amount, bitset);
+        bitset.resize(read_bytes * 8);
+        boost::from_block_range(in_vec.begin(), in_vec.begin() + read_bytes, bitset);
         pos = 0;
     }
 
@@ -105,7 +105,7 @@ void obitstream::writeBit(int bit) {
         throw std::runtime_error("obitstream::writeBit: stream is not open");
     }
 
-    bitset.push_back(bit);
+    bitset.push_back((bool) bit);
 
     if (bitset.size() >= 1024 * 1024 * 8) {
         std::ostream_iterator<char> osit(*this);

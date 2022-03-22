@@ -61,42 +61,6 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
     return 0;
 }
 
-
-int MTFHash::compress_stream(const std::string& path, const std::string& out_path, int k) {
-    std::ifstream in_file(path, std::ios::binary);
-    if (in_file.fail()) {
-        return 1;
-    }
-    ofbitstream out_file(out_path);
-
-    //MinimiserHash<RabinKarp, RabinKarp, Fnv1a> hash(k, 15, 4095);
-    //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
-    //ConcatenatedHash<RabinKarp, CRC> hash(k, 15, 1024);
-    //RabinKarp hash(k, 8388617);
-    //JumpConsistent hash(k, 100000007);
-    //JumpConsistent hash(k, 16777213);
-    //RabinKarp hash(k, 4095);
-    //CRC hash(k, 4095);
-    //Fnv1a hash(k, 100000007);
-
-    Identity hash(3, 256 * 256 * 256);
-    //Identity hash(k, 4095);
-
-    //RabinKarp hash(k, 100000007);
-    //RabinKarp hash(k, 4095);
-    //JumpConsistent hash(k, 4095);
-    //DumbHash hash(k, 4095);
-
-    MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
-    mtf.encode(in_file, out_file);
-
-    in_file.close();
-    out_file.close();
-
-    return 0;
-}
-
-
 int MTFHash::decompress(const std::string &path, const std::string &out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
@@ -139,8 +103,47 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
     return 0;
 }
 
+
+
+
+int MTFHash::compress_stream(const std::string& path, const std::string& out_path, int k) {
+    std::ifstream in_file(path, std::ios::binary);
+    if (in_file.fail()) {
+        return 1;
+    }
+    ofbitstream out_file(out_path);
+    //std::ofstream out_file(out_path);
+
+    //MinimiserHash<RabinKarp, RabinKarp, Fnv1a> hash(k, 15, 4095);
+    //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
+    //ConcatenatedHash<RabinKarp, CRC> hash(k, 15, 1024);
+    //RabinKarp hash(k, 8388617);
+    //JumpConsistent hash(k, 100000007);
+    //JumpConsistent hash(k, 16777213);
+    //RabinKarp hash(k, 4095);
+    //CRC hash(k, 4095);
+    //Fnv1a hash(k, 100000007);
+
+    Identity hash(3, 256 * 256 * 256);
+    //Identity hash(k, 4095);
+
+    //RabinKarp hash(k, 100000007);
+    //RabinKarp hash(k, 4095);
+    //JumpConsistent hash(k, 4095);
+    //DumbHash hash(k, 4095);
+
+    MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
+    mtf.encode(in_file, out_file);
+
+    in_file.close();
+    out_file.close();
+
+    return 0;
+}
+
 int MTFHash::decompress_stream(const std::string& path, const std::string& out_path, int k) {
     ifbitstream in_file(path);
+    //std::ifstream in_file(path);
     if (in_file.fail()) {
         return 1;
     }
