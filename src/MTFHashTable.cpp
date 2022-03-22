@@ -7,7 +7,7 @@
 #include "RabinKarp.h"
 
 template <typename T>
-void MTFHashTable<T>::mtfShift(T& buf, uint8_t c, uint8_t i) {
+void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
     // If the position is zero, no need to change the buffer
     if (i != 0) {
         int bits = (i + 1) * 8;
@@ -15,6 +15,17 @@ void MTFHashTable<T>::mtfShift(T& buf, uint8_t c, uint8_t i) {
         bits = (byte_size() - i) * 8;
         buf = (buf << bits) >> (bits - 8); // Make space for the character in the first position and clean the leftmost bytes
         buf |= left | c; // Put character in the first position
+    }
+}
+
+template <typename T>
+void MTFHashTable<T>::mtfShiftBubble(T& buf, uint8_t c, uint8_t i) {
+    // If the position is zero, no need to change the buffer
+    if (i != 0) {
+        uint8_t c2 = mtfExtract(buf, i - 1);
+
+        buf = (buf & ~(0xFF << (i * 8))) | (c2 << (i * 8));
+        buf = (buf & ~(0xFF << ((i - 1) * 8))) | (c << ((i - 1) * 8));
     }
 }
 
@@ -47,7 +58,7 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     for (uint8_t i = 0; i < byte_size(); i++) {
         uint8_t extracted = mtfExtract(buf, i);
         if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
-            mtfShift(buf, c, i);
+            mtfShiftFront(buf, c, i);
 
             count_symbol_out(i);
 
@@ -81,14 +92,15 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
     T& buf = hash_table[hash_function.get_hash()];
 
     if (i >= byte_size()) {
-        mtfAppend(buf, i - byte_size());
-        hash_function.update(i - byte_size());
-        return i - byte_size();
+        uint8_t c = i - byte_size();
+        mtfAppend(buf, c);
+        hash_function.update(c);
+        return c;
     } else {
-        uint8_t ca = mtfExtract(buf, i);
-        mtfShift(buf, ca, i);
-        hash_function.update(ca);
-        return ca;
+        uint8_t c = mtfExtract(buf, i);
+        mtfShiftFront(buf, c, i);
+        hash_function.update(c);
+        return c;
     }
 }
 
@@ -111,6 +123,7 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
     symbols_out[i]++;
     if (i != last_symbol_out) {
         runs++;
+        symbols_out_run[i]++;
     }
     last_symbol_out = i;
     if (i == 0) {
@@ -120,7 +133,7 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 / table_size > 2 && table_size < 10000000 && table_size_index < sizes.size() - 1) {
+    if (used_cells * 10 / table_size > 1 && table_size < 10000000 && table_size_index < sizes.size() - 1) {
         int old_table_size = table_size;
         table_size = sizes[++table_size_index];
         hash_table.resize(table_size);
@@ -142,29 +155,29 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Hash table load = " << used_cells / double(hash_function.get_size()) << std::endl;
     std::cout << "Number of runs = " << runs << std::endl;
     std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
-    std::cout << "Max compression size = " << (uint64_t) (runs + (runs * log2(stream_length / runs) / 8)) << std::endl; // TODO runs iniziale in teoria dovrebbe essere la stringa con solo la prima lettera di ogni run, compressa H0
 
-    double entropy_in = 0.0;
-    double entropy_out = 0.0;
-    calculate_entropy(entropy_in, entropy_out);
+    double entropy_in = calculate_entropy(symbols_in, 256);
+    double entropy_out = calculate_entropy(symbols_out, 256 + byte_size());
+    double entropy_out_rle = calculate_entropy(symbols_out_run, 256 + byte_size());
+
     std::cout << "Entropy original = " << entropy_in << std::endl;
     std::cout << "Entropy MTF = " << entropy_out << std::endl;
+    std::cout << "Entropy MTF RLE = " << entropy_out_rle << std::endl;
+
+    std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * log2(stream_length / runs))) / 8 << " bytes" << std::endl;
+    std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
 }
 
 template<typename T>
-void MTFHashTable<T>::calculate_entropy(double& entropy_in, double& entropy_out) {
-    for (int i = 0; i < 256; i++) {
-        double p1 = (double) symbols_in[i] / stream_length;
-        if (p1 > 0) {
-            entropy_in -= p1 * log2(p1);
+double MTFHashTable<T>::calculate_entropy(const uint64_t symbols[], int length) {
+    double entropy = 0.0;
+    for (int i = 0; i < length; i++) {
+        double p = (double) symbols[i] / stream_length;
+        if (p > 0) {
+            entropy -= p * log2(p);
         }
     }
-    for (int i = 0; i < 256 + byte_size(); i++) {
-        double p2 = (double) symbols_out[i] / stream_length;
-        if (p2 > 0) {
-            entropy_out -= p2 * log2(p2);
-        }
-    }
+    return entropy;
 }
 
 template class MTFHashTable<uint16_t>;

@@ -9,9 +9,12 @@
 class Identity : public Hash {
 private:
     uint64_t i = 0;
+    uint64_t sh = 0;
 
 public:
-    explicit Identity(int k, int size) : Hash(k, k, size) {}
+    explicit Identity(int k, int size) : Hash(k, k, size) {
+        assert(k <= 8);
+    }
 
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;
@@ -19,10 +22,10 @@ public:
         // First k-mer
         for (i = 0; i < k; i++) {
             kmer[i] = start[i];
-            hash += kmer[i] << (i * 8);
+            hash = (hash << 8) | kmer[i];
         }
 
-        hash = hash % size;
+        sh = (~0ul >> (64 - (8 * k)));
     }
 
     void resize(uint64_t size) override {
@@ -33,9 +36,8 @@ public:
         kmer[i] = c;
         i = (i + 1) % k;
 
-        hash <<= 8;
-        hash += c; // TODO assumes k <= 8
-        hash %= size;
+        hash = (hash << 8) | c;
+        hash &= sh;
     }
 
     [[nodiscard]] uint64_t get_hash() const override {

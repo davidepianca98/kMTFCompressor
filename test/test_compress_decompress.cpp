@@ -5,7 +5,7 @@
 #include <fstream>
 #include "MTFHash.h"
 
-int test_file(const std::string path) {
+int test_file(const std::string& path) {
     std::cout << path << std::endl;
     MTFHash::compress_stream(path, path + ".mtf", 3);
     std::filesystem::path compressed(path + ".mtf");
@@ -28,8 +28,8 @@ int test_file(const std::string path) {
 }
 
 int main() {
-    //std::string path = "../../test/resources/calgarycorpus";
-    std::string path = "../../test/resources/pizzachili";
+    std::string path = "../../test/resources/calgarycorpus";
+    //std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/mio";
 
     for (const auto & entry : std::filesystem::directory_iterator(path)) {

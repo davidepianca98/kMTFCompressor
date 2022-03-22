@@ -8,9 +8,9 @@ MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash& hash) : MTF
 
 template <typename T>
 void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out_block) {
-    std::vector<uint8_t> start(this->k);
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
     int i;
-    for (i = 0; i < this->k; i++) {
+    for (i = 0; i < start.size(); i++) {
         start[i] = block[i];
         out_block[i] = (uint32_t) block[i] + this->byte_size();
     }
@@ -25,9 +25,9 @@ void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out
 
 template <typename T>
 void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out_block) {
-    std::vector<uint8_t> start(this->k);
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
     int i;
-    for (i = 0; i < this->k; i++) {
+    for (i = 0; i < start.size(); i++) {
         start[i] = (uint8_t) (block[i] - this->byte_size());
         out_block[i] = start[i];
     }

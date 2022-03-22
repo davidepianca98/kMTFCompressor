@@ -7,11 +7,12 @@
 #include "MTF.h"
 
 int main() {
-    //std::string path = "../../test/resources/calgarycorpus";
+    std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
     //std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/pizzachilirep";
-    std::string path = "../../test/resources/mio";
+    //std::string path = "../../test/resources/mio";
+    //std::string path = "../../test/resources/maximumcompression";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;
     uint64_t total_time = 0;

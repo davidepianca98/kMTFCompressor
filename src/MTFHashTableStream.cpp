@@ -1,17 +1,20 @@
 
+#include <array>
+#include <boost/dynamic_bitset.hpp>
 #include <thread>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTableStream.h"
 #include "Core.h"
 #include "RabinKarp.h"
+#include "bitstream.h"
 
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash), stop_thread(false) {
     num_cores = 1;//Core::get_cores() - 4;
     read_bytes = 0;
     bytes_to_write = 0;
-    in_data = new uint8_t[this->block_size];
-    mtf_out_data = new uint32_t[this->block_size + 100 * 1024];
+    in_data.resize(this->block_size);
+    mtf_out_data.resize(this->block_size + 100 * 1024);
     hashes.resize(this->block_size);
 }
 
@@ -44,7 +47,7 @@ void MTFHashTableStream<T>::writer_thread(std::ostream& out) {
         //std::cout << "WRITING " << bytes_to_write << std::endl;
         if (bytes_to_write > 0) {
             size_t compressed_size = bytes_to_write * 4 + 1024;
-            Core::compress_final(mtf_out_data, bytes_to_write, reinterpret_cast<uint32_t *>(out_data), compressed_size);
+            Core::compress_final(mtf_out_data.data(), bytes_to_write, reinterpret_cast<uint32_t *>(out_data), compressed_size);
 
             out.write(reinterpret_cast<const char *>(&compressed_size), 4);
             out.write(reinterpret_cast<const char *>(out_data), (long) compressed_size);
@@ -89,7 +92,7 @@ void MTFHashTableStream<T>::encode_pipeline(std::istream& in, std::ostream& out)
         // Double the table size if necessary, before calculating next hashes
         this->double_table();
 
-        in.read(reinterpret_cast<char *>(in_data + i), this->block_size - i);
+        in.read(reinterpret_cast<char *>(in_data.data() + i), this->block_size - i);
         read_bytes = in.gcount() + i;
 
         start_hash = i;
@@ -129,11 +132,9 @@ void MTFHashTableStream<T>::stop() {
 template <typename T>
 MTFHashTableStream<T>::~MTFHashTableStream() {
     stop();
-    delete[] in_data;
-    delete[] mtf_out_data;
 }
 
-void compress(int bytes, std::ostream& out, uint32_t *in_data, uint32_t *out_data) {
+void compress(int bytes, std::ostream& out, uint32_t *in_data, uint32_t *out_data) { // TODO try turborle
     size_t compressed_size = bytes * 4 + 1024;
     Core::compress_final(in_data, bytes, out_data, compressed_size);
 
@@ -142,7 +143,7 @@ void compress(int bytes, std::ostream& out, uint32_t *in_data, uint32_t *out_dat
 }
 
 template <typename T>
-void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
+void MTFHashTableStream<T>::encode2(std::istream& in, std::ostream& out) {
     std::vector<uint8_t> start(this->hash_function.get_window_size());
     auto *out_data = new uint32_t[this->block_size + 100 * 1024];
 
@@ -172,7 +173,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
 
     while (read_bytes > 0) {
         // Read block
-        in.read(reinterpret_cast<char *>(in_data + i), this->block_size - i);
+        in.read(reinterpret_cast<char *>(in_data.data() + i), this->block_size - i);
         read_bytes = in.gcount() + i;
 
         auto *run_counter = reinterpret_cast<int8_t *>(&mtf_out_data[out_i]); // TODO rle also in initialization
@@ -222,7 +223,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
         }
 
         if (read_bytes > 0) {
-            memcpy(mtf_out_data2, mtf_out_data, out_i * 4);
+            memcpy(mtf_out_data2, mtf_out_data.data(), out_i * 4);
             future = std::async(std::launch::async, compress, out_i, std::ref(out), mtf_out_data2, out_data);
         }
         out_i = 0;
@@ -235,11 +236,63 @@ void MTFHashTableStream<T>::encode(std::istream& in, std::ostream& out) {
 }
 
 template <typename T>
+void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
+
+    uint8_t c;
+    int i;
+    for (i = 0; i < start.size() && in.good(); i++) {
+        in.read(reinterpret_cast<char *>(&c), 1);
+        in_data[i] = c;
+        start[i] = c;
+        this->count_symbol_in(c);
+        mtf_out_data[i] = (uint32_t) c + this->byte_size();
+        this->count_symbol_out(mtf_out_data[i]);
+    }
+    if (!in.good()) {
+        throw std::runtime_error("Not enough data to run the algorithm");
+    }
+    read_bytes = i;
+
+    this->hash_function.init(start);
+
+    while (read_bytes > 0) {
+        // Read block
+        in.read(reinterpret_cast<char *>(in_data.data() + i), this->block_size - i);
+        read_bytes = in.gcount() + i;
+
+        // Apply transformation
+        while (i < read_bytes) {
+            uint32_t out_c = this->mtfEncode(in_data[i]);
+
+            uint32_t num = out_c + 1;
+
+            int len = 1 + (int) floor(log2(num));
+            int lengthOfLen = floor(log2(len));
+
+            for (int k = lengthOfLen; k > 0; --k)
+                out.writeBit(0);
+            for (int k = lengthOfLen; k >= 0; --k)
+                out.writeBit((len >> k) & 1);
+            for (int k = len-2; k >= 0; k--)
+                out.writeBit((num >> k) & 1);
+
+
+            this->double_table();
+            i++;
+        }
+        i = 0;
+    }
+    out.flush();
+
+    this->print_stats();
+}
+
+template <typename T>
 void MTFHashTableStream<T>::decompress(int decompressed_size, std::ostream& out, const uint32_t *in) {
     std::vector<uint8_t> start(this->hash_function.get_window_size());
 
-    int i = 0;
-    while (i < decompressed_size) {
+    for (int i = 0; i < decompressed_size; i++) {
         if (!started && i < start.size()) {
             start[i] = (uint8_t) (in[i] - this->byte_size());
             in_data[i] = start[i];
@@ -251,13 +304,12 @@ void MTFHashTableStream<T>::decompress(int decompressed_size, std::ostream& out,
             in_data[i] = this->mtfDecode(in[i]);
             this->double_table();
         }
-        i++;
     }
-    out.write(reinterpret_cast<const char *>(in_data), (long) decompressed_size);
+    out.write(reinterpret_cast<const char *>(in_data.data()), (long) decompressed_size);
 }
 
 template <typename T>
-void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) {
+void MTFHashTableStream<T>::decode2(std::istream &in, std::ostream &out) {
     started = false;
 
     auto *out_block1 = new uint32_t[this->block_size];
@@ -268,12 +320,12 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) {
     do {
         uint32_t block_size;
         in.read(reinterpret_cast<char *>(&block_size), 4);
-        in.read(reinterpret_cast<char *>(mtf_out_data), block_size);
+        in.read(reinterpret_cast<char *>(mtf_out_data.data()), block_size);
         read_bytes_amount = in.gcount();
         if (read_bytes_amount > 0) {
             size_t decompressed_size = mtf_out_data[0] * 4 * 32 + 1024;
 
-            Core::decompress_final(reinterpret_cast<const uint32_t *>(mtf_out_data), read_bytes_amount / 4, out_block1, decompressed_size);
+            Core::decompress_final(reinterpret_cast<const uint32_t *>(mtf_out_data.data()), read_bytes_amount / 4, out_block1, decompressed_size);
 
             if (future.valid()) {
                 future.wait();
@@ -287,6 +339,49 @@ void MTFHashTableStream<T>::decode(std::istream &in, std::ostream &out) {
 
     delete[] out_block1;
     delete[] out_block2;
+}
+
+template <typename T>
+void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
+    started = false;
+
+    std::vector<uint8_t> start(this->hash_function.get_window_size());
+
+    int k = 0;
+    while (in.remaining()) {
+        uint32_t num = 1;
+        int len = 1;
+        int lengthOfLen = 0;
+        while (in.readBit() == 0) {
+            lengthOfLen++;
+        }
+        if (!in.remaining()) {
+            break;
+        }
+        for (int j = 0; j < lengthOfLen; j++) {
+            len <<= 1;
+            if (in.readBit() == 1)
+                len |= 1;
+        }
+        for (int j = 0; j < len - 1; j++) {
+            num <<= 1;
+            if (in.readBit() == 1)
+                num |= 1;
+        }
+        num--;
+
+        if (!started && k < start.size()) {
+            start[k] = (uint8_t) (num - this->byte_size());
+            out.put((char) start[k]);
+            if (k == start.size() - 1) {
+                started = true;
+                this->hash_function.init(start);
+            }
+        } else {
+            out.put(this->mtfDecode(num));
+            this->double_table();
+        }
+    }
 }
 
 template class MTFHashTableStream<uint16_t>;

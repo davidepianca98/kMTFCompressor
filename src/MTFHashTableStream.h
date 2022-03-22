@@ -6,6 +6,7 @@
 #include <atomic>
 #include "MTFHashTable.h"
 #include "Monitor.h"
+#include "bitstream.h"
 
 template <typename T>
 class MTFHashTableStream : public MTFHashTable<T> {
@@ -19,8 +20,8 @@ class MTFHashTableStream : public MTFHashTable<T> {
 
     bool started;
 
-    uint8_t *in_data;
-    uint32_t *mtf_out_data;
+    std::vector<uint8_t> in_data;
+    std::vector<uint32_t> mtf_out_data;
     int start_hash = 0;
     long read_bytes;
     long bytes_to_write;
@@ -38,11 +39,15 @@ public:
 
     ~MTFHashTableStream();
 
-    void encode(std::istream& in, std::ostream& out);
+    void encode2(std::istream& in, std::ostream& out);
+
+    void encode(std::istream& in, obitstream& out);
 
     void encode_pipeline(std::istream& in, std::ostream& out);
 
-    void decode(std::istream& in, std::ostream& out);
+    void decode2(std::istream &in, std::ostream &out);
+
+    void decode(ibitstream& in, std::ostream& out);
 };
 
 

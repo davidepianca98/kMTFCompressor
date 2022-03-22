@@ -34,14 +34,17 @@ protected:
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + 128] = { 0 }; // TODO should be + byte_size()
+    uint64_t symbols_out_run[256 + 128] = { 0 }; // TODO should be + byte_size()
     uint64_t stream_length = 0;
     // Runs
     uint8_t last_symbol_out = 0;
-    uint64_t runs = 0;
+    uint64_t runs = 1;
     uint64_t zeros = 0;
 
 
-    static void mtfShift(T& buf, uint8_t c, uint8_t i);
+    static void mtfShiftFront(T& buf, uint8_t c, uint8_t i);
+
+    static void mtfShiftBubble(T& buf, uint8_t c, uint8_t i);
 
     static void mtfAppend(T& buf, uint8_t c);
 
@@ -73,7 +76,7 @@ protected:
         }
     }
 
-    void calculate_entropy(double& entropy_in, double& entropy_out);
+    double calculate_entropy(const uint64_t symbols[], int length);
 
 public:
     explicit MTFHashTable(int k, int block_size, Hash& hash);

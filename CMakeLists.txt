@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
 
 set(SOURCE_FILES
+        src/bitstream.cpp
         src/Core.cpp
         src/MTFHash.cpp
         src/MTFHashTable.cpp
@@ -14,6 +15,7 @@ set(SOURCE_FILES
         )
 
 set(HEADER_FILES
+        src/bitstream.h
         src/Core.h
         src/MTF.h
         src/MTFHash.h
