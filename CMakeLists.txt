@@ -15,6 +15,7 @@ set(SOURCE_FILES
         )
 
 set(HEADER_FILES
+        src/AdaptiveEliasGamma.h
         src/bitstream.h
         src/Core.h
         src/MTF.h

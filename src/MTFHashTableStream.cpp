@@ -7,6 +7,7 @@
 #include "Core.h"
 #include "RabinKarp.h"
 #include "bitstream.h"
+#include "AdaptiveEliasGamma.h"
 
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash), stop_thread(false) {
@@ -295,13 +296,12 @@ void MTFHashTableStream<T>::decode2(std::istream &in, std::ostream &out) {
 
 
 
-
-
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     started = false;
     std::vector<uint8_t> start(this->hash_function.get_window_size());
 
+    AdaptiveEliasGamma aed(this->byte_size());
     do {
         // Read block
         in.read(reinterpret_cast<char *>(in_data.data()), this->block_size);
@@ -324,18 +324,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
                 out_c = this->mtfEncode(in_data[i]);
             }
 
-            uint32_t num = out_c + 1;
-
-            int len = 1 + (int) floor(log2(num));
-            int lengthOfLen = floor(log2(len));
-
-            for (int k = lengthOfLen; k > 0; --k)
-                out.writeBit(0);
-            for (int k = lengthOfLen; k >= 0; --k)
-                out.writeBit((len >> k) & 1);
-            for (int k = len-2; k >= 0; k--)
-                out.writeBit((num >> k) & 1);
-
+            aed.encode(out_c + 1, out);
 
             this->double_table();
         }
@@ -351,28 +340,13 @@ void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
 
     std::vector<uint8_t> start(this->hash_function.get_window_size());
 
+    AdaptiveEliasGamma aed(this->byte_size());
     int i = 0;
     while (in.remaining()) {
-        uint32_t num = 1;
-        int len = 1;
-        int lengthOfLen = 0;
-        while (in.readBit() == 0) {
-            lengthOfLen++;
-        }
-        if (!in.remaining()) {
+        uint32_t num = aed.decode(in) - 1;
+        if (num < 0) {
             break;
         }
-        for (int j = 0; j < lengthOfLen; j++) {
-            len <<= 1;
-            if (in.readBit() == 1)
-                len |= 1;
-        }
-        for (int j = 0; j < len - 1; j++) {
-            num <<= 1;
-            if (in.readBit() == 1)
-                num |= 1;
-        }
-        num--;
 
         if (!started && i < start.size()) {
             start[i] = (uint8_t) (num - this->byte_size());
