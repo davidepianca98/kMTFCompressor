@@ -106,7 +106,7 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::keep_track(uint64_t hash) {
-    if (!visited[hash]) { // TODO visited should be kept in same structure as table so no double miss just to keep track
+    if (!visited[hash]) {
         used_cells++;
         visited[hash] = true;
     }
@@ -128,12 +128,16 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
     last_symbol_out = i;
     if (i == 0) {
         zeros++;
+    } else if (i == 1) {
+        ones++;
+    } else if (i == 2) {
+        twos++;
     }
 }
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 / table_size > 1 && table_size < 10000000 && table_size_index < sizes.size() - 1) {
+    if (used_cells * 10 / table_size > 1 && table_size_index < sizes.size() - 1) {
         int old_table_size = table_size;
         table_size = sizes[++table_size_index];
         hash_table.resize(table_size);
@@ -153,8 +157,10 @@ template <typename T>
 void MTFHashTable<T>::print_stats() {
     std::cout << "Used hash cells = " << used_cells << std::endl;
     std::cout << "Hash table load = " << used_cells / double(hash_function.get_size()) << std::endl;
+
     std::cout << "Number of runs = " << runs << std::endl;
     std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
+    std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
 
     double entropy_in = calculate_entropy(symbols_in, 256);
     double entropy_out = calculate_entropy(symbols_out, 256 + byte_size());

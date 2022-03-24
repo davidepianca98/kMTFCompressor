@@ -60,9 +60,7 @@ public:
 
         for (int k = 0; k < len - 1; k++)
             out.writeBit(0);
-        out.writeBit(1);
-
-        for (int k = len - 2; k >= 0; k--)
+        for (int k = len - 1; k >= 0; k--)
             out.writeBit((num >> k) & 1);
     }
 
@@ -79,8 +77,7 @@ public:
         }
         for (int j = 0; j < n; j++) {
             num <<= 1;
-            if (in.readBit() == 1)
-                num |= 1;
+            num |= in.readBit();
         }
 
         return num;

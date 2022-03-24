@@ -21,10 +21,9 @@ protected:
     // Size of the block for FastPFOR
     int block_size;
 
-    std::vector<uint64_t> sizes = { 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071,
-                                     262143, 524287, 1048575, 2097143, 4194301, 8388617, 16777213, 33554467 };
-    uint64_t mersenne[4] = { 127, 8191, 131071,524287 };
-    int table_size_index = 2;
+    std::vector<uint64_t> sizes = { 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097143, 4194301,
+                                    8388617, 16777213, 33554467, 67108859, 134217757 };
+    int table_size_index = 0;
     uint64_t table_size;
 
     // Statistics
@@ -40,6 +39,8 @@ protected:
     uint8_t last_symbol_out = 0;
     uint64_t runs = 1;
     uint64_t zeros = 0;
+    uint64_t ones = 0;
+    uint64_t twos = 0;
 
 
     static void mtfShiftFront(T& buf, uint8_t c, uint8_t i);

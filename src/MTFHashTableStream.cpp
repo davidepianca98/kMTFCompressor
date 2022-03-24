@@ -15,7 +15,7 @@ MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MT
     read_bytes = 0;
     bytes_to_write = 0;
     in_data.resize(this->block_size);
-    mtf_out_data.resize(this->block_size + 100 * 1024);
+    mtf_out_data.resize(this->block_size + 1000 * 1024);
     hashes.resize(this->block_size);
 }
 
@@ -295,11 +295,18 @@ void MTFHashTableStream<T>::decode2(std::istream &in, std::ostream &out) {
 
 
 
+void entropy_encode(uint32_t *data, int bytes, AdaptiveEliasGamma& aed, obitstream& out) {
+    for (int i = 0; i < bytes; i++) {
+        aed.encode(data[i] + 1, out);
+    }
+}
 
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     started = false;
     std::vector<uint8_t> start(this->hash_function.get_window_size());
+    std::future<void> future;
+    auto *out_block1 = new uint32_t[this->block_size];
 
     AdaptiveEliasGamma aed(this->byte_size());
     do {
@@ -323,15 +330,26 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
             } else {
                 out_c = this->mtfEncode(in_data[i]);
             }
-
-            aed.encode(out_c + 1, out);
+            mtf_out_data[i] = out_c;
 
             this->double_table();
         }
+
+        if (future.valid()) {
+            future.wait();
+        }
+
+        memcpy(out_block1, mtf_out_data.data(), read_bytes * 4);
+        future = std::async(std::launch::async, entropy_encode, out_block1, read_bytes, std::ref(aed), std::ref(out));
+
     } while (read_bytes > 0);
+    if (future.valid()) {
+        future.wait();
+    }
     out.flush();
 
     this->print_stats();
+    delete[] out_block1;
 }
 
 template <typename T>
