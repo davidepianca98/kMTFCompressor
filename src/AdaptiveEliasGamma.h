@@ -12,10 +12,16 @@ private:
     std::vector<uint32_t> rank; // Keeps track of the rank of the symbol, indexed by symbol
     std::vector<uint32_t> map; // Keeps track of the symbol by rank, indexed by rank
 
+    std::vector<int> length;
+
 public:
     explicit AdaptiveEliasGamma(int byte_size) : count(256 + byte_size, 0), rank(256 + byte_size, 0), map(256 + byte_size, 0) {
         std::iota(std::begin(rank), std::end(rank), 0);
         std::iota(std::begin(map), std::end(map), 0);
+
+        for (int i = 1; i <= 256 + byte_size; i++) {
+            length.push_back(1 + (int) floor(log2(i)));
+        }
     }
 
     void update_frequencies(uint32_t num) {
@@ -55,8 +61,8 @@ public:
         return val;
     }
 
-    static void elias_gamma_encode(uint32_t num, obitstream& out) {
-        int len = 1 + (int) floor(log2(num));
+    void elias_gamma_encode(uint32_t num, obitstream& out) {
+        int len = length[num - 1];
 
         for (int k = 0; k < len - 1; k++)
             out.writeBit(0);
@@ -83,8 +89,8 @@ public:
         return num;
     }
 
-    static void elias_delta_encode(uint32_t num, obitstream& out) {
-        int len = 1 + (int) floor(log2(num));
+    void elias_delta_encode(uint32_t num, obitstream& out) {
+        int len = length[num - 1];
         int lengthOfLen = floor(log2(len));
 
         for (int k = lengthOfLen; k > 0; --k)
