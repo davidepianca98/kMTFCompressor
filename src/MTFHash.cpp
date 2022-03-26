@@ -120,11 +120,11 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     //CRC hash(k, 4095);
     //Fnv1a hash(k, 4095);
 
-    //Identity hash(3, 256 * 256 * 256);
+    Identity hash(3, 256 * 256 * 256);
     //Identity hash(k, 4095);
 
     //RabinKarp hash(k, 100000007);
-    RabinKarp hash(k, 4095);
+    //RabinKarp hash(k, 4095);
     //JumpConsistent hash(k, 4095);
 
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
@@ -145,9 +145,9 @@ int MTFHash::decompress_stream(const std::string& path, const std::string& out_p
     std::ofstream out_file(out_path, std::ios::binary);
 
     //ConcatenatedHash<Fnv1a, Fnv1a> hash(k, 15, 1024);
-    RabinKarp hash(k, 4095);
+    //RabinKarp hash(k, 4095);
     //DumbHash hash(k, 4095);
-    //Identity hash(3, 256 * 256 * 256);
+    Identity hash(3, 256 * 256 * 256);
     MTFHashTableStream<uint64_t> mtf(k, 1024 * 1024, hash); // 1 MB block size
     mtf.decode(in_file, out_file);
 
