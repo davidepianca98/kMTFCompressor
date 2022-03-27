@@ -36,32 +36,23 @@ bool ibitstream::is_open() {
 }
 
 
-obitstream::obitstream() : std::ostream(nullptr) {}
+obitstream::obitstream() : std::ostream(nullptr), bitset(1024 * 1024 * 8), pos(0) {}
 
 void obitstream::writeBit(int bit) {
-    if (bit != 0 && bit != 1) {
-        throw std::runtime_error(std::string("obitstream::writeBit: must pass an integer argument of 0 or 1. You passed the integer "));
-    }
-    if (!is_open()) {
-        throw std::runtime_error("obitstream::writeBit: stream is not open");
-    }
+    bitset[pos++] = (bool) bit;
 
-    bitset.push_back((bool) bit);
-
-    if (bitset.size() >= 1024 * 1024 * 8) {
+    if (pos >= bitset.size()) {
         std::ostream_iterator<char> osit(*this);
         boost::to_block_range(bitset, osit);
-        bitset.clear();
+        pos = 0;
     }
 }
 
 void obitstream::flush() {
+    bitset.resize(pos);
     std::ostream_iterator<char> osit(*this);
     boost::to_block_range(bitset, osit);
-}
-
-bool obitstream::is_open() {
-    return true;
+    pos = 0;
 }
 
 

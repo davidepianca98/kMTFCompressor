@@ -16,8 +16,8 @@ MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MT
     read_bytes = 0;
     bytes_to_write = 0;
     in_data.resize(this->block_size);
-    mtf_out_data.resize(this->block_size + 1000 * 1024);
-    hashes.resize(this->block_size);
+    mtf_out_data.resize(this->block_size);
+    //hashes.resize(this->block_size);
 }
 
 template <typename T>
@@ -313,8 +313,6 @@ void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveEliasGamma& aeg
         }
         aeg.encode(counter, out);
         ah.encode(last, out);
-
-        std::cout << "|" << std::flush;
     }
 }
 
@@ -322,7 +320,6 @@ void entropy_encode(const uint32_t *data, int bytes, AdaptiveHuffman& ah, obitst
     for (int i = 0; i < bytes; i++) {
         ah.encode(data[i], out);
     }
-    std::cout << "|" << std::flush;
 }
 
 template <typename T>
@@ -332,7 +329,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     std::future<void> future;
     auto *out_block1 = new uint32_t[this->block_size];
 
-    AdaptiveEliasGamma aeg(UINT16_MAX); // 256 + this->byte_size() for normal
+    //AdaptiveEliasGamma aeg(UINT16_MAX); // 256 + this->byte_size() for normal
     AdaptiveHuffman ah(this->byte_size());
     do {
         // Read block
@@ -374,7 +371,6 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     }
     out.flush();
 
-    std::cout << std::endl;
     this->print_stats();
     delete[] out_block1;
 }

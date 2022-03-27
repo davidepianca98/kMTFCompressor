@@ -189,8 +189,9 @@ public:
             update_tree(number);
             return number;
         } else {
-            update_tree(tree[node].symbol);
-            return tree[node].symbol;
+            uint32_t number = tree[node].symbol;
+            update_tree(number);
+            return number;
         }
     }
 };
