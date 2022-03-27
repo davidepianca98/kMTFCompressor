@@ -33,10 +33,10 @@ private:
     }
 
     int get_block_leader(int node) {
-        // Find highest number node in nodes of same weight
+        // Find the highest number node in nodes of same weight, the nodes are ordered by decreasing number and weight
         int leader = node;
-        for (int i = 0; i < next_free_slot; i++) { // TODO optimize, find way to not pass all the nodes, in theory the nodes with the same weight are siblings or parent and his siblings or children or his siblings on all rows for everyone.
-            if (tree[i].weight == tree[leader].weight && i != tree[leader].parent && tree[i].number > tree[leader].number) {
+        for (int i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
+            if (i != tree[leader].parent) {
                 leader = i;
             }
         }
@@ -44,23 +44,41 @@ private:
         return leader;
     }
 
-    void swap(int first, int second) {
+    void swap(int& first, int& second) {
         int first_parent = tree[first].parent;
         int second_parent = tree[second].parent;
-        if (first_parent == -1 || second_parent == -1) {
+        if (first_parent == -1 || second_parent == -1 || first_parent == second || second_parent == first) {
             return;
         }
 
-        if (first_parent == second || second_parent == first) {
-            return;
+        // Assign children parents to the other parent's index as they are about to be swapped
+        if (tree[first].left != -1) {
+            tree[tree[first].left].parent = second;
+        }
+        if (tree[first].right != -1) {
+            tree[tree[first].right].parent = second;
+        }
+        if (tree[second].left != -1) {
+            tree[tree[second].left].parent = first;
+        }
+        if (tree[second].right != -1) {
+            tree[tree[second].right].parent = first;
         }
 
-        int &first_child = tree[first_parent].left == first ? tree[first_parent].left : tree[first_parent].right;
-        int &second_child = tree[second_parent].left == second ? tree[second_parent].left : tree[second_parent].right;
+        // Swap the nodes but keep the same parent and order number
+        std::swap(tree[first], tree[second]);
+        std::swap(tree[first].parent, tree[second].parent);
+        std::swap(tree[first].number, tree[second].number);
+        // Swap indexes of the caller
+        std::swap(first, second);
 
-        std::swap(first_child, second_child);
-        std::swap(tree[first_child].parent, tree[second_child].parent);
-        std::swap(tree[first_child].number, tree[second_child].number);
+        // Assign new node index to the reverse map by symbol
+        if (tree[first].symbol != 256 + 8) {
+            map[tree[first].symbol] = first;
+        }
+        if (tree[second].symbol != 256 + 8) {
+            map[tree[second].symbol] = second;
+        }
     }
 
     void write_symbol(int node, obitstream& out) {
@@ -101,19 +119,19 @@ private:
             tree[nyt_node].nyt = false;
             uint64_t number = tree[nyt_node].number;
 
-            tree[nyt_node].left = next_free_slot;
-            tree[next_free_slot].symbol = 256 + 8;
-            tree[next_free_slot].number = number - 2;
-            tree[next_free_slot].parent = nyt_node;
-            tree[next_free_slot].nyt = true;
-
-            next_free_slot++;
-
             tree[nyt_node].right = next_free_slot;
             tree[next_free_slot].symbol = symbol;
             tree[next_free_slot].number = number - 1;
             tree[next_free_slot].parent = nyt_node;
             tree[next_free_slot].nyt = false;
+
+            next_free_slot++;
+
+            tree[nyt_node].left = next_free_slot;
+            tree[next_free_slot].symbol = 256 + 8;
+            tree[next_free_slot].number = number - 2;
+            tree[next_free_slot].parent = nyt_node;
+            tree[next_free_slot].nyt = true;
 
             next_free_slot++;
 
