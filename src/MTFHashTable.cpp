@@ -5,6 +5,7 @@
 #include "MTFHashTable.h"
 #include "hash/Hash.h"
 #include "RabinKarp.h"
+#include "Identity.h"
 
 template <typename T>
 void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
@@ -170,8 +171,9 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Entropy MTF = " << entropy_out << std::endl;
     std::cout << "Entropy MTF RLE = " << entropy_out_rle << std::endl;
 
-    std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * log2(stream_length / runs))) / 8 << " bytes" << std::endl;
     std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
+    std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * ((2 * log2(stream_length / runs) + 1) + 1))) / 8 << " bytes" << std::endl;
+    std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
 }
 
 template<typename T>

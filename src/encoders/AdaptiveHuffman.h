@@ -2,7 +2,8 @@
 #ifndef MTF_ADAPTIVEHUFFMAN_H
 #define MTF_ADAPTIVEHUFFMAN_H
 
-#include "bitstream.h"
+#include "stream/ibitstream.h"
+#include "stream/obitstream.h"
 
 class AdaptiveHuffman {
 private:
@@ -164,7 +165,7 @@ public:
         update_tree(symbol);
     }
 
-    uint32_t decode(ibitstream& in) {
+    int decode(ibitstream& in) {
         int node = 0;
 
         // Traverse the tree until a leaf is reached
@@ -179,20 +180,25 @@ public:
             }
         }
 
+        uint32_t number = 0;
         if (tree[node].nyt) {
             // If the leaf is the NYT node, read 9 bits
-            uint32_t number = 0;
             for (int i = 8; i >= 0; i--) {
                 number <<= 1;
-                number |= in.readBit();
+                int bit = in.readBit();
+                if (bit == -1) {
+                    return -1;
+                }
+                number |= bit;
             }
-            update_tree(number);
-            return number;
         } else {
-            uint32_t number = tree[node].symbol;
-            update_tree(number);
-            return number;
+            number = tree[node].symbol;;
         }
+        if (number >= 256 + 8) {
+            return -1;
+        }
+        update_tree(number);
+        return number;
     }
 };
 

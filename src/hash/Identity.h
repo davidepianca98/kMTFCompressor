@@ -16,6 +16,8 @@ public:
         assert(k <= 8);
     }
 
+    Identity(const Identity& hash) : i(hash.i), sh(hash.sh), Hash(hash) {}
+
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;
 

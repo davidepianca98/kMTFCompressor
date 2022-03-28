@@ -10,7 +10,7 @@
 class RabinKarp : public Hash {
 private:
     // Prime number slightly bigger than the alphabet size
-    uint64_t x = 257;
+    static constexpr uint32_t x = 257;
     // Multiplier to shift left
     uint64_t xk = 1;
 
@@ -26,6 +26,8 @@ private:
 
 public:
     explicit RabinKarp(int k, int size = P100M) : Hash(k, k, size) {}
+
+    RabinKarp(const RabinKarp& hash) : i(hash.i), xk(hash.xk), Hash(hash) {}
 
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;

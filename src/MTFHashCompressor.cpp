@@ -3,28 +3,30 @@
 
 #include <fstream>
 #include <random>
-#include "MTFHash.h"
-#include "Core.h"
+#include "MTFHashCompressor.h"
+#include "MTFBlockWorker.h"
 #include "MTFHashTableStream.h"
 #include "RabinKarp.h"
-#include "VectorHash.h"
-#include "MinimiserHash.h"
-#include "ConcatenatedHash.h"
-#include "Fnv1a.h"
-#include "Adler32.h"
-#include "CRC.h"
 #include "Identity.h"
-#include "JumpConsistent.h"
-#include "DumbHash.h"
+#include "stream/ofbitstream.h"
+#include "stream/ifbitstream.h"
 
-int MTFHash::compress(const std::string& path, const std::string& out_path, int k) {
+static int get_cores() {
+    int processor_count = (int) std::thread::hardware_concurrency();
+    if (processor_count == 0) {
+        processor_count = 1;
+    }
+    return processor_count;
+}
+
+int MTFHashCompressor::compress_block(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
         return 1;
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    int core_number = Core::get_cores() - 2;
+    int core_number = get_cores() - 2;
 
     //int block_size = 1024 * 1024; // 1 MB block size
 
@@ -32,25 +34,25 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
     std::mt19937 mt(rd());
     std::uniform_int_distribution<int> dist(1, 4);
 
-    std::vector<Core> cores;
+    std::vector<MTFBlockWorker<Identity>> workers;
     for (int i = 0; i < core_number; i++) {
         int block_size = dist(mt) * 1024 * 1024;
-        cores.emplace_back(k, block_size, block_size * 4 + 1024);
+        workers.emplace_back(k, 256 * 256 * 256, block_size, block_size * 4 + 1024);
     }
 
     while (in_file.good()) {
-        for (Core& core: cores) {
-            in_file.read(reinterpret_cast<char *>(core.block.data()), core.block.size());
+        for (MTFBlockWorker<Identity>& worker: workers) {
+            in_file.read(reinterpret_cast<char *>(worker.get_in_block()), worker.get_in_block_size());
             long read_bytes = in_file.gcount();
 
-            core.startCompression(read_bytes);
+            worker.startCompression(read_bytes);
         }
 
-        for (Core& core: cores) {
-            uint32_t compressed_block_size = core.get();
+        for (MTFBlockWorker<Identity>& worker: workers) {
+            uint32_t compressed_block_size = worker.get();
             if (compressed_block_size > 0) {
                 out_file.write(reinterpret_cast<const char *>(&compressed_block_size), 4);
-                out_file.write(reinterpret_cast<const char *>(core.out_block.data()), compressed_block_size);
+                out_file.write(reinterpret_cast<const char *>(worker.get_out_block()), compressed_block_size);
             }
         }
     }
@@ -61,38 +63,38 @@ int MTFHash::compress(const std::string& path, const std::string& out_path, int 
     return 0;
 }
 
-int MTFHash::decompress(const std::string &path, const std::string &out_path, int k) {
+int MTFHashCompressor::decompress_block(const std::string &path, const std::string &out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
         return 1;
     }
     std::ofstream out_file(out_path, std::ios::binary);
 
-    int core_number = Core::get_cores() - 2;
+    int core_number = get_cores() - 2;
 
     // Needs max block size as the block size is read after the allocation of these buffers
     int max_block_size = 1024 * 1024 * 10;
 
-    std::vector<Core> cores;
+    std::vector<MTFBlockWorker<Identity>> workers;
     for (int i = 0; i < core_number; i++) {
-        cores.emplace_back(k, max_block_size, max_block_size * 4 + 1024);
+        workers.emplace_back(k, 256 * 256 * 256, max_block_size, max_block_size * 4 + 1024);
     }
 
     while (in_file.good()) {
-        for (Core& core: cores) {
+        for (MTFBlockWorker<Identity>& worker: workers) {
             uint32_t block_size;
             in_file.read(reinterpret_cast<char *>(&block_size), 4);
 
-            in_file.read(reinterpret_cast<char *>(core.block.data()), block_size);
+            in_file.read(reinterpret_cast<char *>(worker.get_in_block()), block_size);
             long read_bytes = in_file.gcount();
 
-            core.startDecompression(read_bytes);
+            worker.startDecompression(read_bytes);
         }
 
-        for (Core& core: cores) {
-            uint32_t decompressed_block_size = core.get();
+        for (MTFBlockWorker<Identity>& worker: workers) {
+            uint32_t decompressed_block_size = worker.get();
             if (decompressed_block_size > 0) {
-                out_file.write(reinterpret_cast<const char *>(core.out_block.data()), decompressed_block_size);
+                out_file.write(reinterpret_cast<const char *>(worker.get_out_block()), decompressed_block_size);
             }
         }
     }
@@ -106,7 +108,7 @@ int MTFHash::decompress(const std::string &path, const std::string &out_path, in
 
 
 
-int MTFHash::compress_stream(const std::string& path, const std::string& out_path, int k) {
+int MTFHashCompressor::compress_stream(const std::string& path, const std::string& out_path, int k) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
         return 1;
@@ -136,7 +138,7 @@ int MTFHash::compress_stream(const std::string& path, const std::string& out_pat
     return 0;
 }
 
-int MTFHash::decompress_stream(const std::string& path, const std::string& out_path, int k) {
+int MTFHashCompressor::decompress_stream(const std::string& path, const std::string& out_path, int k) {
     ifbitstream in_file(path);
     //std::ifstream in_file(path);
     if (in_file.fail()) {

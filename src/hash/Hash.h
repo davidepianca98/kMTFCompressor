@@ -19,6 +19,8 @@ public:
 
     explicit Hash(uint64_t k, uint64_t window_size, uint64_t size) : k(k), size(size), window_size(window_size), kmer(k) {}
 
+    Hash(const Hash& hash) : k(hash.k), size(hash.size), window_size(hash.window_size), kmer(hash.kmer) {}
+
     virtual ~Hash() = default;
 
     virtual void init(const std::vector<uint8_t> &start) {};

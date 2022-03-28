@@ -18,7 +18,7 @@ protected:
 
     // Length of k-mers
     int k;
-    // Size of the block for FastPFOR
+    // Size of the block
     int block_size;
 
     std::vector<uint64_t> sizes = { 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097143, 4194301,

@@ -2,16 +2,16 @@
 #include <filesystem>
 #include <string>
 #include <iostream>
-#include "MTFHash.h"
-#include "SequenceCompressor.h"
-#include "MTF.h"
+#include "MTFHashCompressor.h"
+//#include "SequenceCompressor.h"
+//#include "MTF.h"
 
 int main() {
-    std::string path = "../../test/resources/calgarycorpus";
+    //std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
     //std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/pizzachilirep";
-    //std::string path = "../../test/resources/mio";
+    std::string path = "../../test/resources/mio";
     //std::string path = "../../test/resources/maximumcompression";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;
@@ -22,8 +22,8 @@ int main() {
 
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
-            //MTFHash::compress(entry.path().string(), entry.path().string() + ".mtf", 3);
-            MTFHash::compress_stream(entry.path().string(), entry.path().string() + ".mtf", 3);
+            MTFHashCompressor::compress_block(entry.path().string(), entry.path().string() + ".mtf", 3);
+            //MTFHashCompressor::compress_stream(entry.path().string(), entry.path().string() + ".mtf", 3);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf");
             //SequenceCompressor::compress_stream(entry.path().string(), entry.path().string() + ".mtf");
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

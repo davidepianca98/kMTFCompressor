@@ -4,7 +4,7 @@
 
 #include <istream>
 #include <fstream>
-#include "Core.h"
+#include "encoders/FastPForEncoder.h"
 
 class SequenceCompressor {
 public:
@@ -25,8 +25,7 @@ public:
                     in_data2[i] = in_data[i];
                 }
 
-                size_t compressed_size = read_bytes * 4 + 1024;
-                Core::compress_final(in_data2, read_bytes, out_data, compressed_size);
+                uint32_t compressed_size = FastPForEncoder::compress(in_data2, read_bytes, out_data);
 
                 out.write(reinterpret_cast<const char *>(&compressed_size), 4);
                 out.write(reinterpret_cast<const char *>(out_data), (long) compressed_size);

@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <numeric>
-#include "bitstream.h"
 
 class AdaptiveEliasGamma {
 private:

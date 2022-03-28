@@ -6,25 +6,23 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
 
 set(SOURCE_FILES
-        src/bitstream.cpp
-        src/Core.cpp
-        src/MTFHash.cpp
+        src/MTFHashCompressor.cpp
         src/MTFHashTable.cpp
         src/MTFHashTableBlock.cpp
         src/MTFHashTableStream.cpp
         )
 
 set(HEADER_FILES
-        src/bitstream.h
-        src/Core.h
+        src/MTFBlockWorker.h
         src/MTF.h
-        src/MTFHash.h
+        src/MTFHashCompressor.h
         src/MTFHashTable.h
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
         src/SequenceCompressor.h
         src/encoders/AdaptiveEliasGamma.h
         src/encoders/AdaptiveHuffman.h
+        src/encoders/FastPForEncoder.h
         src/hash/Adler32.h
         src/hash/ConcatenatedHash.h
         src/hash/CRC.h
@@ -36,7 +34,13 @@ set(HEADER_FILES
         src/hash/MinimiserHash.h
         src/hash/RabinKarp.h
         src/hash/SimHash.h
-        src/hash/VectorHash.h)
+        src/hash/VectorHash.h
+        src/stream/ibitstream.h
+        src/stream/ibufbitstream.h
+        src/stream/ifbitstream.h
+        src/stream/obitstream.h
+        src/stream/obufbitstream.h
+        src/stream/ofbitstream.h)
 
 enable_testing()
 
