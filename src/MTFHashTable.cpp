@@ -138,7 +138,7 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 / table_size > 1 && table_size_index < sizes.size() - 1) {
+    if (used_cells * 10 > table_size && table_size_index < sizes.size() - 1) {
         int old_table_size = table_size;
         table_size = sizes[++table_size_index];
         hash_table.resize(table_size);

@@ -3,11 +3,10 @@
 #include <future>
 #include "MTFHashTableStream.h"
 #include "encoders/AdaptiveEliasGamma.h"
-#include "encoders/AdaptiveHuffman.h"
 
 
 template <typename T>
-MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash){
+MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash), started(false) {
     in_data.resize(this->block_size);
     mtf_out_data.resize(this->block_size);
 }
@@ -32,15 +31,16 @@ void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveEliasGamma& aeg
     }
 }
 
-void entropy_encode(const uint32_t *data, int bytes, AdaptiveHuffman& ah, obitstream& out) {
-    for (int i = 0; i < bytes; i++) {
+template <typename T>
+void MTFHashTableStream<T>::entropy_encode(const uint32_t *data, int length, AdaptiveHuffman& ah, obitstream& out) {
+    for (int i = 0; i < length; i++) {
         ah.encode(data[i], out);
     }
 }
 
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
-    bool started = false;
+    started = false;
     std::vector<uint8_t> start(this->hash_function.get_window_size());
     std::future<void> future;
     auto *out_block1 = new uint32_t[this->block_size];
@@ -80,7 +80,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
 
         memcpy(out_block1, mtf_out_data.data(), read_bytes * 4); // TODO probably write to obufbitstream and do final encoding in another class
         //future = std::async(std::launch::async, entropy_rle_encode, out_block1, read_bytes, std::ref(aeg), std::ref(ah), std::ref(out));
-        future = std::async(std::launch::async, entropy_encode, out_block1, read_bytes, std::ref(ah), std::ref(out));
+        future = std::async(std::launch::async, &MTFHashTableStream<T>::entropy_encode, this, out_block1, read_bytes, std::ref(ah), std::ref(out));
 
     } while (read_bytes > 0);
     if (future.valid()) {
@@ -94,33 +94,58 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
 }
 
 template <typename T>
-void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
-    bool started = false;
-
+void MTFHashTableStream<T>::reverse_mtf(const uint32_t *data, int length, std::ostream &out) {
     std::vector<uint8_t> start(this->hash_function.get_window_size());
 
-    AdaptiveHuffman ah(256 + this->byte_size() + 1);
-    int i = 0;
-    while (in.remaining()) {
-        uint32_t num = ah.decode(in);
-        // Check if error happened or EOF symbol reached
-        if (num < 0 || num == 256 + this->byte_size()) {
-            break;
-        }
-
+    for (int i = 0; i < length; i++) {
         if (!started && i < start.size()) {
-            start[i] = (uint8_t) (num - this->byte_size());
-            out.put((char) start[i]);
+            start[i] = (uint8_t) (data[i] - this->byte_size());
+            in_data[i] = start[i];
             if (i == start.size() - 1) {
                 started = true;
                 this->hash_function.init(start);
             }
         } else {
-            out.put(this->mtfDecode(num));
+            in_data[i] = this->mtfDecode(data[i]);
             this->double_table();
         }
-        i++;
     }
+    out.write(reinterpret_cast<const char *>(in_data.data()), (long) length);
+}
+
+template <typename T>
+void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
+    started = false;
+    std::future<void> future;
+    auto *out_block1 = new uint32_t[this->block_size];
+
+    AdaptiveHuffman ah(256 + this->byte_size() + 1);
+    int i = 0;
+    bool stop = false;
+    while (in.remaining() && !stop) {
+        uint32_t num = ah.decode(in);
+        // Check if error happened or EOF symbol reached
+        if (num < 0 || num == 256 + this->byte_size()) {
+            stop = true;
+        } else {
+            out_block1[i++] = num;
+        }
+
+        if (i >= this->block_size || stop) {
+            if (future.valid()) {
+                future.wait();
+            }
+            memcpy(mtf_out_data.data(), out_block1, i * 4);
+
+            future = std::async(std::launch::async, &MTFHashTableStream<T>::reverse_mtf, this, mtf_out_data.data(), i, std::ref(out));
+            i = 0;
+        }
+    }
+    if (future.valid()) {
+        future.wait();
+    }
+
+    delete[] out_block1;
 }
 
 template class MTFHashTableStream<uint16_t>;

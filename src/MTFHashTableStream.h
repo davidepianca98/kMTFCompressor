@@ -4,6 +4,7 @@
 
 
 #include "MTFHashTable.h"
+#include "encoders/AdaptiveHuffman.h"
 #include "stream/obitstream.h"
 #include "stream/ibitstream.h"
 
@@ -13,8 +14,14 @@ class MTFHashTableStream : public MTFHashTable<T> {
     std::vector<std::thread> threads;
     std::thread writer;
 
+    bool started;
+
     std::vector<uint8_t> in_data;
     std::vector<uint32_t> mtf_out_data;
+
+    void entropy_encode(const uint32_t *data, int length, AdaptiveHuffman& ah, obitstream& out);
+
+    void reverse_mtf(const uint32_t *data, int length, std::ostream &out);
 
 public:
     MTFHashTableStream(int k, int blockSize, Hash& hash);

@@ -57,7 +57,12 @@ public:
         // Update k-mer
         uint8_t old = kmer[i];
         kmer[i] = c;
-        i = (i + 1) % k;
+
+        // Faster than wrapping with modulo
+        i++;
+        if (i >= k) {
+            i = 0;
+        }
 
         // Remove the leftmost character using the multiplier
         // Shift left by the multiplier
