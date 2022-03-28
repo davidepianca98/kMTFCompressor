@@ -13,7 +13,7 @@
 #include "encoders/AdaptiveHuffman.h"
 #include "stream/ibufbitstream.h"
 
-template <typename HASH>
+template <typename HASH, typename T>
 class MTFBlockWorker {
 
     int k;
@@ -29,15 +29,15 @@ class MTFBlockWorker {
     uint32_t compressBlock(const uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[size];
 
-        MTFHashTableBlock<uint64_t> mtf(k, size, std::ref(hash));
+        MTFHashTableBlock<T> mtf(k, size, std::ref(hash));
         mtf.encode(in, size, out_block1);
 
         obufbitstream buf(final_block, out_block.size());
-        AdaptiveHuffman ah(256 + 8 + 1);
+        AdaptiveHuffman ah(256 + byte_size() + 1);
         for (int i = 0; i < size; i++) {
             ah.encode(out_block1[i], buf);
         }
-        ah.encode(256 + 8, buf); // EOF
+        ah.encode(256 + byte_size(), buf); // EOF
         buf.flush_remaining();
         uint32_t compressed_size = buf.size();
 
@@ -53,21 +53,35 @@ class MTFBlockWorker {
         //uint32_t decompressed_size = FastPForEncoder::decompress(reinterpret_cast<const uint32_t *>(in), size / 4, out_block1);
 
         ibufbitstream buf(in, size);
-        AdaptiveHuffman ah(256 + 8 + 1);
+        AdaptiveHuffman ah(256 + byte_size() + 1);
         uint32_t decompressed_size = 0;
         while (true) {
             out_block1[decompressed_size] = ah.decode(buf);
-            if (out_block1[decompressed_size] == -1 || out_block1[decompressed_size] == 256 + 8) {
+            if (out_block1[decompressed_size] == -1 || out_block1[decompressed_size] == 256 + byte_size()) {
                 break;
             }
             decompressed_size++;
         }
 
-        MTFHashTableBlock<uint64_t> mtf(k, decompressed_size, std::ref(hash));
+        MTFHashTableBlock<T> mtf(k, decompressed_size, std::ref(hash));
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;
         return decompressed_size;
+    }
+
+    constexpr static uint8_t byte_size() noexcept {
+        if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
+            return 16;
+        } else if (std::is_same<T, boost::multiprecision::uint256_t>::value) {
+            return 32;
+        } else if (std::is_same<T, boost::multiprecision::uint512_t>::value) {
+            return 64;
+        } else if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
+            return 128;
+        } else {
+            return sizeof(T);
+        }
     }
 
 public:
@@ -77,7 +91,7 @@ public:
     void startCompression(long size) {
         if (!valid && size > 0) {
             hash = HASH(k, hash_size);
-            future = std::async(std::launch::async, &MTFBlockWorker<HASH>::compressBlock, this, in_block.data(), size, out_block.data());
+            future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::compressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }
     }
@@ -85,7 +99,7 @@ public:
     void startDecompression(long size) {
         if (!valid && size > 0) {
             hash = HASH(k, hash_size);
-            future = std::async(std::launch::async, &MTFBlockWorker<HASH>::decompressBlock, this, in_block.data(), size, out_block.data());
+            future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::decompressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }
     }

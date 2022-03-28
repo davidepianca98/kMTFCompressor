@@ -6,11 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
 
 set(SOURCE_FILES
-        src/MTFHashCompressor.cpp
         src/MTFHashTable.cpp
         src/MTFHashTableBlock.cpp
-        src/MTFHashTableStream.cpp
-        )
+        src/MTFHashTableStream.cpp)
 
 set(HEADER_FILES
         src/MTFBlockWorker.h
