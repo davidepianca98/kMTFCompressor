@@ -46,7 +46,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     auto *out_block1 = new uint32_t[this->block_size];
 
     //AdaptiveEliasGamma aeg(UINT16_MAX); // 256 + this->byte_size() for normal
-    AdaptiveHuffman ah(this->byte_size());
+    AdaptiveHuffman ah(256 + this->byte_size() + 1);
     long read_bytes;
     do {
         // Read block
@@ -86,6 +86,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     if (future.valid()) {
         future.wait();
     }
+    ah.encode(256 + this->byte_size(), out);
     out.flush_remaining();
 
     this->print_stats();
@@ -98,11 +99,12 @@ void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
 
     std::vector<uint8_t> start(this->hash_function.get_window_size());
 
-    AdaptiveHuffman ah(this->byte_size());
+    AdaptiveHuffman ah(256 + this->byte_size() + 1);
     int i = 0;
     while (in.remaining()) {
         uint32_t num = ah.decode(in);
-        if (num < 0) {
+        // Check if error happened or EOF symbol reached
+        if (num < 0 || num == 256 + this->byte_size()) {
             break;
         }
 

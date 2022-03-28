@@ -25,6 +25,7 @@ private:
     std::vector<TreeNode> tree;
     int nyt_node;
     int next_free_slot;
+    int alphabet_size;
 
     std::vector<int> map; // gets the leaf representing the symbol, indexed by symbol
 
@@ -74,10 +75,10 @@ private:
         std::swap(first, second);
 
         // Assign new node index to the reverse map by symbol
-        if (tree[first].symbol != 256 + 8) {
+        if (tree[first].symbol != alphabet_size) {
             map[tree[first].symbol] = first;
         }
-        if (tree[second].symbol != 256 + 8) {
+        if (tree[second].symbol != alphabet_size) {
             map[tree[second].symbol] = second;
         }
     }
@@ -129,7 +130,7 @@ private:
             next_free_slot++;
 
             tree[nyt_node].left = next_free_slot;
-            tree[next_free_slot].symbol = 256 + 8;
+            tree[next_free_slot].symbol = alphabet_size;
             tree[next_free_slot].number = number - 2;
             tree[next_free_slot].parent = nyt_node;
             tree[next_free_slot].nyt = true;
@@ -144,9 +145,9 @@ private:
     }
 
 public:
-    explicit AdaptiveHuffman(int byte_size): tree((256 + byte_size) * 2 + 1), map(256 + byte_size, -1), nyt_node(0), next_free_slot(1) {
-        tree[0].symbol = 256 + byte_size;
-        tree[0].number = (256 + byte_size) * 2;
+    explicit AdaptiveHuffman(int alphabet_size): alphabet_size(alphabet_size), tree(alphabet_size * 2 + 1), map(alphabet_size, -1), nyt_node(0), next_free_slot(1) {
+        tree[0].symbol = alphabet_size;
+        tree[0].number = alphabet_size * 2;
         tree[0].nyt = true;
     }
 
@@ -157,7 +158,7 @@ public:
             // If the symbol hasn't been seen yet, write the NYT escape sequence
             write_symbol(nyt_node, out);
 
-            // Write the 9 bits fixed representation of the symbol
+            // Write the log_2(alphabet_size) + 1 bits fixed representation of the symbol
             for (int i = 8; i >= 0; i--) {
                 out.writeBit((symbol >> i) & 1);
             }
@@ -182,7 +183,7 @@ public:
 
         uint32_t number = 0;
         if (tree[node].nyt) {
-            // If the leaf is the NYT node, read 9 bits
+            // If the leaf is the NYT node, read log_2(alphabet_size) + 1 bits
             for (int i = 8; i >= 0; i--) {
                 number <<= 1;
                 int bit = in.readBit();
@@ -194,7 +195,7 @@ public:
         } else {
             number = tree[node].symbol;;
         }
-        if (number >= 256 + 8) {
+        if (number >= alphabet_size) {
             return -1;
         }
         update_tree(number);

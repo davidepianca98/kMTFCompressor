@@ -31,6 +31,7 @@ public:
         std::ostream_iterator<char> osit(*this);
         boost::to_block_range(bitset, osit);
         pos = 0;
+        flush();
     }
 };
 

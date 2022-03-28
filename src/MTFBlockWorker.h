@@ -32,11 +32,12 @@ class MTFBlockWorker {
         MTFHashTableBlock<uint64_t> mtf(k, size, std::ref(hash));
         mtf.encode(in, size, out_block1);
 
-        obufbitstream buf(final_block, size); // TODO seems like it outputs many zeros in the end
-        AdaptiveHuffman ah(8);
+        obufbitstream buf(final_block, out_block.size());
+        AdaptiveHuffman ah(256 + 8 + 1);
         for (int i = 0; i < size; i++) {
             ah.encode(out_block1[i], buf);
         }
+        ah.encode(256 + 8, buf); // EOF
         buf.flush_remaining();
         uint32_t compressed_size = buf.size();
 
@@ -52,13 +53,17 @@ class MTFBlockWorker {
         //uint32_t decompressed_size = FastPForEncoder::decompress(reinterpret_cast<const uint32_t *>(in), size / 4, out_block1);
 
         ibufbitstream buf(in, size);
-        AdaptiveHuffman ah(8);
+        AdaptiveHuffman ah(256 + 8 + 1);
         uint32_t decompressed_size = 0;
-        while ((out_block1[decompressed_size] = ah.decode(buf)) != -1) {
+        while (true) {
+            out_block1[decompressed_size] = ah.decode(buf);
+            if (out_block1[decompressed_size] == -1 || out_block1[decompressed_size] == 256 + 8) {
+                break;
+            }
             decompressed_size++;
         }
 
-        MTFHashTableBlock<uint64_t> mtf(k, size, std::ref(hash));
+        MTFHashTableBlock<uint64_t> mtf(k, decompressed_size, std::ref(hash));
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;
