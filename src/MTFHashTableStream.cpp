@@ -122,10 +122,10 @@ void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
     AdaptiveHuffman ah(256 + this->byte_size() + 1);
     int i = 0;
     bool stop = false;
-    while (in.remaining() && !stop) {
+    while (!stop) {
         uint32_t num = ah.decode(in);
         // Check if error happened or EOF symbol reached
-        if (num < 0 || num == 256 + this->byte_size()) {
+        if (num < 0 || num == 256 + this->byte_size() || !in.remaining()) {
             stop = true;
         } else {
             out_block1[i++] = num;
