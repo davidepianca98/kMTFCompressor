@@ -29,7 +29,7 @@ class MTFBlockWorker {
     uint32_t compressBlock(const uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[size];
 
-        MTFHashTableBlock<T> mtf(k, size, std::ref(hash));
+        MTFHashTableBlock<T> mtf(size, std::ref(hash));
         mtf.encode(in, size, out_block1);
 
         obufbitstream buf(final_block, out_block.size());
@@ -63,7 +63,7 @@ class MTFBlockWorker {
             decompressed_size++;
         }
 
-        MTFHashTableBlock<T> mtf(k, decompressed_size, std::ref(hash));
+        MTFHashTableBlock<T> mtf(decompressed_size, std::ref(hash));
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;

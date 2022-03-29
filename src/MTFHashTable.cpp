@@ -4,8 +4,6 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include "MTFHashTable.h"
 #include "hash/Hash.h"
-#include "RabinKarp.h"
-#include "Identity.h"
 
 template <typename T>
 void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
@@ -140,9 +138,9 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 > table_size && table_size_index < sizes.size() - 1) {
+    if (used_cells * 10 > table_size && table_size < 134217728) {
         int old_table_size = table_size;
-        table_size = sizes[++table_size_index];
+        table_size *= 2;
         hash_table.resize(table_size);
         visited.resize(table_size);
         hash_function.resize(table_size);
@@ -155,13 +153,16 @@ void MTFHashTable<T>::double_table() {
 }
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int k, int block_size, Hash& hash): table_size(hash.get_size()), hash_table(hash.get_size()), visited(hash.get_size(), false), k(k), block_size(block_size),
-                                                                  hash_function(hash) {}
+MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), visited(hash.get_size(), false), block_size(block_size), hash_function(hash) {
+    table_size = hash.get_size();
+    modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
+}
 
 template <typename T>
 void MTFHashTable<T>::print_stats() {
-    std::cout << "Used hash cells = " << used_cells << std::endl;
+    std::cout << "Used hash cells = " << used_cells << "/" << table_size << std::endl;
     std::cout << "Hash table load = " << used_cells / double(hash_function.get_size()) << std::endl;
+    // TODO count number of distinct kmers
 
     std::cout << "Number of runs = " << runs << std::endl;
     std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;

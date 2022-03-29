@@ -121,7 +121,7 @@ public:
         HASH hash(k, 4096);
         //HASH hash(k, 256 * 256 * 256);
 
-        MTFHashTableStream<T> mtf(k, 1024 * 1024, hash); // 1 MB block size
+        MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
         mtf.encode(in_file, out_file);
 
         in_file.close();
@@ -141,7 +141,7 @@ public:
 
         HASH hash(k, 4096);
         //HASH hash(k, 256 * 256 * 256);
-        MTFHashTableStream<T> mtf(k, 1024 * 1024, hash); // 1 MB block size
+        MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
         mtf.decode(in_file, out_file);
 
         in_file.close();

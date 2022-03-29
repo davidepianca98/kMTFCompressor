@@ -4,7 +4,7 @@
 #include "RabinKarp.h"
 
 template <typename T>
-MTFHashTableBlock<T>::MTFHashTableBlock(int k, int block_size, Hash& hash) : MTFHashTable<T>(k, block_size, hash) {}
+MTFHashTableBlock<T>::MTFHashTableBlock(int block_size, Hash& hash) : MTFHashTable<T>(block_size, hash) {}
 
 template <typename T>
 void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out_block) {

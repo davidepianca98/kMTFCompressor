@@ -24,7 +24,7 @@ class MTFHashTableStream : public MTFHashTable<T> {
     void reverse_mtf(const uint32_t *data, int length, std::ostream &out);
 
 public:
-    MTFHashTableStream(int k, int blockSize, Hash& hash);
+    MTFHashTableStream(int blockSize, Hash& hash);
 
     void encode(std::istream& in, obitstream& out);
 
