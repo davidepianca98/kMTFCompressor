@@ -49,8 +49,9 @@ uint8_t MTFHashTable<T>::mtfExtract(const T& buf, uint8_t i) {
  */
 template <typename T>
 uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
-    keep_track(hash_function.get_hash());
-    T& buf = hash_table[hash_function.get_hash()];
+    uint64_t hash = hash_function.get_hash_full() & modulo_val;
+    keep_track(hash);
+    T& buf = hash_table[hash];
 
     hash_function.update(c);
     count_symbol_in(c);
@@ -89,8 +90,9 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
 
 template <typename T>
 uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
-    keep_track(hash_function.get_hash());
-    T& buf = hash_table[hash_function.get_hash()];
+    uint64_t hash = hash_function.get_hash_full() & modulo_val;
+    keep_track(hash);
+    T& buf = hash_table[hash];
 
     if (i >= byte_size()) {
         uint8_t c = i - byte_size();
@@ -144,6 +146,8 @@ void MTFHashTable<T>::double_table() {
         hash_table.resize(table_size);
         visited.resize(table_size);
         hash_function.resize(table_size);
+
+        modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
 
         std::fill(hash_table.begin() + old_table_size, hash_table.end(), 0);
         std::fill(visited.begin() + old_table_size, visited.end(), false);

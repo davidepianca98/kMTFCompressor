@@ -39,10 +39,6 @@ public:
         // Resize for the table size
         return Hash::get_hash() % size;
     }
-
-    [[nodiscard]] uint64_t get_hash_full() const {
-        return Hash::get_hash();
-    }
 };
 
 

@@ -5,6 +5,7 @@
 
 
 #include <vector>
+#include <cmath>
 #include "Hash.h"
 #include "RabinKarp.h"
 

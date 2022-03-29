@@ -74,32 +74,6 @@ public:
         // Resize for the table size
         return Hash::get_hash() % size;
     }
-
-    [[nodiscard]] uint64_t get_hash_full() const {
-        return Hash::get_hash();
-    }
-
-    void increment_k(uint8_t c) {
-        k++;
-        std::cout << k << std::endl;
-        kmer.resize(k);
-        for (uint64_t j = k - 1; j > i; j--) {
-            kmer[j] = kmer[j - 1];
-        }
-        kmer[i] = c;
-        hash = (hash * x) % size;
-        hash = (hash + c) % size;
-
-        i = (i + 1) % k;
-
-        xk = (xk * x) % size;
-    }
-
-    void decrement_k() {
-        k--;
-        // TODO
-        xk = (xk / x) % size;
-    }
 };
 
 

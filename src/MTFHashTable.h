@@ -21,10 +21,11 @@ protected:
     // Size of the block
     int block_size;
 
-    std::vector<uint64_t> sizes = { 4095, 8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097143, 4194301,
-                                    8388617, 16777213, 33554467, 67108859, 134217757 };
+    std::vector<uint64_t> sizes = { 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576, 2097152, 4194304,
+                                    8388608, 16777216, 33554432, 67108864, 134217728 };
     int table_size_index = 0;
-    uint64_t table_size;
+    uint64_t table_size = sizes[table_size_index];
+    uint64_t modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
 
     // Statistics
     double used_cells = 0;

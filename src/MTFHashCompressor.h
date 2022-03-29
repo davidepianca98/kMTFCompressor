@@ -38,7 +38,7 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, 4095, block_size, block_size * 4 + 1024);
+            workers.emplace_back(k, 4096, block_size, block_size * 4 + 1024);
             //workers.emplace_back(k, 256 * 256 * 256, block_size, block_size * 4 + 1024);
         }
 
@@ -80,7 +80,7 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, 4095, max_block_size, max_block_size * 4 + 1024);
+            workers.emplace_back(k, 4096, max_block_size, max_block_size * 4 + 1024);
             //workers.emplace_back(k, 256 * 256 * 256, max_block_size, max_block_size * 4 + 1024);
         }
 
@@ -118,7 +118,7 @@ public:
         ofbitstream out_file(out_path);
         //std::ofstream out_file(out_path);
 
-        HASH hash(k, 4095);
+        HASH hash(k, 4096);
         //HASH hash(k, 256 * 256 * 256);
 
         MTFHashTableStream<T> mtf(k, 1024 * 1024, hash); // 1 MB block size
@@ -139,7 +139,7 @@ public:
         }
         std::ofstream out_file(out_path, std::ios::binary);
 
-        HASH hash(k, 4095);
+        HASH hash(k, 4096);
         //HASH hash(k, 256 * 256 * 256);
         MTFHashTableStream<T> mtf(k, 1024 * 1024, hash); // 1 MB block size
         mtf.decode(in_file, out_file);

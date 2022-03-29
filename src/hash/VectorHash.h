@@ -40,7 +40,7 @@ public:
     }
 
     void resize(uint64_t size) override {
-        // TODO
+        this->size = size;
     }
 
     void update(uint8_t c) override {

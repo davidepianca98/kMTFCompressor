@@ -66,7 +66,7 @@ public:
     }
 
     void resize(uint64_t size) override {
-        // TODO
+        this->size = size;
     }
 };
 

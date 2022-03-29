@@ -33,6 +33,10 @@ public:
         return hash;
     };
 
+    [[nodiscard]] virtual uint64_t get_hash_full() const {
+        return hash;
+    };
+
     [[nodiscard]] uint64_t get_size() const {
         return size;
     }
