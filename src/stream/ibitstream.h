@@ -2,35 +2,44 @@
 #ifndef MTF_IBITSTREAM_H
 #define MTF_IBITSTREAM_H
 
-#include <boost/dynamic_bitset.hpp>
-
 class ibitstream: public std::istream {
 private:
-    boost::dynamic_bitset<unsigned char> bitset;
-    std::vector<uint8_t> in_vec;
-    int pos = 0;
+    std::vector<uint8_t> bitset;
+    int byte_pos;
+    int pos;
 
 public:
-    ibitstream() : std::istream(nullptr), in_vec(1024 * 1024) {}
+    ibitstream() : std::istream(nullptr), bitset(1024 * 1024), byte_pos(0), pos(0) {}
 
     int readBit() {
-        if (pos == 0 || pos >= bitset.size()) {
-            read(reinterpret_cast<char *>(in_vec.data()), in_vec.size());
+        if (byte_pos == 0 && pos == 0) {
+            read(reinterpret_cast<char *>(bitset.data()), bitset.size());
             long read_bytes = gcount();
             if (read_bytes <= 0) {
                 return EOF;
             }
 
-            bitset.resize(read_bytes * 8);
-            boost::from_block_range(in_vec.begin(), in_vec.begin() + read_bytes, bitset);
+            bitset.resize(read_bytes);
+            byte_pos = 0;
             pos = 0;
         }
 
-        return bitset.test(pos++);
+        int val = (bitset[byte_pos] >> (7 - pos)) & 1;
+        pos++;
+        if (pos > 7) {
+            byte_pos++;
+            pos = 0;
+
+            if (byte_pos >= bitset.size()) {
+                byte_pos = 0;
+            }
+        }
+
+        return val;
     }
 
     bool remaining() {
-        if (!good() && pos >= bitset.size()) {
+        if (!good() && byte_pos >= bitset.size()) {
             return false;
         }
         return true;

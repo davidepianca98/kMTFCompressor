@@ -97,7 +97,7 @@ private:
             n++;
             node = parent;
         }
-        // Write out the bits in the opposite order, because they need to be from root to leave
+        // Write out the bits in the opposite order, because they need to be from root to leaf
         for (int i = 0; i < n; i++) {
             out.writeBit((bits >> i) & 1);
         }
