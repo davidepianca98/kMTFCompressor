@@ -1,11 +1,6 @@
 
 #include <string>
-#include <fstream>
-#include <sstream>
-
 #include "MTFHashCompressor.h"
-#include "MTF.h"
-#include "MTFBlockWorker.h"
 
 
 int main(int argc, char *argv[]) {
@@ -16,7 +11,7 @@ int main(int argc, char *argv[]) {
     std::string path = argv[1];
     int k = (int) strtol(argv[2], nullptr, 10);
 
-    MTFHashCompressor::compress_stream(path, path + ".mtf", k);
+    MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(path, path + ".mtf", k);
 
     return 0;
 }

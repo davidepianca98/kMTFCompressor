@@ -2,8 +2,26 @@
 #include <future>
 #include <thread>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <numeric>
 #include "MTFHashTable.h"
 #include "hash/Hash.h"
+
+
+template <typename T>
+MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), visited(hash.get_size(), false), block_size(block_size), hash_function(hash) {
+    table_size = hash.get_size();
+    modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
+
+#ifdef MTF_RANK
+    counter.resize(hash.get_size());
+    for (int i = 0; i < hash.get_size(); i++) {
+        counter[i].resize(byte_size());
+
+        std::fill(counter[i].begin(), counter[i].end(), 0);
+    }
+#endif
+}
+
 
 template <typename T>
 void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
@@ -18,13 +36,24 @@ void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
 }
 
 template <typename T>
-void MTFHashTable<T>::mtfShiftBubble(T& buf, uint8_t c, uint8_t i) {
-    // If the position is zero, no need to change the buffer
-    if (i != 0) {
-        uint8_t c2 = mtfExtract(buf, i - 1);
+void MTFHashTable<T>::mtfShiftRank(T& buf, std::vector<uint64_t>& count, uint8_t c, uint8_t i) {
+    count[i]++;
 
-        buf = (buf & ~(0xFF << (i * 8))) | (c2 << (i * 8));
-        buf = (buf & ~(0xFF << ((i - 1) * 8))) | (c << ((i - 1) * 8));
+    for (int j = i - 1; j >= 0; j--) {
+        if (count[i] >= count[j]) {
+            std::swap(count[i], count[j]);
+
+            uint8_t c2 = mtfExtract(buf, j);
+
+            // Swap
+            buf = (buf & ~(0xFF << (i * 8))) | (c2 << (i * 8));
+            buf = (buf & ~(0xFF << (j * 8))) | (c << (j * 8));
+
+            i = j;
+        } else {
+            // Because the list is ordered
+            break;
+        }
     }
 }
 
@@ -36,6 +65,29 @@ void MTFHashTable<T>::mtfAppend(T& buf, uint8_t c) {
 template <typename T>
 uint8_t MTFHashTable<T>::mtfExtract(const T& buf, uint8_t i) {
     return static_cast<uint8_t>((buf >> (i * 8)) & 0xFF);
+}
+
+template <typename T>
+void MTFHashTable<T>::mtfAppendRank(T& buf, std::vector<uint64_t>& count, uint8_t c) {
+    int i;
+    for (i = 0; i < byte_size() - 1; i++) {
+        if (count[i] <= 1) {
+            break;
+        }
+    }
+    for (int j = byte_size() - 1; j >= i + 1; j--) {
+        count[j] = count[j - 1];
+    }
+    count[i] = 1;
+    if (i == 0) {
+        mtfAppend(buf, c);
+    } else {
+        // Shift left from i-th position, while keeping rightmost characters still
+        T left = (buf >> (i * 8)) << ((i + 1) * 8);
+        T right = (buf << ((8 - i) * 8)) >> ((8 - i) * 8);
+        // Insert in position i
+        buf = left | right | (c << (i * 8));
+    }
 }
 
 /*
@@ -58,7 +110,11 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     for (uint8_t i = 0; i < byte_size(); i++) {
         uint8_t extracted = mtfExtract(buf, i);
         if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
+#ifdef MTF_RANK
+            mtfShiftRank(buf, counter[hash], c, i);
+#else
             mtfShiftFront(buf, c, i);
+#endif
 
             count_symbol_out(i);
 
@@ -78,7 +134,11 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     }
 
     // Not found so shift left and put character in first position
+#ifdef MTF_RANK
+    mtfAppendRank(buf, counter[hash], c);
+#else
     mtfAppend(buf, c);
+#endif
 
     count_symbol_out(c + byte_size());
 
@@ -149,13 +209,15 @@ void MTFHashTable<T>::double_table() {
 
         std::fill(hash_table.begin() + old_table_size, hash_table.end(), 0);
         std::fill(visited.begin() + old_table_size, visited.end(), false);
-    }
-}
 
-template <typename T>
-MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), visited(hash.get_size(), false), block_size(block_size), hash_function(hash) {
-    table_size = hash.get_size();
-    modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
+#ifdef MTF_RANK
+        counter.resize(table_size);
+        for (int i = old_table_size; i < table_size; i++) {
+            counter[i].resize(byte_size());
+            std::fill(counter[i].begin(), counter[i].end(), 0);
+        }
+#endif
+    }
 }
 
 template <typename T>

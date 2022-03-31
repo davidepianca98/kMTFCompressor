@@ -67,7 +67,7 @@ public:
             }
 
             size_t compressed_size = read_bytes * 4 + 1024;
-            FastPForEncoder::compress(mtf_out_data, read_bytes, reinterpret_cast<uint32_t *>(out_data), compressed_size);
+            FastPForEncoder::compress(mtf_out_data, read_bytes, reinterpret_cast<uint32_t *>(out_data));
 
             out_file.write(reinterpret_cast<const char *>(&compressed_size), 4);
             out_file.write(reinterpret_cast<const char *>(out_data), compressed_size);

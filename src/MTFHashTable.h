@@ -39,11 +39,16 @@ protected:
     uint64_t twos = 0;
 
 
+    std::vector<std::vector<uint64_t>> counter;
+
+
     static void mtfShiftFront(T& buf, uint8_t c, uint8_t i);
 
-    static void mtfShiftBubble(T& buf, uint8_t c, uint8_t i);
+    static void mtfShiftRank(T& buf, std::vector<uint64_t>& count, uint8_t c, uint8_t i);
 
     static void mtfAppend(T& buf, uint8_t c);
+
+    void mtfAppendRank(T& buf, std::vector<uint64_t>& count, uint8_t c);
 
     static uint8_t mtfExtract(const T& buf, uint8_t i);
 

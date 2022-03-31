@@ -6,7 +6,7 @@
 
 
 template <typename T>
-MTFHashTableStream<T>::MTFHashTableStream(int k, int blockSize, Hash& hash) : MTFHashTable<T>(k, blockSize, hash), started(false) {
+MTFHashTableStream<T>::MTFHashTableStream(int blockSize, Hash& hash) : MTFHashTable<T>(blockSize, hash), started(false) {
     in_data.resize(this->block_size);
     mtf_out_data.resize(this->block_size);
 }
