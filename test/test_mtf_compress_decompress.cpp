@@ -34,7 +34,7 @@ int main() {
     }
 
     mtf.print_stats();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << std::endl;
+    std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms" << std::endl;
 
     RabinKarp hash2(3, 4096);
     MTFHashTableBlock<uint64_t> mtf2(1024 * 1024, hash2);

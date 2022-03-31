@@ -6,9 +6,9 @@
 #include "MTF.h"
 
 int main() {
-    //std::string path = "../../test/resources/calgarycorpus";
+    std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
-    std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/mio";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;

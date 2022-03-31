@@ -17,10 +17,8 @@ set(HEADER_FILES
         src/MTFHashTable.h
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
-        src/SequenceCompressor.h
         src/encoders/AdaptiveEliasGamma.h
         src/encoders/AdaptiveHuffman.h
-        src/encoders/FastPForEncoder.h
         src/hash/Adler32.h
         src/hash/CRC.h
         src/hash/Fnv1a.h
@@ -44,10 +42,8 @@ include_directories(src/hash)
 
 
 FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
-TARGET_LINK_LIBRARIES(MTF_lib ${Boost_LIBRARIES})
+target_link_libraries(MTF_lib ${Boost_LIBRARIES})
 
-target_link_directories(MTF_lib PUBLIC /usr/local/lib)
-target_link_libraries(MTF_lib FastPFOR)
 target_link_libraries(MTF_lib pthread)
 
 add_subdirectory(test)

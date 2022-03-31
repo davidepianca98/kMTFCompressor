@@ -45,12 +45,12 @@ public:
         if (in_file.fail()) {
             return 1;
         }
-        std::ofstream out_file(out_path, std::ios::binary);
+        ofbitstream out_file(out_path);
 
         int block_size = 1024 * 1024; // 1 MB block size
         auto *in_data = new uint8_t[block_size];
-        auto *mtf_out_data = new uint32_t[block_size];
-        auto *out_data = new uint32_t[block_size];
+
+        AdaptiveHuffman ah(256 + 1);
 
         std::vector<uint8_t> list(256);
         std::iota(std::begin(list), std::end(list), 0);
@@ -58,24 +58,16 @@ public:
         while (in_file.good()) {
             in_file.read(reinterpret_cast<char *>(in_data), block_size);
             long read_bytes = in_file.gcount();
-            if (read_bytes <= 0) {
-                break;
-            }
 
             for (int i = 0; i < read_bytes; i++) {
-                mtf_out_data[i] = (uint32_t) moveToFront(in_data[i], list);
+                ah.encode(moveToFront(in_data[i], list), out_file);
             }
-
-            size_t compressed_size = read_bytes * 4 + 1024;
-            FastPForEncoder::compress(mtf_out_data, read_bytes, reinterpret_cast<uint32_t *>(out_data));
-
-            out_file.write(reinterpret_cast<const char *>(&compressed_size), 4);
-            out_file.write(reinterpret_cast<const char *>(out_data), compressed_size);
         }
+        ah.encode(255, out_file); // EOF
+
+        out_file.flush_remaining();
 
         delete[] in_data;
-        delete[] mtf_out_data;
-        delete[] out_data;
 
         in_file.close();
         out_file.close();

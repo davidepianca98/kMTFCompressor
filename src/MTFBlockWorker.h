@@ -6,7 +6,6 @@
 #include <vector>
 #include <cstdint>
 #include <future>
-#include "encoders/FastPForEncoder.h"
 #include "MTFHashTable.h"
 #include "MTFHashTableBlock.h"
 #include "stream/obufbitstream.h"
