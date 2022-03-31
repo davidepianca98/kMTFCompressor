@@ -22,16 +22,12 @@ set(HEADER_FILES
         src/encoders/AdaptiveHuffman.h
         src/encoders/FastPForEncoder.h
         src/hash/Adler32.h
-        src/hash/ConcatenatedHash.h
         src/hash/CRC.h
-        src/hash/DumbHash.h
         src/hash/Fnv1a.h
         src/hash/Hash.h
         src/hash/Identity.h
         src/hash/JumpConsistent.h
-        src/hash/MinimiserHash.h
         src/hash/RabinKarp.h
-        src/hash/SimHash.h
         src/hash/VectorHash.h
         src/stream/ibitstream.h
         src/stream/ibufbitstream.h

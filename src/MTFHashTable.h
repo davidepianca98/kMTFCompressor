@@ -22,14 +22,28 @@ protected:
     uint64_t table_size;
     uint64_t modulo_val;
 
+    constexpr static uint8_t byte_size() noexcept {
+        if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
+            return 16;
+        } else if (std::is_same<T, boost::multiprecision::uint256_t>::value) {
+            return 32;
+        } else if (std::is_same<T, boost::multiprecision::uint512_t>::value) {
+            return 64;
+        } else if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
+            return 128;
+        } else {
+            return sizeof(T);
+        }
+    }
+
     // Statistics
     double used_cells = 0;
     // Keep track of visited MTF buffers
     std::vector<bool> visited;
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
-    uint64_t symbols_out[256 + 128] = { 0 }; // TODO should be + byte_size()
-    uint64_t symbols_out_run[256 + 128] = { 0 }; // TODO should be + byte_size()
+    uint64_t symbols_out[256 + byte_size()] = { 0 };
+    uint64_t symbols_out_run[256 + byte_size()] = { 0 };
     uint64_t stream_length = 0;
     // Runs
     uint8_t last_symbol_out = 0;
@@ -63,20 +77,6 @@ protected:
     void count_symbol_out(uint32_t i);
 
     void double_table();
-
-    constexpr static uint8_t byte_size() noexcept {
-        if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
-            return 16;
-        } else if (std::is_same<T, boost::multiprecision::uint256_t>::value) {
-            return 32;
-        } else if (std::is_same<T, boost::multiprecision::uint512_t>::value) {
-            return 64;
-        } else if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
-            return 128;
-        } else {
-            return sizeof(T);
-        }
-    }
 
     double calculate_entropy(const uint64_t symbols[], int length);
 
