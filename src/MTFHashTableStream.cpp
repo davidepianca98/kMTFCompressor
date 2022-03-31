@@ -7,8 +7,8 @@
 
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int blockSize, Hash& hash) : MTFHashTable<T>(blockSize, hash), started(false) {
-    in_data.resize(this->block_size);
-    mtf_out_data.resize(this->block_size);
+    byte_array.resize(this->block_size);
+    int_array.resize(this->block_size);
 }
 
 
@@ -50,14 +50,14 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     long read_bytes;
     do {
         // Read block
-        in.read(reinterpret_cast<char *>(in_data.data()), this->block_size);
+        in.read(reinterpret_cast<char *>(byte_array.data()), this->block_size);
         read_bytes = in.gcount();
 
         // Apply transformation
         for (int i = 0; i < read_bytes; i++) {
             uint32_t out_c;
             if (!started && i < start.size()) {
-                uint8_t c = in_data[i];
+                uint8_t c = byte_array[i];
                 start[i] = c;
                 this->count_symbol_in(c);
                 out_c = (uint32_t) c + this->byte_size();
@@ -67,9 +67,9 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
                     this->hash_function.init(start);
                 }
             } else {
-                out_c = this->mtfEncode(in_data[i]);
+                out_c = this->mtfEncode(byte_array[i]);
             }
-            mtf_out_data[i] = out_c;
+            int_array[i] = out_c;
 
             this->double_table();
         }
@@ -78,7 +78,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
             future.wait();
         }
 
-        memcpy(out_block1, mtf_out_data.data(), read_bytes * 4); // TODO probably write to obufbitstream and do final encoding in another class
+        memcpy(out_block1, int_array.data(), read_bytes * 4); // TODO probably write to obufbitstream and do final encoding in another class
         //future = std::async(std::launch::async, entropy_rle_encode, out_block1, read_bytes, std::ref(aeg), std::ref(ah), std::ref(out));
         future = std::async(std::launch::async, &MTFHashTableStream<T>::entropy_encode, this, out_block1, read_bytes, std::ref(ah), std::ref(out));
 
@@ -100,17 +100,17 @@ void MTFHashTableStream<T>::reverse_mtf(const uint32_t *data, int length, std::o
     for (int i = 0; i < length; i++) {
         if (!started && i < start.size()) {
             start[i] = (uint8_t) (data[i] - this->byte_size());
-            in_data[i] = start[i];
+            byte_array[i] = start[i];
             if (i == start.size() - 1) {
                 started = true;
                 this->hash_function.init(start);
             }
         } else {
-            in_data[i] = this->mtfDecode(data[i]);
+            byte_array[i] = this->mtfDecode(data[i]);
             this->double_table();
         }
     }
-    out.write(reinterpret_cast<const char *>(in_data.data()), (long) length);
+    out.write(reinterpret_cast<const char *>(byte_array.data()), (long) length);
 }
 
 template <typename T>
@@ -135,9 +135,9 @@ void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
             if (future.valid()) {
                 future.wait();
             }
-            memcpy(mtf_out_data.data(), out_block1, i * 4);
+            memcpy(int_array.data(), out_block1, i * 4);
 
-            future = std::async(std::launch::async, &MTFHashTableStream<T>::reverse_mtf, this, mtf_out_data.data(), i, std::ref(out));
+            future = std::async(std::launch::async, &MTFHashTableStream<T>::reverse_mtf, this, int_array.data(), i, std::ref(out));
             i = 0;
         }
     }
