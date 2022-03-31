@@ -3,7 +3,7 @@
 #ifndef MTF_VECTORHASH_H
 #define MTF_VECTORHASH_H
 
-
+#include <vector>
 #include "Hash.h"
 
 class VectorHash : public Hash {
@@ -25,7 +25,7 @@ class VectorHash : public Hash {
     }
 
 public:
-    explicit VectorHash(int k, int size) : Hash(k, k, size), v(k) {
+    explicit VectorHash(int k, int size) : Hash(k, size), v(k) {
         for (uint8_t& c: v) {
             c = 255;
         }

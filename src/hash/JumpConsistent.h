@@ -24,7 +24,7 @@ private:
     }
 
 public:
-    explicit JumpConsistent(int k, int size) : Hash(k, k, size) {}
+    explicit JumpConsistent(int k, int size) : Hash(k, size) {}
 
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;

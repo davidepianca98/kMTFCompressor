@@ -14,7 +14,7 @@ private:
     static constexpr int BASE = 65521;
 
 public:
-    explicit Adler32(int k, int size) : Hash(k, k, size) {}
+    explicit Adler32(int k, int size) : Hash(k, size) {}
 
     void init(const std::vector<uint8_t> &start) override {
         a = 1;

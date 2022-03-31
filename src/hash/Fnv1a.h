@@ -16,7 +16,7 @@ private:
     //static constexpr uint64_t PRIME = 1099511628211;
 
 public:
-    explicit Fnv1a(int k, int size) : Hash(k, k, size) {}
+    explicit Fnv1a(int k, int size) : Hash(k, size) {}
 
     void init(const std::vector <uint8_t> &start) override {
         uint32_t hash = BASE;

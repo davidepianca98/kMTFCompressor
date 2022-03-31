@@ -25,7 +25,7 @@ private:
     static constexpr uint64_t q = P100M;//2147483647; // 2^31 - 1
 
 public:
-    explicit RabinKarp(int k, int size = P100M) : Hash(k, k, size) {}
+    explicit RabinKarp(int k, int size = P100M) : Hash(k, size) {}
 
     RabinKarp(const RabinKarp& hash) : i(hash.i), xk(hash.xk), Hash(hash) {}
 

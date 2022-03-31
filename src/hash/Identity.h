@@ -12,7 +12,7 @@ private:
     uint64_t sh = 0;
 
 public:
-    explicit Identity(int k, int size) : Hash(k, k, size) {
+    explicit Identity(int k, int size) : Hash(k, size) {
         assert(k <= 8);
     }
 

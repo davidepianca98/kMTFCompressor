@@ -41,7 +41,7 @@ void MTFHashTableStream<T>::entropy_encode(const uint32_t *data, int length, Ada
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     started = false;
-    std::vector<uint8_t> start(this->hash_function.get_window_size());
+    std::vector<uint8_t> start(this->hash_function.get_length());
     std::future<void> future;
     auto *out_block1 = new uint32_t[this->block_size];
 
@@ -95,7 +95,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
 
 template <typename T>
 void MTFHashTableStream<T>::reverse_mtf(const uint32_t *data, int length, std::ostream &out) {
-    std::vector<uint8_t> start(this->hash_function.get_window_size());
+    std::vector<uint8_t> start(this->hash_function.get_length());
 
     for (int i = 0; i < length; i++) {
         if (!started && i < start.size()) {
