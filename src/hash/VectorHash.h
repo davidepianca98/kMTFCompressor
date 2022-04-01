@@ -7,47 +7,41 @@
 #include "Hash.h"
 
 class VectorHash : public Hash {
-    uint64_t b;
-    std::vector<uint8_t> v;
 
-    static uint64_t dot(std::vector<uint8_t> u, std::vector<uint8_t> v) {
-        uint64_t result = 0;
-        for (int i = 0; i < u.size(); i++) {
-            result += u[i] * v[i];
-        }
-        return result;
-    }
+    uint64_t sum = 0;
+    uint64_t i = 0;
 
     void compute() {
-        uint64_t a = dot(kmer, v);
-
-        hash = (uint64_t) (((double) a / (double) b) * size);
+        // Sum is the dot product with the unit diagonal vector (1, ..., 1)
+        // k is the same as the dot product of the unit vector with itself
+        hash = (uint64_t) (((double) sum / (double) (k * 255)) * size);
     }
 
 public:
-    explicit VectorHash(int k, int size) : Hash(k, size), v(k) {
-        for (uint8_t& c: v) {
-            c = 255;
-        }
-        b = dot(v, v);
-    }
+    explicit VectorHash(int k, int size) : Hash(k, size) {}
 
     void init(const std::vector<uint8_t> &start) override {
-        for (int i = 0; i < k; i++) {
-            kmer[i] = start[i];
+        sum = 0;
+        i = 0;
+        for (int j = 0; j < k; j++) {
+            kmer[j] = start[j];
+            sum += kmer[j];
         }
         compute();
     }
 
-    void resize(uint64_t size) override {
-        this->size = size;
-    }
-
     void update(uint8_t c) override {
-        for (int i = 0; i < kmer.size() - 1; i++) {
-            kmer[i] = kmer[i + 1];
+        // Update k-mer
+        uint8_t old = kmer[i];
+        kmer[i] = c;
+
+        // Faster than wrapping with modulo
+        i++;
+        if (i >= k) {
+            i = 0;
         }
-        kmer[kmer.size() - 1] = c;
+        sum -= old;
+        sum += c;
         compute();
     }
 };

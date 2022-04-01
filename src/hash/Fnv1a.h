@@ -31,10 +31,6 @@ public:
         this->hash = hash;
     }
 
-    void resize(uint64_t size) override {
-        this->size = size;
-    }
-
     void update(uint8_t c) override {
         // Update k-mer
         uint8_t old = kmer[i];
@@ -46,11 +42,6 @@ public:
             hash = (hash ^ kmer[(i + j + 1) % k]) * PRIME;
         }
         this->hash = hash;
-    }
-
-    [[nodiscard]] uint64_t get_hash() const override {
-        // Resize for the table size
-        return Hash::get_hash() % size;
     }
 };
 

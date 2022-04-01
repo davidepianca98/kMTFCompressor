@@ -8,8 +8,8 @@
 class Adler32 : public Hash {
 private:
     uint64_t i = 0;
-    uint32_t a;
-    uint32_t b;
+    uint32_t a = 1;
+    uint32_t b = 0;
 
     static constexpr int BASE = 65521;
 
@@ -24,15 +24,11 @@ public:
             uint8_t c = start[j];
             kmer[j] = c;
 
-            a += c % BASE;
-            b += a % BASE;
+            a = (a + c) % BASE;
+            b = (b + a) % BASE;
         }
 
         hash = (b << 16) | a;
-    }
-
-    void resize(uint64_t size) override {
-        this->size = size;
     }
 
     void update(uint8_t c) override {
@@ -41,18 +37,10 @@ public:
         kmer[i] = c;
         i = (i + 1) % k;
 
-        b = (a >> 16) & 0xFFFF;
-        a &= 0xFFFF;
-
         a = (a - old + c) % BASE;
-        b = (b - (k * old) + a) % BASE;
+        b = (b - ((k - 1) * old) + a) % BASE;
 
         hash = (b << 16) | a;
-    }
-
-    [[nodiscard]] uint64_t get_hash() const override {
-        // Resize for the table size
-        return Hash::get_hash() % size;
     }
 };
 

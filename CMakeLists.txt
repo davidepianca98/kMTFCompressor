@@ -25,7 +25,9 @@ set(HEADER_FILES
         src/hash/Hash.h
         src/hash/Identity.h
         src/hash/JumpConsistent.h
+        src/hash/LinearHash.h
         src/hash/RabinKarp.h
+        src/hash/TabulationHash.h
         src/hash/VectorHash.h
         src/stream/ibitstream.h
         src/stream/ibufbitstream.h

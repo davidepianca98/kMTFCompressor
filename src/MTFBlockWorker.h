@@ -40,16 +40,12 @@ class MTFBlockWorker {
         buf.flush_remaining();
         uint32_t compressed_size = buf.size();
 
-        //uint32_t compressed_size = FastPForEncoder::compress(out_block1, size, reinterpret_cast<uint32_t *>(final_block));
-
         delete[] out_block1;
         return compressed_size;
     }
 
     uint32_t decompressBlock(uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[in_block.size()];
-
-        //uint32_t decompressed_size = FastPForEncoder::decompress(reinterpret_cast<const uint32_t *>(in), size / 4, out_block1);
 
         ibufbitstream buf(in, size);
         AdaptiveHuffman ah(256 + byte_size() + 1);

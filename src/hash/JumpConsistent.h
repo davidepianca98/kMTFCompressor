@@ -41,10 +41,6 @@ public:
         i = 0;
     }
 
-    void resize(uint64_t size) override {
-        this->size = size;
-    }
-
     void update(uint8_t c) override {
         // Update k-mer
         uint8_t old = kmer[i];
@@ -55,11 +51,6 @@ public:
         key = (key << 8) | c;
 
         hash = jump_consistent_hash(key);
-    }
-
-    [[nodiscard]] uint64_t get_hash() const override {
-        // Resize for the table size
-        return Hash::get_hash() % size;
     }
 };
 

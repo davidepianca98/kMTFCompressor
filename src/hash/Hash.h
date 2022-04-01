@@ -26,10 +26,12 @@ public:
 
     virtual void update(uint8_t c) {};
 
-    virtual void resize(uint64_t new_size) {};
+    virtual void resize(uint64_t new_size) {
+        size = new_size;
+    };
 
     [[nodiscard]] virtual uint64_t get_hash() const {
-        return hash;
+        return hash % size;
     };
 
     [[nodiscard]] virtual uint64_t get_hash_full() const {

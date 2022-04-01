@@ -30,21 +30,12 @@ public:
         sh = (~0ul >> (64 - (8 * k)));
     }
 
-    void resize(uint64_t size) override {
-        this->size = size;
-    }
-
     void update(uint8_t c) override {
         kmer[i] = c;
         i = (i + 1) % k;
 
         hash = (hash << 8) | c;
         hash &= sh;
-    }
-
-    [[nodiscard]] uint64_t get_hash() const override {
-        // Resize for the table size
-        return Hash::get_hash() % size;
     }
 };
 
