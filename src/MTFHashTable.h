@@ -8,12 +8,20 @@
 #include <queue>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "Hash.h"
+#include "MTFBuffer.h"
+#include "MTFRankBuffer.h"
+
+#define MTF_RANK
 
 template <typename T>
 class MTFHashTable {
 protected:
     // Hash table of MTF buffers
-    std::vector<T> hash_table;
+#ifdef MTF_RANK
+    std::vector<MTFRankBuffer<T>> hash_table;
+#else
+    std::vector<MTFBuffer<T>> hash_table;
+#endif
     Hash& hash_function;
 
     // Size of the block
@@ -38,8 +46,6 @@ protected:
 
     // Statistics
     double used_cells = 0;
-    // Keep track of visited MTF buffers
-    std::vector<bool> visited;
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + byte_size()] = { 0 };
@@ -53,24 +59,12 @@ protected:
     uint64_t twos = 0;
 
 
-    std::vector<std::vector<uint64_t>> counter;
-
-
-    static void mtfShiftFront(T& buf, uint8_t c, uint8_t i);
-
-    static void mtfShiftRank(T& buf, std::vector<uint64_t>& count, uint8_t c, uint8_t i);
-
-    static void mtfAppend(T& buf, uint8_t c);
-
-    void mtfAppendRank(T& buf, std::vector<uint64_t>& count, uint8_t c);
-
-    static uint8_t mtfExtract(const T& buf, uint8_t i);
 
     uint32_t mtfEncode(uint8_t c);
 
     uint8_t mtfDecode(uint32_t c);
 
-    void keep_track(uint64_t hash);
+    void keep_track(MTFBuffer<T>& buf);
 
     void count_symbol_in(uint8_t c);
 

@@ -11,12 +11,14 @@ set(SOURCE_FILES
         src/MTFHashTableStream.cpp)
 
 set(HEADER_FILES
+        src/MTFBuffer.h
         src/MTFBlockWorker.h
         src/MTF.h
         src/MTFHashCompressor.h
         src/MTFHashTable.h
         src/MTFHashTableBlock.h
         src/MTFHashTableStream.h
+        src/MTFRankBuffer.h
         src/encoders/AdaptiveEliasGamma.h
         src/encoders/AdaptiveHuffman.h
         src/hash/Adler32.h

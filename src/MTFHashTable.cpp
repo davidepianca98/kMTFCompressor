@@ -2,93 +2,16 @@
 #include <future>
 #include <thread>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <numeric>
 #include "MTFHashTable.h"
 #include "hash/Hash.h"
 
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), visited(hash.get_size(), false), block_size(block_size), hash_function(hash) {
+MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), counter_rle(hash.get_size(), 0), block_size(block_size), hash_function(hash) {
     table_size = hash.get_size();
     modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
-
-#ifdef MTF_RANK
-    counter.resize(hash.get_size());
-    for (int i = 0; i < hash.get_size(); i++) {
-        counter[i].resize(byte_size());
-
-        std::fill(counter[i].begin(), counter[i].end(), 0);
-    }
-#endif
 }
 
-
-template <typename T>
-void MTFHashTable<T>::mtfShiftFront(T& buf, uint8_t c, uint8_t i) {
-    // If the position is zero, no need to change the buffer
-    if (i != 0) {
-        int bits = (i + 1) * 8;
-        T left = (buf >> bits) << bits; // Extract the part to be preserved
-        bits = (byte_size() - i) * 8;
-        buf = (buf << bits) >> (bits - 8); // Make space for the character in the first position and clean the leftmost bytes
-        buf |= left | c; // Put character in the first position
-    }
-}
-
-template <typename T>
-void MTFHashTable<T>::mtfShiftRank(T& buf, std::vector<uint64_t>& count, uint8_t c, uint8_t i) {
-    count[i]++;
-
-    for (int j = i - 1; j >= 0; j--) {
-        if (count[i] >= count[j]) {
-            std::swap(count[i], count[j]);
-
-            uint8_t c2 = mtfExtract(buf, j);
-
-            // Swap
-            buf = (buf & ~(0xFF << (i * 8))) | (c2 << (i * 8));
-            buf = (buf & ~(0xFF << (j * 8))) | (c << (j * 8));
-
-            i = j;
-        } else {
-            // Because the list is ordered
-            break;
-        }
-    }
-}
-
-template <typename T>
-void MTFHashTable<T>::mtfAppend(T& buf, uint8_t c) {
-    buf = (buf << 8) | c;
-}
-
-template <typename T>
-uint8_t MTFHashTable<T>::mtfExtract(const T& buf, uint8_t i) {
-    return static_cast<uint8_t>((buf >> (i * 8)) & 0xFF);
-}
-
-template <typename T>
-void MTFHashTable<T>::mtfAppendRank(T& buf, std::vector<uint64_t>& count, uint8_t c) {
-    int i;
-    for (i = 0; i < byte_size() - 1; i++) {
-        if (count[i] <= 1) {
-            break;
-        }
-    }
-    for (int j = byte_size() - 1; j >= i + 1; j--) {
-        count[j] = count[j - 1];
-    }
-    count[i] = 1;
-    if (i == 0) {
-        mtfAppend(buf, c);
-    } else {
-        // Shift left from i-th position, while keeping rightmost characters still
-        T left = (buf >> (i * 8)) << ((i + 1) * 8);
-        T right = (buf << ((8 - i) * 8)) >> ((8 - i) * 8);
-        // Insert in position i
-        buf = left | right | (c << (i * 8));
-    }
-}
 
 /*
  * MTF buffer containing at most 8 chars
@@ -100,21 +23,17 @@ void MTFHashTable<T>::mtfAppendRank(T& buf, std::vector<uint64_t>& count, uint8_
 template <typename T>
 uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     uint64_t hash = hash_function.get_hash_full() & modulo_val;
-    keep_track(hash);
-    T& buf = hash_table[hash];
+    MTFBuffer<T>& buf = hash_table[hash];
+    keep_track(buf);
 
     hash_function.update(c);
     count_symbol_in(c);
 
     bool zero = false;
     for (uint8_t i = 0; i < byte_size(); i++) {
-        uint8_t extracted = mtfExtract(buf, i);
+        uint8_t extracted = buf.extract(i);
         if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
-#ifdef MTF_RANK
-            mtfShiftRank(buf, counter[hash], c, i);
-#else
-            mtfShiftFront(buf, c, i);
-#endif
+            buf.shift(c, i);
 
             count_symbol_out(i);
 
@@ -134,11 +53,7 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     }
 
     // Not found so shift left and put character in first position
-#ifdef MTF_RANK
-    mtfAppendRank(buf, counter[hash], c);
-#else
-    mtfAppend(buf, c);
-#endif
+    buf.append(c);
 
     count_symbol_out(c + byte_size());
 
@@ -149,27 +64,26 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
 template <typename T>
 uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
     uint64_t hash = hash_function.get_hash_full() & modulo_val;
-    keep_track(hash);
-    T& buf = hash_table[hash];
+    MTFBuffer<T>& buf = hash_table[hash];
+    keep_track(buf);
 
+    uint8_t c;
     if (i >= byte_size()) {
-        uint8_t c = i - byte_size();
-        mtfAppend(buf, c);
-        hash_function.update(c);
-        return c;
+        c = i - byte_size();
+        buf.append(c);
     } else {
-        uint8_t c = mtfExtract(buf, i);
-        mtfShiftFront(buf, c, i);
-        hash_function.update(c);
-        return c;
+        c = buf.extract(i);
+        buf.shift(c, i);
     }
+    hash_function.update(c);
+    return c;
 }
 
 template <typename T>
-void MTFHashTable<T>::keep_track(uint64_t hash) {
-    if (!visited[hash]) {
+void MTFHashTable<T>::keep_track(MTFBuffer<T>& buf) {
+    if (!buf.visited()) {
         used_cells++;
-        visited[hash] = true;
+        buf.set_visited();
     }
 }
 
@@ -202,21 +116,9 @@ void MTFHashTable<T>::double_table() {
         int old_table_size = table_size;
         table_size *= 2;
         hash_table.resize(table_size);
-        visited.resize(table_size);
         hash_function.resize(table_size);
 
         modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
-
-        std::fill(hash_table.begin() + old_table_size, hash_table.end(), 0);
-        std::fill(visited.begin() + old_table_size, visited.end(), false);
-
-#ifdef MTF_RANK
-        counter.resize(table_size);
-        for (int i = old_table_size; i < table_size; i++) {
-            counter[i].resize(byte_size());
-            std::fill(counter[i].begin(), counter[i].end(), 0);
-        }
-#endif
     }
 }
 
@@ -239,7 +141,7 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Entropy MTF RLE = " << entropy_out_rle << std::endl;
 
     std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
-    std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * ((2 * log2(stream_length / runs) + 1) + 1))) / 8 << " bytes" << std::endl;
+    std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * ceil(2 * floor(log2(ceil(stream_length / runs)) + 1)))) / 8 << " bytes" << std::endl;
     std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
 }
 

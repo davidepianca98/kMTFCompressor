@@ -152,6 +152,7 @@ public:
     }
 
     void encode(uint32_t symbol, obitstream& out) {
+        assert(symbol < alphabet_size);
         if (map[symbol] != -1) {
             write_symbol(map[symbol], out);
         } else {

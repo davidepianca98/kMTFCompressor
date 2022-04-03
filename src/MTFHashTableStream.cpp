@@ -8,26 +8,35 @@
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int blockSize, Hash& hash) : MTFHashTable<T>(blockSize, hash), started(false) {
     byte_array.resize(this->block_size);
-    int_array.resize(this->block_size);
+    int_array.resize(this->block_size * 2);
 }
 
 
-void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveEliasGamma& aeg, AdaptiveHuffman& ah, obitstream& out) {
+void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
     if (bytes > 0) {
-        uint32_t last = data[0];
-        uint64_t counter = 1;
-        for (int i = 1; i < bytes; i++) {
-            if (last == data[i]) {
-                counter++;
+        int64_t last = -1;
+        uint64_t counter = 0;
+        for (int i = 0; i < bytes; i++) {
+            if (data[i] == 0) {
+                if (last != 0) {
+                    counter = 1;
+                } else {
+                    counter++;
+                }
             } else {
-                aeg.encode(counter, out);
-                ah.encode(last, out);
-                last = data[i];
-                counter = 1;
+                if (counter > 0) {
+                    ah.encode(0, out);
+                    ahrle.encode(counter, out);
+                    counter = 0;
+                }
+                ah.encode(data[i], out);
             }
+            last = data[i];
         }
-        aeg.encode(counter, out);
-        ah.encode(last, out);
+        if (counter > 0) {
+            ah.encode(0, out);
+            ahrle.encode(counter, out);
+        }
     }
 }
 
@@ -38,6 +47,7 @@ void MTFHashTableStream<T>::entropy_encode(const uint32_t *data, int length, Ada
     }
 }
 
+
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     started = false;
@@ -45,7 +55,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     std::future<void> future;
     auto *out_block1 = new uint32_t[this->block_size];
 
-    //AdaptiveEliasGamma aeg(UINT16_MAX); // 256 + this->byte_size() for normal
+    //AdaptiveHuffman ahrle(UINT16_MAX);
     AdaptiveHuffman ah(256 + this->byte_size() + 1);
     long read_bytes;
     do {
@@ -79,7 +89,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
         }
 
         memcpy(out_block1, int_array.data(), read_bytes * 4); // TODO probably write to obufbitstream and do final encoding in another class
-        //future = std::async(std::launch::async, entropy_rle_encode, out_block1, read_bytes, std::ref(aeg), std::ref(ah), std::ref(out));
+        //future = std::async(std::launch::async, entropy_rle_encode, out_block1, read_bytes, std::ref(ahrle), std::ref(ah), std::ref(out));
         future = std::async(std::launch::async, &MTFHashTableStream<T>::entropy_encode, this, out_block1, read_bytes, std::ref(ah), std::ref(out));
 
     } while (read_bytes > 0);
