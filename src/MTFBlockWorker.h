@@ -16,7 +16,7 @@ template <typename HASH, typename T>
 class MTFBlockWorker {
 
     int k;
-    int hash_size;
+    uint64_t seed;
     bool valid = false;
     std::future<uint32_t> future;
 
@@ -81,11 +81,11 @@ class MTFBlockWorker {
 
 public:
 
-    MTFBlockWorker(int k, int hash_size, int in_block_size, int out_block_size) : k(k), hash_size(hash_size), in_block(in_block_size), out_block(out_block_size), hash(k, hash_size) {}
+    MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size), hash(k, seed) {}
 
     void startCompression(long size) {
         if (!valid && size > 0) {
-            hash = HASH(k, hash_size);
+            hash = HASH(k, seed);
             future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::compressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }
@@ -93,7 +93,7 @@ public:
 
     void startDecompression(long size) {
         if (!valid && size > 0) {
-            hash = HASH(k, hash_size);
+            hash = HASH(k, seed);
             future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::decompressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }

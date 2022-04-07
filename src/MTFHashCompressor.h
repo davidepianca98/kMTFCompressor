@@ -15,6 +15,10 @@
 
 class MTFHashCompressor {
 
+    static uint64_t generate_seed() {
+        return std::chrono::system_clock::now().time_since_epoch().count();
+    }
+
 public:
     static int get_cores() {
         int processor_count = (int) std::thread::hardware_concurrency();
@@ -26,11 +30,15 @@ public:
 
     template <typename HASH, typename T>
     static int compress_block(const std::string& path, const std::string& out_path, int k) {
-        std::ifstream in_file(path, std::ios::binary); // TODO generate seed randomly and save at start of file
+        std::ifstream in_file(path, std::ios::binary);
         if (in_file.fail()) {
             return 1;
         }
         std::ofstream out_file(out_path, std::ios::binary);
+
+        uint64_t seed = generate_seed();
+        uint64_t be_seed = htobe64(seed);
+        out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
 
         int core_number = get_cores() - 2;
 
@@ -38,8 +46,7 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, 4096, block_size, block_size * 4 + 1024);
-            //workers.emplace_back(k, 256 * 256 * 256, block_size, block_size * 4 + 1024);
+            workers.emplace_back(k, seed, block_size, block_size * 4 + 1024);
         }
 
         while (in_file.good()) {
@@ -53,7 +60,8 @@ public:
             for (MTFBlockWorker<HASH, T>& worker: workers) {
                 uint32_t compressed_block_size = worker.get();
                 if (compressed_block_size > 0) {
-                    out_file.write(reinterpret_cast<const char *>(&compressed_block_size), 4);
+                    uint32_t be_compressed_block_size = htobe32(compressed_block_size);
+                    out_file.write(reinterpret_cast<const char *>(&be_compressed_block_size), 4);
                     out_file.write(reinterpret_cast<const char *>(worker.get_out_block()), compressed_block_size);
                 }
             }
@@ -73,6 +81,10 @@ public:
         }
         std::ofstream out_file(out_path, std::ios::binary);
 
+        uint64_t be_seed;
+        in_file.read(reinterpret_cast<char *>(&be_seed), 8);
+        uint64_t seed = be64toh(be_seed);
+
         int core_number = get_cores() - 2;
 
         // Needs max block size as the block size is read after the allocation of these buffers
@@ -80,14 +92,14 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, 4096, max_block_size, max_block_size * 4 + 1024);
-            //workers.emplace_back(k, 256 * 256 * 256, max_block_size, max_block_size * 4 + 1024);
+            workers.emplace_back(k, seed, max_block_size, max_block_size * 4 + 1024);
         }
 
         while (in_file.good()) {
             for (MTFBlockWorker<HASH, T>& worker: workers) {
                 uint32_t block_size;
                 in_file.read(reinterpret_cast<char *>(&block_size), 4);
+                block_size = be32toh(block_size);
 
                 in_file.read(reinterpret_cast<char *>(worker.get_in_block()), block_size);
                 long read_bytes = in_file.gcount();
@@ -117,8 +129,11 @@ public:
         }
         ofbitstream out_file(out_path);
 
-        HASH hash(k, 4096); // TODO generate seed randomly and save at start of file
-        //HASH hash(k, 256 * 256 * 256);
+        uint64_t seed = generate_seed();
+        uint64_t be_seed = htobe64(seed);
+        out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
+
+        HASH hash(k, seed);
 
         MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
         mtf.encode(in_file, out_file);
@@ -132,14 +147,16 @@ public:
     template <typename HASH, typename T>
     static int decompress_stream(const std::string& path, const std::string& out_path, int k) {
         ifbitstream in_file(path);
-        //std::ifstream in_file(path);
         if (in_file.fail()) {
             return 1;
         }
         std::ofstream out_file(out_path, std::ios::binary);
 
-        HASH hash(k, 4096); // TODO read seed from start of file
-        //HASH hash(k, 256 * 256 * 256);
+        uint64_t be_seed;
+        in_file.read(reinterpret_cast<char *>(&be_seed), 8);
+        uint64_t seed = be64toh(be_seed);
+
+        HASH hash(k, seed);
         MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
         mtf.decode(in_file, out_file);
 
