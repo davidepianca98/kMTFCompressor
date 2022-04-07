@@ -42,21 +42,6 @@ public:
         delete[] T;
     }
 
-    void init(const std::vector<uint8_t> &start) override {
-        hash = 0;
-        // First k-mer
-        for (int j = 0; j < k; j++) {
-            uint8_t c = start[j];
-            kmer[j] = c;
-
-            kmer_hash = (kmer_hash << 8) | c;
-        }
-        for (int j = 0; j < t; j++) {
-            hash ^= T[j * len + (kmer_hash >> (r * j)) & 0xFF]; // TODO instead of FF should be r ones
-        }
-        i = 0;
-    }
-
     void update(uint8_t c) override {
         // Update k-mer
         uint8_t old = kmer[i];
@@ -73,7 +58,7 @@ public:
 
         hash = 0;
         for (int j = 0; j < t; j++) {
-            hash ^= T[j * len + (kmer_hash >> (r * j)) & 0xFF];
+            hash ^= T[j * len + (kmer_hash >> (r * j)) & 0xFF]; // TODO instead of FF should be r ones
         }
     }
 };

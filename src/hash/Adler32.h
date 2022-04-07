@@ -16,21 +16,6 @@ private:
 public:
     Adler32(int k, uint64_t seed) : Hash(k, seed) {}
 
-    void init(const std::vector<uint8_t> &start) override {
-        a = 1;
-        b = 0;
-        // First k-mer
-        for (int j = 0; j < k; j++) {
-            uint8_t c = start[j];
-            kmer[j] = c;
-
-            a = (a + c) % BASE;
-            b = (b + a) % BASE;
-        }
-
-        hash = (b << 16) | a;
-    }
-
     void update(uint8_t c) override {
         // Update k-mer
         uint8_t old = kmer[i];

@@ -19,22 +19,6 @@ private:
 public:
     RabinKarp(int k, uint64_t seed) : Hash(k, seed) {
         base = dis(gen);
-    }
-
-    void init(const std::vector<uint8_t> &start) override {
-        hash = 0;
-        // First k-mer
-        for (int j = 0; j < k; j++) {
-            uint8_t c = start[j];
-            kmer[j] = c;
-
-            // Multiply the hash by the multiplier to "shift left"
-            hash = (hash * base) % M61;
-            // Add the new character (push right)
-            hash = (hash + c) % M61;
-        }
-
-        i = 0;
 
         // Build the multiplier (power) for the leftmost character, needed to remove it when updating
         xk = 1;

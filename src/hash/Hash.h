@@ -31,8 +31,6 @@ public:
 
     virtual ~Hash() = default;
 
-    virtual void init(const std::vector<uint8_t> &start) {};
-
     virtual void update(uint8_t c) {};
 
     [[nodiscard]] virtual uint64_t get_hash() const {

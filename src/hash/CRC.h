@@ -23,25 +23,13 @@ private:
     }
 
 public:
-    CRC(int k, uint64_t seed) : Hash(k, seed) {}
-
-    void init(const std::vector<uint8_t> &start) override {
+    CRC(int k, uint64_t seed) : Hash(k, seed) {
         hash = 0;
         mask1 = 1ul << (WORD_SIZE - 1 - 1);
         mask1 ^= mask1 - 1;
 
         maskn = 1ul << (WORD_SIZE - k - 1);
         maskn ^= maskn - 1;
-
-        // First k-mer
-        for (int j = 0; j < k; j++) {
-            uint8_t c = start[j];
-            kmer[j] = c;
-
-            hash = fastleftshift1(hash);
-            hash ^= c;
-        }
-        i = 0;
     }
 
     void update(uint8_t c) override {

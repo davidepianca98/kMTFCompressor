@@ -22,16 +22,6 @@ class VectorHash : public Hash {
 public:
     VectorHash(int k, int size) : Hash(k, size) {}
 
-    void init(const std::vector<uint8_t> &start) override {
-        sum = 0;
-        i = 0;
-        for (int j = 0; j < k; j++) {
-            kmer[j] = start[j];
-            sum += kmer[j];
-        }
-        compute();
-    }
-
     void update(uint8_t c) override {
         // Update k-mer
         uint8_t old = kmer[i];

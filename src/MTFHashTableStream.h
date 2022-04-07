@@ -11,8 +11,6 @@
 template <typename HASH, typename T>
 class MTFHashTableStream : public MTFHashTable<HASH, T> {
 
-    bool started;
-
     std::vector<uint8_t> byte_array;
     std::vector<uint32_t> int_array;
 
@@ -81,32 +79,19 @@ class MTFHashTableStream : public MTFHashTable<HASH, T> {
     }
 
     void reverse_mtf(const uint32_t *data, int length, std::ostream &out) {
-        std::vector<uint8_t> start(MTFHashTable<HASH, T>::hash_function.get_length());
-
         for (int i = 0; i < length; i++) {
-            if (!started && i < start.size()) {
-                start[i] = (uint8_t) (data[i] - MTFHashTable<HASH, T>::byte_size());
-                byte_array[i] = start[i];
-                if (i == start.size() - 1) {
-                    started = true;
-                    MTFHashTable<HASH, T>::hash_function.init(start);
-                }
-            } else {
-                byte_array[i] = MTFHashTable<HASH, T>::mtfDecode(data[i]);
-            }
+            byte_array[i] = MTFHashTable<HASH, T>::mtfDecode(data[i]);
         }
         out.write(reinterpret_cast<const char *>(byte_array.data()), (long) length);
     }
 
 public:
-    MTFHashTableStream(int blockSize, int k, uint64_t seed) : MTFHashTable<HASH, T>(blockSize, k, seed), started(false) {
+    MTFHashTableStream(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, T>(block_size, max_memory_usage, k, seed) {
         byte_array.resize(MTFHashTable<HASH, T>::block_size);
         int_array.resize(MTFHashTable<HASH, T>::block_size);
     }
 
     void encode(std::istream& in, obitstream& out) {
-        started = false;
-        std::vector<uint8_t> start(MTFHashTable<HASH, T>::hash_function.get_length());
         std::future<void> future;
         auto *out_block1 = new uint32_t[MTFHashTable<HASH, T>::block_size];
 
@@ -120,21 +105,7 @@ public:
 
             // Apply transformation
             for (int i = 0; i < read_bytes; i++) {
-                uint32_t out_c;
-                if (!started && i < start.size()) {
-                    uint8_t c = byte_array[i];
-                    start[i] = c;
-                    MTFHashTable<HASH, T>::count_symbol_in(c);
-                    out_c = (uint32_t) c + MTFHashTable<HASH, T>::byte_size();
-                    MTFHashTable<HASH, T>::count_symbol_out(out_c);
-                    if (i == start.size() - 1) {
-                        started = true;
-                        MTFHashTable<HASH, T>::hash_function.init(start);
-                    }
-                } else {
-                    out_c = MTFHashTable<HASH, T>::mtfEncode(byte_array[i]);
-                }
-                int_array[i] = out_c;
+                int_array[i] = MTFHashTable<HASH, T>::mtfEncode(byte_array[i]);
             }
 
             if (future.valid()) {
@@ -157,7 +128,6 @@ public:
     }
 
     void decode(ibitstream& in, std::ostream& out) {
-        started = false;
         std::future<void> future;
         auto *out_block1 = new uint32_t[MTFHashTable<HASH, T>::block_size];
 

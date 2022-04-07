@@ -18,22 +18,8 @@ public:
     LinearHash(int k, uint64_t seed) : Hash(k, seed) {
         a = dis(gen);
         b = dis(gen);
-    }
-
-    LinearHash(const LinearHash& hash) = default;
-
-    void init(const std::vector<uint8_t> &start) override {
         hash = 0;
         kmer_hash = 0;
-        // First k-mer
-        for (int j = 0; j < k; j++) {
-            uint8_t c = start[j];
-            kmer[j] = c;
-
-            kmer_hash = (kmer_hash << 8) | c;
-        }
-        hash = (a * kmer_hash + b) % M61;
-        i = 0;
     }
 
     void update(uint8_t c) override {

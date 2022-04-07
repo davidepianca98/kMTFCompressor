@@ -29,7 +29,7 @@ public:
     }
 
     template <typename HASH, typename T>
-    static int compress_block(const std::string& path, const std::string& out_path, int k) {
+    static int compress_block(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
         std::ifstream in_file(path, std::ios::binary);
         if (in_file.fail()) {
             return 1;
@@ -46,7 +46,7 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, seed, block_size, block_size * 4 + 1024);
+            workers.emplace_back(k, seed, block_size, block_size * 4 + 1024, max_memory_usage / core_number);
         }
 
         while (in_file.good()) {
@@ -74,7 +74,7 @@ public:
     }
 
     template <typename HASH, typename T>
-    static int decompress_block(const std::string& path, const std::string& out_path, int k) {
+    static int decompress_block(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
         std::ifstream in_file(path, std::ios::binary);
         if (in_file.fail()) {
             return 1;
@@ -92,7 +92,7 @@ public:
 
         std::vector<MTFBlockWorker<HASH, T>> workers;
         for (int i = 0; i < core_number; i++) {
-            workers.emplace_back(k, seed, max_block_size, max_block_size * 4 + 1024);
+            workers.emplace_back(k, seed, max_block_size, max_block_size * 4 + 1024, max_memory_usage / core_number);
         }
 
         while (in_file.good()) {
@@ -122,7 +122,7 @@ public:
     }
 
     template <typename HASH, typename T>
-    static int compress_stream(const std::string& path, const std::string& out_path, int k) {
+    static int compress_stream(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
         std::ifstream in_file(path, std::ios::binary);
         if (in_file.fail()) {
             return 1;
@@ -133,7 +133,7 @@ public:
         uint64_t be_seed = htobe64(seed);
         out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
 
-        MTFHashTableStream<HASH, T> mtf(1024 * 1024, k, seed); // 1 MB block size
+        MTFHashTableStream<HASH, T> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
         mtf.encode(in_file, out_file);
 
         in_file.close();
@@ -143,7 +143,7 @@ public:
     }
 
     template <typename HASH, typename T>
-    static int decompress_stream(const std::string& path, const std::string& out_path, int k) {
+    static int decompress_stream(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
         ifbitstream in_file(path);
         if (in_file.fail()) {
             return 1;
@@ -154,7 +154,7 @@ public:
         in_file.read(reinterpret_cast<char *>(&be_seed), 8);
         uint64_t seed = be64toh(be_seed);
 
-        MTFHashTableStream<HASH, T> mtf(1024 * 1024, k, seed); // 1 MB block size
+        MTFHashTableStream<HASH, T> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
         mtf.decode(in_file, out_file);
 
         in_file.close();

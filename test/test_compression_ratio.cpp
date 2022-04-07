@@ -4,7 +4,13 @@
 #include <iostream>
 #include "MTFHashCompressor.h"
 #include "RabinKarp.h"
-//#include "SequenceCompressor.h"
+#include "LinearHash.h"
+#include "TabulationHash.h"
+#include "Fnv1a.h"
+#include "Adler32.h"
+#include "CRC.h"
+#include "VectorHash.h"
+#include "MinimiserHash.h"
 //#include "MTF.h"
 
 int main() {
@@ -14,19 +20,23 @@ int main() {
     //std::string path = "../../test/resources/pizzachilirep";
     //std::string path = "../../test/resources/mio";
     //std::string path = "../../test/resources/maximumcompression";
+    //std::string path = "../../test/resources/texts";
     uint64_t size_uncompressed = 0;
     uint64_t size_compressed = 0;
     uint64_t total_time = 0;
+
+    uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
+
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
-            //MTFHashCompressor::compress_block<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3);
-            MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3);
-            //MTF::compress(entry.path().string(), entry.path().string() + ".mtf");
-            //SequenceCompressor::compress_stream(entry.path().string(), entry.path().string() + ".mtf");
+            //MTFHashCompressor::compress_block<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
+            MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
+            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 5, ram);
+            //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
             std::filesystem::path compressed(entry.path().string() + ".mtf");

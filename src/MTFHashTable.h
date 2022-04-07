@@ -27,6 +27,7 @@ protected:
 
     // Size of the block
     int block_size;
+    uint64_t max_table_size;
 
     uint64_t modulo_val;
 
@@ -58,16 +59,25 @@ protected:
     uint64_t ones = 0;
     uint64_t twos = 0;
 
+    int kmer_chars = 0;
+
 
     uint32_t mtfEncode(uint8_t c) {
-        uint64_t hash = hash_function.get_hash() & modulo_val;
-        MTFBuffer<T>& buf = hash_table[hash];
-        keep_track(buf);
+        count_symbol_in(c);
+        uint32_t out;
+
+        if (kmer_chars < hash_function.get_length()) {
+            kmer_chars++;
+            out = (uint32_t) c + byte_size();
+        } else {
+            uint64_t hash = hash_function.get_hash() & modulo_val;
+            MTFBuffer<T>& buf = hash_table[hash];
+            keep_track(buf);
+            out = buf.encode(c);
+        }
 
         hash_function.update(c);
-        count_symbol_in(c);
 
-        uint32_t out = buf.encode(c);
         count_symbol_out(out);
 
         double_table();
@@ -75,11 +85,17 @@ protected:
     }
 
     uint8_t mtfDecode(uint32_t i) {
-        uint64_t hash = hash_function.get_hash() & modulo_val;
-        MTFBuffer<T>& buf = hash_table[hash];
-        keep_track(buf);
+        uint8_t c;
+        if (kmer_chars < hash_function.get_length()) {
+            kmer_chars++;
+            c = (uint8_t) (i - byte_size());
+        } else {
+            uint64_t hash = hash_function.get_hash() & modulo_val;
+            MTFBuffer<T> &buf = hash_table[hash];
+            keep_track(buf);
 
-        uint8_t c = buf.decode(i);
+            c = buf.decode(i);
+        }
         hash_function.update(c);
 
         double_table();
@@ -115,7 +131,7 @@ protected:
     }
 
     void double_table() {
-        if (used_cells * 10 > hash_table.size() && hash_table.size() < 134217728) {
+        if (used_cells * 10 > hash_table.size() && hash_table.size() * 2 < max_table_size) {
             hash_table.resize(hash_table.size() * 2);
 
             modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
@@ -134,8 +150,7 @@ protected:
     }
 
 public:
-    MTFHashTable(int block_size, int k, uint64_t seed) : hash_table(4096),
-                                                         block_size(block_size), hash_function(k, seed) {
+    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_table(4096), max_table_size(max_memory_usage / sizeof(MTFRankBuffer<T>)), block_size(block_size), hash_function(k, seed) {
         modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
     }
 

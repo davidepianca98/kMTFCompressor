@@ -17,6 +17,7 @@ class MTFBlockWorker {
 
     int k;
     uint64_t seed;
+    uint64_t max_memory_usage;
     bool valid = false;
     std::future<uint32_t> future;
 
@@ -26,9 +27,8 @@ class MTFBlockWorker {
     uint32_t compressBlock(const uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[size];
 
-        MTFHashTableBlock<HASH, T> mtf(size, k, seed);
+        MTFHashTableBlock<HASH, T> mtf(size, max_memory_usage, k, seed);
         mtf.encode(in, size, out_block1);
-
         obufbitstream buf(final_block, out_block.size());
         AdaptiveHuffman ah(256 + byte_size() + 1);
         for (int i = 0; i < size; i++) {
@@ -56,7 +56,7 @@ class MTFBlockWorker {
             decompressed_size++;
         }
 
-        MTFHashTableBlock<HASH, T> mtf(decompressed_size, k, seed);
+        MTFHashTableBlock<HASH, T> mtf(decompressed_size, max_memory_usage, k, seed);
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;
@@ -79,7 +79,7 @@ class MTFBlockWorker {
 
 public:
 
-    MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size) {}
+    MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size, uint64_t max_memory_usage) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size), max_memory_usage(max_memory_usage) {}
 
     void startCompression(long size) {
         if (!valid && size > 0) {
