@@ -19,7 +19,6 @@ void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out
 
     for (; i < size; i++) {
         out_block[i] = this->mtfEncode(block[i]);
-        this->double_table();
     }
 }
 
@@ -36,7 +35,6 @@ void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out
 
     for (; i < size; i++) {
         out_block[i] = this->mtfDecode(block[i]);
-        this->double_table();
     }
 }
 

@@ -116,7 +116,6 @@ public:
             return 1;
         }
         ofbitstream out_file(out_path);
-        //std::ofstream out_file(out_path);
 
         HASH hash(k, 4096);
         //HASH hash(k, 256 * 256 * 256);

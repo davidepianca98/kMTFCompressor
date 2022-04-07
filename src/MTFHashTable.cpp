@@ -25,6 +25,8 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
 
     uint32_t out = buf.encode(c);
     count_symbol_out(out);
+
+    double_table();
     return out;
 }
 
@@ -37,6 +39,8 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
 
     uint8_t c = buf.decode(i);
     hash_function.update(c);
+
+    double_table();
     return c;
 }
 
@@ -93,8 +97,8 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
 
     double entropy_in = calculate_entropy(symbols_in, 256);
-    double entropy_out = calculate_entropy(symbols_out, 256 + byte_size() + 2);
-    double entropy_out_rle = calculate_entropy(symbols_out_run, 256 + byte_size() + 2);
+    double entropy_out = calculate_entropy(symbols_out, 256 + byte_size());
+    double entropy_out_rle = calculate_entropy(symbols_out_run, 256 + byte_size());
 
     for (uint32_t i : symbols_in) {
         std::cout << i << ",";

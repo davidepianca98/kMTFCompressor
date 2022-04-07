@@ -110,8 +110,6 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
                 out_c = this->mtfEncode(byte_array[i]);
             }
             int_array[i] = out_c;
-
-            this->double_table(); // TODO move into encode and decode
         }
 
         if (future.valid()) {
@@ -147,7 +145,6 @@ void MTFHashTableStream<T>::reverse_mtf(const uint32_t *data, int length, std::o
             }
         } else {
             byte_array[i] = this->mtfDecode(data[i]);
-            this->double_table();
         }
     }
     out.write(reinterpret_cast<const char *>(byte_array.data()), (long) length);

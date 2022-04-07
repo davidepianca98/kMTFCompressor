@@ -34,8 +34,8 @@ public:
 
                 // Swap
                 T max = 0xFF;
-                this->buf = (this->buf & ~(max << (i * 8))) | ((T) c2 << (i * 8));
-                this->buf = (this->buf & ~(max << (j * 8))) | ((T) c << (j * 8));
+                MTFBuffer<T>::buf = (MTFBuffer<T>::buf & ~(max << (i * 8))) | ((T) c2 << (i * 8));
+                MTFBuffer<T>::buf = (MTFBuffer<T>::buf & ~(max << (j * 8))) | ((T) c << (j * 8));
 
                 i = j;
             } else {
@@ -49,7 +49,7 @@ public:
 
     void append(uint8_t c) override {
         int i;
-        for (i = 0; i < this->byte_size() - 1; i++) {
+        for (i = 0; i < MTFBuffer<T>::byte_size() - 1; i++) {
             if (counter[i] < 1) {
                 break;
             }
@@ -58,9 +58,13 @@ public:
         if (i == 0) {
             MTFBuffer<T>::append(c);
         } else {
-            T right = (this->buf << ((this->byte_size() - i) * 8)) >> ((this->byte_size() - i) * 8);
+            T right = (MTFBuffer<T>::buf << ((MTFBuffer<T>::byte_size() - i) * 8)) >> ((MTFBuffer<T>::byte_size() - i) * 8);
             // Insert in position i
-            this->buf = right | ((T) c << (i * 8));
+            MTFBuffer<T>::buf = right | ((T) c << (i * 8));
+
+            if (MTFBuffer<T>::symbols < MTFBuffer<T>::byte_size()) {
+                MTFBuffer<T>::symbols++;
+            }
         }
 
         normalize_rank_counter();

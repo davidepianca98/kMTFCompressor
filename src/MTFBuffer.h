@@ -10,6 +10,7 @@ class MTFBuffer {
 protected:
     T buf = 0;
 
+    uint8_t symbols = 0;
     bool is_visited = false;
 
 public:
@@ -40,6 +41,9 @@ public:
 
     virtual void append(uint8_t c) {
         buf = (buf << 8) | c;
+        if (symbols < byte_size()) {
+            symbols++;
+        }
     }
 
     uint8_t extract(uint8_t i) {
@@ -47,27 +51,15 @@ public:
     }
 
     uint32_t encode(uint8_t c) {
-        bool zero = false;
-        for (uint8_t i = 0; i < byte_size(); i++) {
+        for (uint8_t i = 0; i < symbols; i++) {
             uint8_t extracted = extract(i);
             if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
                 shift(c, i);
                 return i;
             }
-            // If two consecutive zeros are found, it means the remaining part of the buffer is not initialized yet, so
-            // no need to continue iterating
-            if (extracted == 0) {
-                if (!zero) {
-                    zero = true;
-                } else {
-                    break;
-                }
-            } else {
-                zero = false;
-            }
         }
 
-        // Not found so shift left and put character in first position
+        // Not found so add the symbol to the buffer
         append(c);
 
         // Sum byte_size to differentiate between indexes on the MTF buffer and characters
