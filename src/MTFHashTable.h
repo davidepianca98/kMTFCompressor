@@ -7,6 +7,7 @@
 #include <vector>
 #include <queue>
 #include <boost/multiprecision/cpp_int.hpp>
+#include <unordered_set>
 #include "Hash.h"
 #include "MTFBuffer.h"
 #include "MTFRankBuffer.h"
@@ -28,6 +29,7 @@ protected:
     // Size of the block
     int block_size;
     uint64_t max_table_size;
+    bool doubling = true;
 
     uint64_t modulo_val;
 
@@ -52,6 +54,7 @@ protected:
     uint64_t symbols_out[256 + byte_size()] = { 0 };
     uint64_t symbols_out_run[256 + byte_size()] = { 0 };
     uint64_t stream_length = 0;
+    std::unordered_set<uint64_t> distinct_kmers;
     // Runs
     uint8_t last_symbol_out = 0;
     uint64_t runs = 1;
@@ -74,6 +77,8 @@ protected:
             MTFBuffer<T>& buf = hash_table[hash];
             keep_track(buf);
             out = buf.encode(c);
+
+            distinct_kmers.insert(hash_function.get_hash());
         }
 
         hash_function.update(c);
@@ -131,7 +136,7 @@ protected:
     }
 
     void double_table() {
-        if (used_cells * 10 > hash_table.size() && hash_table.size() * 2 < max_table_size) {
+        if (doubling && used_cells * 10 > hash_table.size() && hash_table.size() * 2 < max_table_size) {
             hash_table.resize(hash_table.size() * 2);
 
             modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
@@ -150,14 +155,23 @@ protected:
     }
 
 public:
-    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_table(4096), max_table_size(max_memory_usage / sizeof(MTFRankBuffer<T>)), block_size(block_size), hash_function(k, seed) {
+    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed) {
+        max_table_size = max_memory_usage / sizeof(MTFRankBuffer<T>);
+        if (doubling) { // TODO set as parameter
+            hash_table.resize(4096);
+        } else {
+            hash_table.resize(max_table_size);
+            //hash_table.resize(524288);
+            //hash_table.resize(4096);
+        }
+
         modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
     }
 
     void print_stats() {
         std::cout << "Used hash cells = " << used_cells << "/" << hash_table.size() << std::endl;
         std::cout << "Hash table load = " << used_cells / double(hash_table.size()) << std::endl;
-        // TODO count number of distinct kmers
+        std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 
         std::cout << "Number of runs = " << runs << std::endl;
         std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
