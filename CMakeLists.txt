@@ -1,14 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
-project(MTF)
+project(MTF CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
-
-set(SOURCE_FILES
-        src/MTFHashTable.cpp
-        src/MTFHashTableBlock.cpp
-        src/MTFHashTableStream.cpp)
 
 set(HEADER_FILES
         src/MTFBuffer.h
@@ -26,8 +21,8 @@ set(HEADER_FILES
         src/hash/Fnv1a.h
         src/hash/Hash.h
         src/hash/Identity.h
-        src/hash/JumpConsistent.h
         src/hash/LinearHash.h
+        src/hash/MinimiserHash.h
         src/hash/RabinKarp.h
         src/hash/TabulationHash.h
         src/hash/VectorHash.h
@@ -40,7 +35,8 @@ set(HEADER_FILES
 
 enable_testing()
 
-add_library(MTF_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
+add_library(MTF_lib STATIC ${HEADER_FILES})
+set_target_properties(MTF_lib PROPERTIES LINKER_LANGUAGE CXX)
 include_directories(src)
 include_directories(src/hash)
 

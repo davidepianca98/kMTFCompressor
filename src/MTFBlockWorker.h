@@ -20,15 +20,13 @@ class MTFBlockWorker {
     bool valid = false;
     std::future<uint32_t> future;
 
-    HASH hash;
-
     std::vector<uint8_t> in_block;
     std::vector<uint8_t> out_block;
 
     uint32_t compressBlock(const uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[size];
 
-        MTFHashTableBlock<T> mtf(size, std::ref(hash));
+        MTFHashTableBlock<HASH, T> mtf(size, k, seed);
         mtf.encode(in, size, out_block1);
 
         obufbitstream buf(final_block, out_block.size());
@@ -58,7 +56,7 @@ class MTFBlockWorker {
             decompressed_size++;
         }
 
-        MTFHashTableBlock<T> mtf(decompressed_size, std::ref(hash));
+        MTFHashTableBlock<HASH, T> mtf(decompressed_size, k, seed);
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;
@@ -81,11 +79,10 @@ class MTFBlockWorker {
 
 public:
 
-    MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size), hash(k, seed) {}
+    MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size) {}
 
     void startCompression(long size) {
         if (!valid && size > 0) {
-            hash = HASH(k, seed);
             future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::compressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }
@@ -93,7 +90,6 @@ public:
 
     void startDecompression(long size) {
         if (!valid && size > 0) {
-            hash = HASH(k, seed);
             future = std::async(std::launch::async, &MTFBlockWorker<HASH, T>::decompressBlock, this, in_block.data(), size, out_block.data());
             valid = true;
         }
