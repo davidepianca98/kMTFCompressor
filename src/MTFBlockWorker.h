@@ -30,7 +30,7 @@ class MTFBlockWorker {
         MTFHashTableBlock<HASH, T> mtf(size, max_memory_usage, k, seed);
         mtf.encode(in, size, out_block1);
         obufbitstream buf(final_block, out_block.size());
-        AdaptiveHuffman ah(256 + byte_size() + 1);
+        AdaptiveHuffman ah(256 + byte_size() + 1); // TODO RLE
         for (int i = 0; i < size; i++) {
             ah.encode(out_block1[i], buf);
         }

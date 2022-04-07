@@ -14,33 +14,6 @@ class MTFHashTableStream : public MTFHashTable<HASH, T> {
     std::vector<uint8_t> byte_array;
     std::vector<uint32_t> int_array;
 
-    void entropy_rle_encode_zeros(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
-        if (bytes > 0) {
-            uint64_t counter = 0;
-            for (int i = 0; i < bytes; i++) {
-                if (data[i] == 0) {
-                    counter++;
-                    if (counter >= 255) {
-                        ah.encode(0, out);
-                        ahrle.encode(counter, out);
-                        counter = 0;
-                    }
-                } else {
-                    if (counter > 0) {
-                        ah.encode(0, out);
-                        ahrle.encode(counter, out);
-                        counter = 0;
-                    }
-                    ah.encode(data[i], out);
-                }
-            }
-            if (counter > 0) {
-                ah.encode(0, out);
-                ahrle.encode(counter, out);
-            }
-        }
-    }
-
     void entropy_rle_encode_n(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
         if (bytes > 0) {
             int n = 4;
@@ -65,7 +38,7 @@ class MTFHashTableStream : public MTFHashTable<HASH, T> {
                 }
                 last = data[i];
             }
-            if (counter > n) {
+            if (counter >= n) {
                 ahrle.encode(counter - n, out);
             }
         }
@@ -129,11 +102,15 @@ public:
 
     void decode(ibitstream& in, std::ostream& out) {
         std::future<void> future;
-        auto *out_block1 = new uint32_t[MTFHashTable<HASH, T>::block_size];
+        auto *out_block1 = new uint32_t[MTFHashTable<HASH, T>::block_size * 2];
 
+        AdaptiveHuffman ahrle(UINT8_MAX + 1);
         AdaptiveHuffman ah(256 + MTFHashTable<HASH, T>::byte_size() + 1);
         int i = 0;
         bool stop = false;
+        int counter = 1;
+        int last = -1;
+
         while (!stop) {
             int num = ah.decode(in);
             // Check if error happened or EOF symbol reached
@@ -141,6 +118,20 @@ public:
                 stop = true;
             } else {
                 out_block1[i++] = num;
+                // RLE decode
+                if (last == num) {
+                    counter++;
+                    if (counter >= 4) {
+                        int length = ahrle.decode(in);
+                        for (int j = 0; j < length; j++) {
+                            out_block1[i++] = num;
+                        }
+                        counter = 0;
+                    }
+                } else {
+                    counter = 1;
+                }
+                last = num;
             }
 
             if (i >= MTFHashTable<HASH, T>::block_size || stop) {
