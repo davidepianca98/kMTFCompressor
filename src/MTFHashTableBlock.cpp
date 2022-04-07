@@ -8,33 +8,33 @@ MTFHashTableBlock<T>::MTFHashTableBlock(int block_size, Hash& hash) : MTFHashTab
 
 template <typename T>
 void MTFHashTableBlock<T>::encode(const uint8_t *block, long size, uint32_t *out_block) {
-    std::vector<uint8_t> start(this->hash_function.get_length());
+    std::vector<uint8_t> start(MTFHashTable<T>::hash_function.get_length());
     int i;
     for (i = 0; i < start.size(); i++) {
         start[i] = block[i];
-        out_block[i] = (uint32_t) block[i] + this->byte_size();
+        out_block[i] = (uint32_t) block[i] + MTFHashTable<T>::byte_size();
     }
 
-    this->hash_function.init(start);
+    MTFHashTable<T>::hash_function.init(start);
 
     for (; i < size; i++) {
-        out_block[i] = this->mtfEncode(block[i]);
+        out_block[i] = MTFHashTable<T>::mtfEncode(block[i]);
     }
 }
 
 template <typename T>
 void MTFHashTableBlock<T>::decode(const uint32_t *block, long size, uint8_t *out_block) {
-    std::vector<uint8_t> start(this->hash_function.get_length());
+    std::vector<uint8_t> start(MTFHashTable<T>::hash_function.get_length());
     int i;
     for (i = 0; i < start.size(); i++) {
-        start[i] = (uint8_t) (block[i] - this->byte_size());
+        start[i] = (uint8_t) (block[i] - MTFHashTable<T>::byte_size());
         out_block[i] = start[i];
     }
 
-    this->hash_function.init(start);
+    MTFHashTable<T>::hash_function.init(start);
 
     for (; i < size; i++) {
-        out_block[i] = this->mtfDecode(block[i]);
+        out_block[i] = MTFHashTable<T>::mtfDecode(block[i]);
     }
 }
 

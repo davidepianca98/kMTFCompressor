@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <vector>
 #include <cmath>
-#include <random>
 #include "Hash.h"
 
 class TabulationHash : public Hash {
@@ -15,8 +14,6 @@ private:
 
     // Number of bits in the key to be hashed
     uint64_t p = 0;
-    // Number of bits to output as hash
-    uint64_t q = 0;
     // Block size (r <= p)
     uint64_t r = 8;
     // Number of blocks to represent a key
@@ -27,14 +24,10 @@ private:
     int len;
 
 public:
-    explicit TabulationHash(int k, int size) : Hash(k, size), p(k * 8), q((uint64_t) log2(size)) {
+    TabulationHash(int k, uint64_t seed) : Hash(k, seed), p(k * 8) {
         t = ceil((double) p / (double) r);
         len = (int) pow(2, (double) r);
         T = new uint64_t[len * t];
-
-        std::random_device rd;
-        std::mt19937_64 gen(rd());
-        std::uniform_int_distribution<uint64_t> dis;
 
         for (int j1 = 0; j1 < t; j1++) {
             for (int j2 = 0; j2 < len; j2++) {
@@ -62,11 +55,6 @@ public:
             hash ^= T[j * len + (kmer_hash >> (r * j)) & 0xFF]; // TODO instead of FF should be r ones
         }
         i = 0;
-    }
-
-    void resize(uint64_t size) override {
-        this->size = size;
-        q = (uint64_t) log2((double) size);
     }
 
     void update(uint8_t c) override {

@@ -11,12 +11,14 @@ private:
     uint64_t i = 0;
     uint64_t kmer_hash = 0;
 
-    static constexpr uint64_t a = 12828009;
-    static constexpr uint64_t b = 77602751;
-    static constexpr uint64_t q = 100000007;
+    uint64_t a;
+    uint64_t b;
 
 public:
-    explicit LinearHash(int k, int size) : Hash(k, size) {}
+    LinearHash(int k, uint64_t seed) : Hash(k, seed) {
+        a = dis(gen);
+        b = dis(gen);
+    }
 
     LinearHash(const LinearHash& hash) = default;
 
@@ -30,7 +32,7 @@ public:
 
             kmer_hash = (kmer_hash << 8) | c;
         }
-        hash = (a * kmer_hash + b) % q;
+        hash = (a * kmer_hash + b) % M61;
         i = 0;
     }
 
@@ -48,7 +50,7 @@ public:
         kmer_hash -= old << ((k - 1) * 8);
         kmer_hash = (kmer_hash << 8) | c;
 
-        hash = (a * kmer_hash + b) % q;
+        hash = (a * kmer_hash + b) % M61;
     }
 };
 

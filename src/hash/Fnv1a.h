@@ -16,7 +16,7 @@ private:
     //static constexpr uint64_t PRIME = 1099511628211;
 
 public:
-    explicit Fnv1a(int k, int size) : Hash(k, size) {}
+    Fnv1a(int k, uint64_t seed) : Hash(k, seed) {}
 
     void init(const std::vector <uint8_t> &start) override {
         uint32_t hash = BASE;
@@ -28,7 +28,7 @@ public:
 
             hash = (hash ^ c) * PRIME;
         }
-        this->hash = hash;
+        Hash::hash = hash;
     }
 
     void update(uint8_t c) override {
@@ -41,7 +41,7 @@ public:
         for (int j = 0; j < k; j++) {
             hash = (hash ^ kmer[(i + j + 1) % k]) * PRIME;
         }
-        this->hash = hash;
+        Hash::hash = hash;
     }
 };
 

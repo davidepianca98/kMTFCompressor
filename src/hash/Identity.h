@@ -12,7 +12,7 @@ private:
     uint64_t sh = 0;
 
 public:
-    explicit Identity(int k, int size) : Hash(k, size) {
+    Identity(int k, uint64_t seed) : Hash(k, seed) {
         assert(k <= 8);
         sh = (~0ul >> (64 - (8 * k)));
         hash = 0;

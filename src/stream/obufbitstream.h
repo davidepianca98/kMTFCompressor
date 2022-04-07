@@ -15,10 +15,10 @@ public:
     }
 
     uint64_t size() {
-        if (this->bit_count % 8 > 0) {
-            return this->bit_count / 8 + 1;
+        if (obitstream::bit_count % 8 > 0) {
+            return obitstream::bit_count / 8 + 1;
         }
-        return this->bit_count / 8;
+        return obitstream::bit_count / 8;
     }
 };
 

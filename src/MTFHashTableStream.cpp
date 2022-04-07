@@ -7,8 +7,8 @@
 
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int blockSize, Hash& hash) : MTFHashTable<T>(blockSize, hash), started(false) {
-    byte_array.resize(this->block_size);
-    int_array.resize(this->block_size);
+    byte_array.resize(MTFHashTable<T>::block_size);
+    int_array.resize(MTFHashTable<T>::block_size);
 }
 
 
@@ -81,16 +81,16 @@ void MTFHashTableStream<T>::entropy_encode(const uint32_t *data, int length, Ada
 template <typename T>
 void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     started = false;
-    std::vector<uint8_t> start(this->hash_function.get_length());
+    std::vector<uint8_t> start(MTFHashTable<T>::hash_function.get_length());
     std::future<void> future;
-    auto *out_block1 = new uint32_t[this->block_size];
+    auto *out_block1 = new uint32_t[MTFHashTable<T>::block_size];
 
     AdaptiveHuffman ahrle(UINT8_MAX + 1);
-    AdaptiveHuffman ah(256 + this->byte_size() + 1);
+    AdaptiveHuffman ah(256 + MTFHashTable<T>::byte_size() + 1);
     long read_bytes;
     do {
         // Read block
-        in.read(reinterpret_cast<char *>(byte_array.data()), this->block_size);
+        in.read(reinterpret_cast<char *>(byte_array.data()), MTFHashTable<T>::block_size);
         read_bytes = in.gcount();
 
         // Apply transformation
@@ -99,15 +99,15 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
             if (!started && i < start.size()) {
                 uint8_t c = byte_array[i];
                 start[i] = c;
-                this->count_symbol_in(c);
-                out_c = (uint32_t) c + this->byte_size();
-                this->count_symbol_out(out_c);
+                MTFHashTable<T>::count_symbol_in(c);
+                out_c = (uint32_t) c + MTFHashTable<T>::byte_size();
+                MTFHashTable<T>::count_symbol_out(out_c);
                 if (i == start.size() - 1) {
                     started = true;
-                    this->hash_function.init(start);
+                    MTFHashTable<T>::hash_function.init(start);
                 }
             } else {
-                out_c = this->mtfEncode(byte_array[i]);
+                out_c = MTFHashTable<T>::mtfEncode(byte_array[i]);
             }
             int_array[i] = out_c;
         }
@@ -124,27 +124,27 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     if (future.valid()) {
         future.wait();
     }
-    ah.encode(256 + this->byte_size(), out);
+    ah.encode(256 + MTFHashTable<T>::byte_size(), out);
     out.flush_remaining();
 
-    this->print_stats();
+    MTFHashTable<T>::print_stats();
     delete[] out_block1;
 }
 
 template <typename T>
 void MTFHashTableStream<T>::reverse_mtf(const uint32_t *data, int length, std::ostream &out) {
-    std::vector<uint8_t> start(this->hash_function.get_length());
+    std::vector<uint8_t> start(MTFHashTable<T>::hash_function.get_length());
 
     for (int i = 0; i < length; i++) {
         if (!started && i < start.size()) {
-            start[i] = (uint8_t) (data[i] - this->byte_size());
+            start[i] = (uint8_t) (data[i] - MTFHashTable<T>::byte_size());
             byte_array[i] = start[i];
             if (i == start.size() - 1) {
                 started = true;
-                this->hash_function.init(start);
+                MTFHashTable<T>::hash_function.init(start);
             }
         } else {
-            byte_array[i] = this->mtfDecode(data[i]);
+            byte_array[i] = MTFHashTable<T>::mtfDecode(data[i]);
         }
     }
     out.write(reinterpret_cast<const char *>(byte_array.data()), (long) length);
@@ -154,21 +154,21 @@ template <typename T>
 void MTFHashTableStream<T>::decode(ibitstream &in, std::ostream &out) {
     started = false;
     std::future<void> future;
-    auto *out_block1 = new uint32_t[this->block_size];
+    auto *out_block1 = new uint32_t[MTFHashTable<T>::block_size];
 
-    AdaptiveHuffman ah(256 + this->byte_size() + 1);
+    AdaptiveHuffman ah(256 + MTFHashTable<T>::byte_size() + 1);
     int i = 0;
     bool stop = false;
     while (!stop) {
         int num = ah.decode(in);
         // Check if error happened or EOF symbol reached
-        if (num < 0 || num == 256 + this->byte_size() || !in.remaining()) {
+        if (num < 0 || num == 256 + MTFHashTable<T>::byte_size() || !in.remaining()) {
             stop = true;
         } else {
             out_block1[i++] = num;
         }
 
-        if (i >= this->block_size || stop) {
+        if (i >= MTFHashTable<T>::block_size || stop) {
             if (future.valid()) {
                 future.wait();
             }

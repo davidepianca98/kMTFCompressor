@@ -26,7 +26,7 @@ public:
 
     template <typename HASH, typename T>
     static int compress_block(const std::string& path, const std::string& out_path, int k) {
-        std::ifstream in_file(path, std::ios::binary);
+        std::ifstream in_file(path, std::ios::binary); // TODO generate seed randomly and save at start of file
         if (in_file.fail()) {
             return 1;
         }
@@ -117,7 +117,7 @@ public:
         }
         ofbitstream out_file(out_path);
 
-        HASH hash(k, 4096);
+        HASH hash(k, 4096); // TODO generate seed randomly and save at start of file
         //HASH hash(k, 256 * 256 * 256);
 
         MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
@@ -138,7 +138,7 @@ public:
         }
         std::ofstream out_file(out_path, std::ios::binary);
 
-        HASH hash(k, 4096);
+        HASH hash(k, 4096); // TODO read seed from start of file
         //HASH hash(k, 256 * 256 * 256);
         MTFHashTableStream<T> mtf(1024 * 1024, hash); // 1 MB block size
         mtf.decode(in_file, out_file);

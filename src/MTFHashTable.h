@@ -28,7 +28,6 @@ protected:
     // Size of the block
     int block_size;
 
-    uint64_t table_size;
     uint64_t modulo_val;
 
     constexpr static uint8_t byte_size() noexcept {

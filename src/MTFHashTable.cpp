@@ -7,16 +7,15 @@
 
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()),
+MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(4096), // TODO probably hash should be template type
                                 block_size(block_size), hash_function(hash) {
-    table_size = hash.get_size();
-    modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
+    modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
 }
 
 
 template <typename T>
 uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
-    uint64_t hash = hash_function.get_hash_full() & modulo_val;
+    uint64_t hash = hash_function.get_hash() & modulo_val;
     MTFBuffer<T>& buf = hash_table[hash];
     keep_track(buf);
 
@@ -33,7 +32,7 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
 
 template <typename T>
 uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
-    uint64_t hash = hash_function.get_hash_full() & modulo_val;
+    uint64_t hash = hash_function.get_hash() & modulo_val;
     MTFBuffer<T>& buf = hash_table[hash];
     keep_track(buf);
 
@@ -77,19 +76,17 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 
 template <typename T>
 void MTFHashTable<T>::double_table() {
-    if (used_cells * 10 > table_size && table_size < 134217728) {
-        table_size *= 2;
-        hash_table.resize(table_size);
-        hash_function.resize(table_size);
+    if (used_cells * 10 > hash_table.size() && hash_table.size() < 134217728) {
+        hash_table.resize(hash_table.size() * 2);
 
-        modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
+        modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
     }
 }
 
 template <typename T>
 void MTFHashTable<T>::print_stats() {
-    std::cout << "Used hash cells = " << used_cells << "/" << table_size << std::endl;
-    std::cout << "Hash table load = " << used_cells / double(hash_function.get_size()) << std::endl;
+    std::cout << "Used hash cells = " << used_cells << "/" << hash_table.size() << std::endl;
+    std::cout << "Hash table load = " << used_cells / double(hash_table.size()) << std::endl;
     // TODO count number of distinct kmers
 
     std::cout << "Number of runs = " << runs << std::endl;

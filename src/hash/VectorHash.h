@@ -11,14 +11,16 @@ class VectorHash : public Hash {
     uint64_t sum = 0;
     uint64_t i = 0;
 
+    static constexpr uint64_t max_size = UINT64_MAX - 1;
+
     void compute() {
         // Sum is the dot product with the unit diagonal vector (1, ..., 1)
         // k is the same as the dot product of the unit vector with itself
-        hash = (uint64_t) (((double) sum / (double) (k * 255)) * size);
+        hash = (uint64_t) (((double) sum / (double) (k * 255)) * max_size);
     }
 
 public:
-    explicit VectorHash(int k, int size) : Hash(k, size) {}
+    VectorHash(int k, int size) : Hash(k, size) {}
 
     void init(const std::vector<uint8_t> &start) override {
         sum = 0;

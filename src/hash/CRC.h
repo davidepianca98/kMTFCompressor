@@ -23,7 +23,7 @@ private:
     }
 
 public:
-    explicit CRC(int k, int size) : Hash(k, size) {}
+    CRC(int k, uint64_t seed) : Hash(k, seed) {}
 
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;
