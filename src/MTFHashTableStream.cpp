@@ -8,20 +8,20 @@
 template <typename T>
 MTFHashTableStream<T>::MTFHashTableStream(int blockSize, Hash& hash) : MTFHashTable<T>(blockSize, hash), started(false) {
     byte_array.resize(this->block_size);
-    int_array.resize(this->block_size * 2);
+    int_array.resize(this->block_size);
 }
 
 
-void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
+void entropy_rle_encode_zeros(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
     if (bytes > 0) {
-        int64_t last = -1;
         uint64_t counter = 0;
         for (int i = 0; i < bytes; i++) {
             if (data[i] == 0) {
-                if (last != 0) {
-                    counter = 1;
-                } else {
-                    counter++;
+                counter++;
+                if (counter >= 255) {
+                    ah.encode(0, out);
+                    ahrle.encode(counter, out);
+                    counter = 0;
                 }
             } else {
                 if (counter > 0) {
@@ -31,13 +31,43 @@ void entropy_rle_encode(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle,
                 }
                 ah.encode(data[i], out);
             }
-            last = data[i];
         }
         if (counter > 0) {
             ah.encode(0, out);
             ahrle.encode(counter, out);
         }
     }
+}
+
+void entropy_rle_encode_n(const uint32_t *data, int bytes, AdaptiveHuffman& ahrle, AdaptiveHuffman& ah, obitstream& out) {
+    if (bytes > 0) {
+        int n = 4;
+        uint64_t counter = 1;
+        uint32_t last = data[0];
+        ah.encode(last, out);
+        for (int i = 1; i < bytes; i++) {
+            if (data[i] == last) {
+                counter++;
+                if (counter >= 255) {
+                    ahrle.encode(counter - n, out);
+                    counter = 0;
+                } else if (counter <= n) {
+                    ah.encode(last, out);
+                }
+            } else {
+                if (counter >= n) {
+                    ahrle.encode(counter - n, out);
+                }
+                ah.encode(data[i], out);
+                counter = 1;
+            }
+            last = data[i];
+        }
+        if (counter > n) {
+            ahrle.encode(counter - n, out);
+        }
+    }
+    //ah.normalizeWeights();
 }
 
 template <typename T>
@@ -55,7 +85,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
     std::future<void> future;
     auto *out_block1 = new uint32_t[this->block_size];
 
-    //AdaptiveHuffman ahrle(UINT16_MAX);
+    AdaptiveHuffman ahrle(UINT8_MAX + 1);
     AdaptiveHuffman ah(256 + this->byte_size() + 1);
     long read_bytes;
     do {
@@ -81,7 +111,7 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
             }
             int_array[i] = out_c;
 
-            this->double_table();
+            this->double_table(); // TODO move into encode and decode
         }
 
         if (future.valid()) {
@@ -89,8 +119,8 @@ void MTFHashTableStream<T>::encode(std::istream& in, obitstream& out) {
         }
 
         memcpy(out_block1, int_array.data(), read_bytes * 4); // TODO probably write to obufbitstream and do final encoding in another class
-        //future = std::async(std::launch::async, entropy_rle_encode, out_block1, read_bytes, std::ref(ahrle), std::ref(ah), std::ref(out));
-        future = std::async(std::launch::async, &MTFHashTableStream<T>::entropy_encode, this, out_block1, read_bytes, std::ref(ah), std::ref(out));
+        future = std::async(std::launch::async, entropy_rle_encode_n, out_block1, read_bytes, std::ref(ahrle), std::ref(ah), std::ref(out));
+        //future = std::async(std::launch::async, &MTFHashTableStream<T>::entropy_encode, this, out_block1, read_bytes, std::ref(ah), std::ref(out));
 
     } while (read_bytes > 0);
     if (future.valid()) {

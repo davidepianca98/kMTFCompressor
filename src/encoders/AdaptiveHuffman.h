@@ -9,23 +9,22 @@ class AdaptiveHuffman {
 private:
 
     struct TreeNode {
-        uint32_t symbol;
-        uint64_t weight; // Number of times the symbol has been seen
-        uint64_t number;
+        uint32_t symbol = 0;
+        uint64_t weight = 0; // Number of times the symbol has been seen
+        uint64_t number = 0;
 
-        int parent;
-        int left;
-        int right;
+        int parent = -1;
+        int left = -1;
+        int right = -1;
 
-        bool nyt; // true if not yet transmitted node
-
-        TreeNode() : symbol(0), weight(0), number(0), left(-1), right(-1), parent(-1), nyt(false) {}
+        bool nyt = false; // true if not yet transmitted node
     };
 
     std::vector<TreeNode> tree;
     int nyt_node;
     int next_free_slot;
     int alphabet_size;
+    int log_alphabet_size;
 
     std::vector<int> map; // gets the leaf representing the symbol, indexed by symbol
 
@@ -149,6 +148,8 @@ public:
         tree[0].symbol = alphabet_size;
         tree[0].number = alphabet_size * 2;
         tree[0].nyt = true;
+
+        log_alphabet_size = (int) log2(alphabet_size);
     }
 
     void encode(uint32_t symbol, obitstream& out) {
@@ -160,7 +161,7 @@ public:
             write_symbol(nyt_node, out);
 
             // Write the log_2(alphabet_size) + 1 bits fixed representation of the symbol
-            for (int i = 8; i >= 0; i--) {
+            for (int i = log_alphabet_size; i >= 0; i--) {
                 out.writeBit((symbol >> i) & 1);
             }
         }
@@ -185,7 +186,7 @@ public:
         uint32_t number = 0;
         if (tree[node].nyt) {
             // If the leaf is the NYT node, read log_2(alphabet_size) + 1 bits
-            for (int i = 8; i >= 0; i--) {
+            for (int i = log_alphabet_size; i >= 0; i--) {
                 number <<= 1;
                 int bit = in.readBit();
                 if (bit == -1) {
@@ -201,6 +202,12 @@ public:
         }
         update_tree(number);
         return number;
+    }
+
+    void normalizeWeights() {
+        for (auto & node : tree) {
+            node.weight = (uint64_t) log2((double) (node.weight + 1)); // TODO this generates infinite loop in write_symbol in big files, probably doesn't preserve the sum of children weights in parent weight, so apply log to leaves and then set internal nodes weights
+        }
     }
 };
 

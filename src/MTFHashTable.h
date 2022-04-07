@@ -10,6 +10,7 @@
 #include "Hash.h"
 #include "MTFBuffer.h"
 #include "MTFRankBuffer.h"
+#include "Identity.h"
 
 #define MTF_RANK
 
@@ -57,7 +58,6 @@ protected:
     uint64_t zeros = 0;
     uint64_t ones = 0;
     uint64_t twos = 0;
-
 
 
     uint32_t mtfEncode(uint8_t c);

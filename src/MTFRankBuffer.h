@@ -8,10 +8,20 @@
 template <typename T>
 class MTFRankBuffer : public MTFBuffer<T> {
 
-    std::vector<uint64_t> counter;
+    uint64_t counter[MTFBuffer<T>::byte_size()] = { 0 };
+    int amount = 0;
+
+    void normalize_rank_counter() {
+        amount++;
+        if (amount >= 4096) { // TODO maybe more than 4096
+            for (auto & c : counter) {
+                c = (uint64_t) log2((double) (c + 1));
+            }
+            amount = 0;
+        }
+    }
 
 public:
-    MTFRankBuffer() : counter(this->byte_size(), 0) {}
 
     void shift(uint8_t c, uint8_t i) override {
         counter[i]++;
@@ -33,6 +43,8 @@ public:
                 break;
             }
         }
+
+        normalize_rank_counter();
     }
 
     void append(uint8_t c) override {
@@ -50,12 +62,8 @@ public:
             // Insert in position i
             this->buf = right | ((T) c << (i * 8));
         }
-    }
 
-    void normalizeRankCounter(std::vector<uint64_t>& count) {
-        for (auto & c : count) {
-            c = (uint64_t) log2((double) (c + 1));
-        }
+        normalize_rank_counter();
     }
 
 };

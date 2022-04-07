@@ -14,9 +14,11 @@ private:
 public:
     explicit Identity(int k, int size) : Hash(k, size) {
         assert(k <= 8);
+        sh = (~0ul >> (64 - (8 * k)));
+        hash = 0;
     }
 
-    Identity(const Identity& hash) : i(hash.i), sh(hash.sh), Hash(hash) {}
+    Identity(const Identity& hash) = default;
 
     void init(const std::vector<uint8_t> &start) override {
         hash = 0;
@@ -26,8 +28,6 @@ public:
             kmer[i] = start[i];
             hash = (hash << 8) | kmer[i];
         }
-
-        sh = (~0ul >> (64 - (8 * k)));
     }
 
     void update(uint8_t c) override {

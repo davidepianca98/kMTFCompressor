@@ -46,6 +46,46 @@ public:
         return static_cast<uint8_t>((buf >> (i * 8)) & 0xFF);
     }
 
+    uint32_t encode(uint8_t c) {
+        bool zero = false;
+        for (uint8_t i = 0; i < byte_size(); i++) {
+            uint8_t extracted = extract(i);
+            if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
+                shift(c, i);
+                return i;
+            }
+            // If two consecutive zeros are found, it means the remaining part of the buffer is not initialized yet, so
+            // no need to continue iterating
+            if (extracted == 0) {
+                if (!zero) {
+                    zero = true;
+                } else {
+                    break;
+                }
+            } else {
+                zero = false;
+            }
+        }
+
+        // Not found so shift left and put character in first position
+        append(c);
+
+        // Sum byte_size to differentiate between indexes on the MTF buffer and characters
+        return c + byte_size();
+    }
+
+    uint8_t decode(uint32_t symbol) {
+        uint8_t c;
+        if (symbol >= byte_size()) {
+            c = symbol - byte_size();
+            append(c);
+        } else {
+            c = extract(symbol);
+            shift(c, symbol);
+        }
+        return c;
+    }
+
     T get_buf() {
         return buf;
     }

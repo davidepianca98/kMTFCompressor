@@ -16,7 +16,7 @@ protected:
     std::vector<uint8_t> kmer;
 public:
 
-    explicit Hash(uint64_t k, uint64_t size) : k(k), size(size), kmer(k) {}
+    explicit Hash(uint64_t k, uint64_t size) : k(k), size(size), kmer(k, 0) {}
 
     Hash(const Hash& hash) : k(hash.k), size(hash.size), kmer(hash.kmer) {}
 

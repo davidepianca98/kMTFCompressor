@@ -7,19 +7,13 @@
 
 
 template <typename T>
-MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()), counter_rle(hash.get_size(), 0), block_size(block_size), hash_function(hash) {
+MTFHashTable<T>::MTFHashTable(int block_size, Hash& hash) : hash_table(hash.get_size()),
+                                block_size(block_size), hash_function(hash) {
     table_size = hash.get_size();
     modulo_val = UINT64_MAX >> (64 - (int) log2(table_size));
 }
 
 
-/*
- * MTF buffer containing at most 8 chars
- *
- * When called on a 64-bits buffer buf (8 chars, top char in least significant position) and character c,
- * looks for the rightmost occurrence of c in buf, moving it to the front and returning its position in the buffer
- * before moving c. If c is not found in buf, then c is returned.
- */
 template <typename T>
 uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     uint64_t hash = hash_function.get_hash_full() & modulo_val;
@@ -29,37 +23,11 @@ uint32_t MTFHashTable<T>::mtfEncode(uint8_t c) {
     hash_function.update(c);
     count_symbol_in(c);
 
-    bool zero = false;
-    for (uint8_t i = 0; i < byte_size(); i++) {
-        uint8_t extracted = buf.extract(i);
-        if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
-            buf.shift(c, i);
-
-            count_symbol_out(i);
-
-            return i;
-        }
-        // If two consecutive zeros are found, it means the remaining part of the buffer is not initialized yet, so
-        // no need to continue iterating
-        if (extracted == 0) {
-            if (!zero) {
-                zero = true;
-            } else {
-                break;
-            }
-        } else {
-            zero = false;
-        }
-    }
-
-    // Not found so shift left and put character in first position
-    buf.append(c);
-
-    count_symbol_out(c + byte_size());
-
-    // Sum 8 to differentiate between indexes on the MTF buffer and characters
-    return c + byte_size();
+    uint32_t out = buf.encode(c);
+    count_symbol_out(out);
+    return out;
 }
+
 
 template <typename T>
 uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
@@ -67,14 +35,7 @@ uint8_t MTFHashTable<T>::mtfDecode(uint32_t i) {
     MTFBuffer<T>& buf = hash_table[hash];
     keep_track(buf);
 
-    uint8_t c;
-    if (i >= byte_size()) {
-        c = i - byte_size();
-        buf.append(c);
-    } else {
-        c = buf.extract(i);
-        buf.shift(c, i);
-    }
+    uint8_t c = buf.decode(i);
     hash_function.update(c);
     return c;
 }
@@ -113,7 +74,6 @@ void MTFHashTable<T>::count_symbol_out(uint32_t i) {
 template <typename T>
 void MTFHashTable<T>::double_table() {
     if (used_cells * 10 > table_size && table_size < 134217728) {
-        int old_table_size = table_size;
         table_size *= 2;
         hash_table.resize(table_size);
         hash_function.resize(table_size);
@@ -133,8 +93,17 @@ void MTFHashTable<T>::print_stats() {
     std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
 
     double entropy_in = calculate_entropy(symbols_in, 256);
-    double entropy_out = calculate_entropy(symbols_out, 256 + byte_size());
-    double entropy_out_rle = calculate_entropy(symbols_out_run, 256 + byte_size());
+    double entropy_out = calculate_entropy(symbols_out, 256 + byte_size() + 2);
+    double entropy_out_rle = calculate_entropy(symbols_out_run, 256 + byte_size() + 2);
+
+    for (uint32_t i : symbols_in) {
+        std::cout << i << ",";
+    }
+    std::cout << std::endl;
+    for (uint32_t i : symbols_out) {
+        std::cout << i << ",";
+    }
+    std::cout << std::endl;
 
     std::cout << "Entropy original = " << entropy_in << std::endl;
     std::cout << "Entropy MTF = " << entropy_out << std::endl;
