@@ -8,8 +8,8 @@
 class obitstream: public std::ostream {
 private:
     std::vector<uint8_t> bitset;
-    int byte_pos;
-    int pos;
+    uint64_t byte_pos;
+    uint64_t pos;
 
 protected:
     uint64_t bit_count;
@@ -17,7 +17,7 @@ protected:
 public:
     obitstream();
 
-    void write_bit(int bit);
+    void write_bit(uint32_t bit);
 
     void flush_remaining();
 };

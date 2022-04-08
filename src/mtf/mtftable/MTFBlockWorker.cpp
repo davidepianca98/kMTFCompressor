@@ -40,7 +40,7 @@ uint32_t MTFBlockWorker<HASH, T>::decompressBlock(uint8_t *in, int size, uint8_t
 }
 
 template <typename HASH, typename T>
-MTFBlockWorker<HASH, T>::MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size, uint64_t max_memory_usage) : k(k), seed(seed), in_block(in_block_size), out_block(out_block_size), max_memory_usage(max_memory_usage) {}
+MTFBlockWorker<HASH, T>::MTFBlockWorker(int k, uint64_t seed, int in_block_size, int out_block_size, uint64_t max_memory_usage) : k(k), seed(seed), max_memory_usage(max_memory_usage), in_block(in_block_size), out_block(out_block_size) {}
 
 template <typename HASH, typename T>
 void MTFBlockWorker<HASH, T>::startCompression(long size) {

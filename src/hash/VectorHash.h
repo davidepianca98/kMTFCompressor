@@ -9,7 +9,6 @@
 class VectorHash : public Hash {
 
     uint64_t sum = 0;
-    uint64_t i = 0;
 
     static constexpr uint64_t max_size = UINT64_MAX - 1;
 

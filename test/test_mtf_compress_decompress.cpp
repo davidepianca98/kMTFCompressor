@@ -30,9 +30,9 @@ int main() {
     mtf.encode(reinterpret_cast<const uint8_t *>(data.data()), file_size, out_data.data());
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    for (auto c: out_data) {
+    //for (auto c: out_data) {
         //std::cout << c << " ";
-    }
+    //}
 
     mtf.print_stats();
     std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms" << std::endl;

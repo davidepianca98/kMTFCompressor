@@ -4,9 +4,9 @@
 #include "LinearHash.h"
 
 template <typename HASH1, typename HASH2, typename HASH3>
-MinimiserHash<HASH1, HASH2, HASH3>::MinimiserHash(int k, uint64_t seed) : Hash(k, seed), hash1(sub_k, seed), hash2(sub_k, seed), hash_window(k, seed),
-                                                     window_hashes1(k - sub_k + 1), window_hashes2(k - sub_k + 1), filled(0),
-                                                     min_index(0), minimum(UINT64_MAX) {}
+MinimiserHash<HASH1, HASH2, HASH3>::MinimiserHash(int k, uint64_t seed) : Hash(k, seed), window_hashes1(k - sub_k + 1),
+                                                    window_hashes2(k - sub_k + 1), hash1(sub_k, seed), hash2(sub_k, seed),
+                                                    hash_window(k, seed), filled(0), min_index(0), minimum(UINT64_MAX) {}
 
 template <typename HASH1, typename HASH2, typename HASH3>
 void MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {

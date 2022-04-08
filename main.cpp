@@ -1,6 +1,7 @@
 
 #include <string>
 #include "mtf/MTFHashCompressor.h"
+#include "randomized/RabinKarp.h"
 
 
 int main(int argc, char *argv[]) {

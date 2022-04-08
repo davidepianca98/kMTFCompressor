@@ -8,11 +8,13 @@ uint64_t Hash::fast_modulo(uint64_t val) {
     return (res >= M61) ? res - M61 : res;
 }
 
-void Hash::update(uint8_t c) {}
+void Hash::update(uint8_t c) {
+
+}
 
 uint64_t Hash::get_hash() const {
     return hash;
-};
+}
 
 uint64_t Hash::get_length() const {
     return k;

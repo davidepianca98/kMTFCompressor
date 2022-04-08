@@ -11,8 +11,8 @@ class RunLength {
     AdaptiveHuffman ah;
     int n;
 
-    int counter = 1;
-    int last = -1;
+    int counter;
+    int last;
 
 public:
     explicit RunLength(int alphabet_size, int n = 4);

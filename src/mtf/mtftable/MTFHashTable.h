@@ -31,7 +31,7 @@ protected:
     bool doubling = false;
 
     uint64_t modulo_val;
-    int kmer_chars = 0;
+    uint32_t kmer_chars = 0;
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {

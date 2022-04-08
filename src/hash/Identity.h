@@ -6,7 +6,6 @@
 
 class Identity : public Hash {
 private:
-    uint64_t i = 0;
     uint64_t sh = 0;
 
 public:

@@ -6,7 +6,7 @@ ibitstream::ibitstream() : std::istream(nullptr), bitset(1024 * 1024), byte_pos(
 
 int ibitstream::read_bit() {
     if (byte_pos == 0 && pos == 0) {
-        read(reinterpret_cast<char *>(bitset.data()), bitset.size());
+        read(reinterpret_cast<char *>(bitset.data()), (long) bitset.size());
         long read_bytes = gcount();
         if (read_bytes <= 0) {
             return EOF;

@@ -5,9 +5,9 @@
 #include "encoders/AdaptiveHuffman.h"
 
 uint8_t MTF::move_to_front(uint8_t c, std::vector<uint8_t>& list) {
-    for (int i = 0; i < list.size(); i++) {
+    for (uint32_t i = 0; i < list.size(); i++) {
         if (list[i] == c) {
-            for (int j = i; j > 0; j--) {
+            for (uint32_t j = i; j > 0; j--) {
                 list[j] = list[j - 1];
             }
             list[0] = c;

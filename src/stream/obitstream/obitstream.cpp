@@ -3,7 +3,7 @@
 
 obitstream::obitstream() : std::ostream(nullptr), bitset(1024 * 1024, 0), byte_pos(0), pos(0), bit_count(0) {}
 
-void obitstream::write_bit(int bit) {
+void obitstream::write_bit(uint32_t bit) {
     bitset[byte_pos] |= bit << (7 - pos);
     pos++;
     bit_count++;

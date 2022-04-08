@@ -6,7 +6,6 @@
 
 class TabulationHash : public Hash {
 private:
-    uint64_t i = 0;
     uint64_t kmer_hash = 0;
 
     // Number of bits in the key to be hashed

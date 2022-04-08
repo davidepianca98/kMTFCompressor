@@ -23,7 +23,7 @@ private:
     std::vector<TreeNode> tree;
     int nyt_node;
     int next_free_slot;
-    int alphabet_size;
+    uint32_t alphabet_size;
     int log_alphabet_size;
 
     std::vector<int> map; // gets the leaf representing the symbol, indexed by symbol
@@ -42,15 +42,15 @@ private:
     void update_tree(uint32_t symbol);
 
 public:
-    explicit AdaptiveHuffman(int alphabet_size);
+    explicit AdaptiveHuffman(uint32_t alphabet_size);
 
     void encode(uint32_t symbol, obitstream& out);
 
-    void encode(const uint32_t *data, int length, obitstream& out);
+    void encode(const uint32_t *data, uint32_t length, obitstream& out);
 
     int decode(ibitstream& in);
 
-    uint32_t decode(ibitstream& in, uint32_t *data, int length, uint32_t eof);
+    uint32_t decode(ibitstream& in, uint32_t *data, uint32_t length, uint32_t eof);
 
     void normalizeWeights();
 };

@@ -6,8 +6,6 @@
 
 class Fnv1a : public Hash {
 private:
-    uint64_t i = 0;
-
     static constexpr uint64_t BASE = 2166136261;
     //static constexpr uint64_t BASE = 14695981039346656037u;
 

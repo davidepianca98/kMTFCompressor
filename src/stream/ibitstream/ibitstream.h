@@ -8,8 +8,8 @@
 class ibitstream: public std::istream {
 private:
     std::vector<uint8_t> bitset;
-    int byte_pos;
-    int pos;
+    uint64_t byte_pos;
+    uint64_t pos;
 
 public:
     ibitstream();

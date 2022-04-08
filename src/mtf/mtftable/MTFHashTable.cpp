@@ -112,7 +112,7 @@ double MTFHashTable<HASH, T>::calculate_entropy(const uint64_t symbols[], int le
 }
 
 template <typename HASH, typename T>
-MTFHashTable<HASH, T>::MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed), counter_hash(k, seed) {
+MTFHashTable<HASH, T>::MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed), block_size(block_size), counter_hash(k, seed) {
     max_table_size = max_memory_usage / sizeof(MTFRankBuffer<T>);
     if (doubling) { // TODO set as parameter
         hash_table.resize(4096);

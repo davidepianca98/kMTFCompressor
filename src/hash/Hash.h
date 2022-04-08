@@ -10,7 +10,8 @@ class Hash {
 protected:
     uint64_t hash = 0;
 
-    uint64_t k;
+    int k;
+    int i = 0;
 
     // Rolling k-mer
     std::vector<uint8_t> kmer;

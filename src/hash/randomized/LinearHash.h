@@ -6,7 +6,6 @@
 
 class LinearHash : public Hash {
 private:
-    uint64_t i = 0;
     uint64_t kmer_hash = 0;
 
     uint64_t a;

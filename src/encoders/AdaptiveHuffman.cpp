@@ -4,7 +4,8 @@
 #include <cassert>
 #include "AdaptiveHuffman.h"
 
-AdaptiveHuffman::AdaptiveHuffman(int alphabet_size): alphabet_size(alphabet_size), tree(alphabet_size * 2 + 1), map(alphabet_size, -1), nyt_node(0), next_free_slot(1) {
+AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): tree(alphabet_size * 2 + 1), nyt_node(0), next_free_slot(1),
+                                                    alphabet_size(alphabet_size), map(alphabet_size, -1) {
     tree[0].symbol = alphabet_size;
     tree[0].number = alphabet_size * 2;
     tree[0].nyt = true;
@@ -66,7 +67,7 @@ void AdaptiveHuffman::swap(int& first, int& second) {
 }
 
 void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
-    uint32_t bits; // List of bits that represent the symbol
+    uint32_t bits = 0; // List of bits that represent the symbol
     int n = 0;
     // Traverse the tree from the leaf until the node before the root is reached
     while (node != -1 && tree[node].parent != -1) {
@@ -142,8 +143,8 @@ void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     update_tree(symbol);
 }
 
-void AdaptiveHuffman::encode(const uint32_t *data, int length, obitstream& out) {
-    for (int i = 0; i < length; i++) {
+void AdaptiveHuffman::encode(const uint32_t *data, uint32_t length, obitstream& out) {
+    for (uint32_t i = 0; i < length; i++) {
         encode(data[i], out);
     }
 }
@@ -175,20 +176,24 @@ int AdaptiveHuffman::decode(ibitstream& in) {
             number |= bit;
         }
     } else {
-        number = tree[node].symbol;;
+        number = tree[node].symbol;
     }
     if (number >= alphabet_size) {
         return -1;
     }
     update_tree(number);
-    return number;
+    return (int) number;
 }
 
-uint32_t AdaptiveHuffman::decode(ibitstream& in, uint32_t *data, int length, uint32_t eof) {
+uint32_t AdaptiveHuffman::decode(ibitstream& in, uint32_t *data, uint32_t length, uint32_t eof) {
     uint32_t decompressed_size = 0;
     while (decompressed_size < length) {
-        data[decompressed_size] = decode(in);
-        if (data[decompressed_size] == -1 || data[decompressed_size] == eof) {
+        int value = decode(in);
+        if (value == -1) {
+            break;
+        }
+        data[decompressed_size] = value;
+        if (data[decompressed_size] == eof) {
             break;
         }
         decompressed_size++;

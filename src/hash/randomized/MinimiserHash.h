@@ -18,7 +18,6 @@ class MinimiserHash : public Hash {
     HASH2 hash2;
     HASH3 hash_window;
 
-    int i = 0;
     int filled;
     int min_index;
     uint64_t minimum;

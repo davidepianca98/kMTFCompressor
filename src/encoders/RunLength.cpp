@@ -1,12 +1,12 @@
 
 #include "RunLength.h"
 
-RunLength::RunLength(int alphabet_size, int n) : ahrle(UINT8_MAX + 1), ah(alphabet_size), n(n) {}
+RunLength::RunLength(int alphabet_size, int n) : ahrle(UINT8_MAX + 1), ah(alphabet_size), n(n), counter(1), last(-1) {}
 
 void RunLength::encode_array(const uint32_t *data, int length, obitstream& out) {
     if (length > 0) {
         for (int i = 0; i < length; i++) {
-            if (data[i] == last) {
+            if (data[i] == (uint32_t) last) {
                 counter++;
                 if (counter >= 255) {
                     ahrle.encode(counter - n, out);
@@ -39,7 +39,7 @@ int RunLength::decode_array(ibitstream& in, uint32_t *data, int length, uint32_t
     while (i < length) {
         int num = ah.decode(in);
         // Check if error happened or EOF symbol reached
-        if (num < 0 || num == eof || !in.remaining()) {
+        if (num < 0 || (uint32_t) num == eof || !in.remaining()) {
             return i;
         } else {
             data[i++] = num;

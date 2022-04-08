@@ -12,8 +12,6 @@ private:
     // Multiplier to shift left (depends on k)
     uint64_t xk = 1;
 
-    uint64_t i = 0;
-
 public:
     RabinKarp(int k, uint64_t seed);
 
