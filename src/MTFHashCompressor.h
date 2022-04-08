@@ -7,7 +7,7 @@
 #include <random>
 #include "MTFHashCompressor.h"
 #include "MTFBlockWorker.h"
-#include "MTFHashTableStream.h"
+#include "mtf/mtftable/MTFHashTableStream.h"
 #include "hash/randomized/RabinKarp.h"
 #include "Identity.h"
 #include "stream/obitstream/ofbitstream.h"

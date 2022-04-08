@@ -3,14 +3,12 @@
 #include <string>
 #include <iostream>
 #include "MTFHashCompressor.h"
-#include "RabinKarp.h"
-#include "LinearHash.h"
-#include "TabulationHash.h"
+#include "hash/randomized/RabinKarp.h"
+#include "hash/randomized/LinearHash.h"
+#include "hash/randomized/TabulationHash.h"
 #include "Fnv1a.h"
-#include "Adler32.h"
-#include "CRC.h"
 #include "VectorHash.h"
-#include "MinimiserHash.h"
+#include "hash/randomized/MinimiserHash.h"
 //#include "MTF.h"
 
 int main() {
@@ -35,7 +33,7 @@ int main() {
 
             //MTFHashCompressor::compress_block<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 5, ram);
+            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 8, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

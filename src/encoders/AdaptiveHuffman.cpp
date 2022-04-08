@@ -142,6 +142,12 @@ void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     update_tree(symbol);
 }
 
+void AdaptiveHuffman::encode(const uint32_t *data, int length, obitstream& out) {
+    for (int i = 0; i < length; i++) {
+        encode(data[i], out);
+    }
+}
+
 int AdaptiveHuffman::decode(ibitstream& in) {
     int node = 0;
 
@@ -176,6 +182,18 @@ int AdaptiveHuffman::decode(ibitstream& in) {
     }
     update_tree(number);
     return number;
+}
+
+uint32_t AdaptiveHuffman::decode(ibitstream& in, uint32_t *data, int length, uint32_t eof) {
+    uint32_t decompressed_size = 0;
+    while (decompressed_size < length) {
+        data[decompressed_size] = decode(in);
+        if (data[decompressed_size] == -1 || data[decompressed_size] == eof) {
+            break;
+        }
+        decompressed_size++;
+    }
+    return decompressed_size;
 }
 
 void AdaptiveHuffman::normalizeWeights() {

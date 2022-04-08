@@ -6,8 +6,8 @@
 #include <vector>
 #include <cstdint>
 #include <future>
-#include "MTFHashTable.h"
-#include "MTFHashTableBlock.h"
+#include "mtf/mtftable/MTFHashTable.h"
+#include "mtf/mtftable/MTFHashTableBlock.h"
 #include "stream/obitstream/obufbitstream.h"
 #include "encoders/AdaptiveHuffman.h"
 #include "stream/ibitstream/ibufbitstream.h"
@@ -29,11 +29,10 @@ class MTFBlockWorker {
 
         MTFHashTableBlock<HASH, T> mtf(size, max_memory_usage, k, seed);
         mtf.encode(in, size, out_block1);
+
         obufbitstream buf(final_block, out_block.size());
         AdaptiveHuffman ah(256 + byte_size() + 1); // TODO RLE
-        for (int i = 0; i < size; i++) {
-            ah.encode(out_block1[i], buf);
-        }
+        ah.encode(out_block1, size, buf);
         ah.encode(256 + byte_size(), buf); // EOF
         buf.flush_remaining();
         uint32_t compressed_size = buf.size();
@@ -47,14 +46,7 @@ class MTFBlockWorker {
 
         ibufbitstream buf(in, size);
         AdaptiveHuffman ah(256 + byte_size() + 1);
-        uint32_t decompressed_size = 0;
-        while (true) {
-            out_block1[decompressed_size] = ah.decode(buf);
-            if (out_block1[decompressed_size] == -1 || out_block1[decompressed_size] == 256 + byte_size()) {
-                break;
-            }
-            decompressed_size++;
-        }
+        uint32_t decompressed_size = ah.decode(buf, out_block1, in_block.size(), 256 + byte_size());
 
         MTFHashTableBlock<HASH, T> mtf(decompressed_size, max_memory_usage, k, seed);
         mtf.decode(out_block1, (long) decompressed_size, final_block);

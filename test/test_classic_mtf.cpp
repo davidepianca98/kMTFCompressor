@@ -3,7 +3,7 @@
 #include <string>
 #include <iostream>
 #include "MTFHashCompressor.h"
-#include "MTF.h"
+#include "mtf/MTF.h"
 
 int main() {
     //std::string path = "../../test/resources/calgarycorpus";

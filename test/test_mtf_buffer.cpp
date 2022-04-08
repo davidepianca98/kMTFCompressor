@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <iostream>
 #include <vector>
-#include "MTFBuffer.h"
-#include "MTFRankBuffer.h"
+#include "mtf/buffer/MTFBuffer.h"
+#include "mtf/buffer/MTFRankBuffer.h"
 
 
 int main() {

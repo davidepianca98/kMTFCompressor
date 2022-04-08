@@ -46,7 +46,11 @@ public:
 
     void encode(uint32_t symbol, obitstream& out);
 
+    void encode(const uint32_t *data, int length, obitstream& out);
+
     int decode(ibitstream& in);
+
+    uint32_t decode(ibitstream& in, uint32_t *data, int length, uint32_t eof);
 
     void normalizeWeights();
 };

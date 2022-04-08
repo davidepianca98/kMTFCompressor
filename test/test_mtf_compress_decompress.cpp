@@ -3,9 +3,9 @@
 #include <string>
 #include <fstream>
 #include <cstring>
-#include "MTFHashTable.h"
-#include "MTFHashTableBlock.h"
-#include "RabinKarp.h"
+#include "mtf/mtftable/MTFHashTable.h"
+#include "mtf/mtftable/MTFHashTableBlock.h"
+#include "hash/randomized/RabinKarp.h"
 
 
 int main() {
@@ -23,8 +23,9 @@ int main() {
 
     std::vector<uint32_t> out_data(file_size);
 
-    RabinKarp hash(3, 4096);
-    MTFHashTableBlock<uint64_t> mtf(1024 * 1024, hash);
+    uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
+
+    MTFHashTableBlock<RabinKarp, uint64_t> mtf(1024 * 1024, ram, 3, 1);
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     mtf.encode(reinterpret_cast<const uint8_t *>(data.data()), file_size, out_data.data());
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
@@ -35,9 +36,8 @@ int main() {
 
     mtf.print_stats();
     std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms" << std::endl;
-
-    RabinKarp hash2(3, 4096);
-    MTFHashTableBlock<uint64_t> mtf2(1024 * 1024, hash2);
+    
+    MTFHashTableBlock<RabinKarp, uint64_t> mtf2(1024 * 1024, ram, 3, 1);
     mtf2.decode(out_data.data(), file_size, reinterpret_cast<uint8_t *>(out_data.data()));
 
     if (memcmp(data.data(), out_data.data(), file_size) != 0) {
