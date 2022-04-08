@@ -1,6 +1,6 @@
 
 #include <string>
-#include "MTFHashCompressor.h"
+#include "mtf/MTFHashCompressor.h"
 
 
 int main(int argc, char *argv[]) {

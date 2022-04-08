@@ -3,6 +3,9 @@ project(MTF CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -flto")
+
 set(SOURCE_FILES
         src/encoders/AdaptiveEliasGamma.cpp
         src/encoders/AdaptiveEliasGamma.h
@@ -30,6 +33,8 @@ set(SOURCE_FILES
         src/mtf/buffer/MTFBuffer.h
         src/mtf/buffer/MTFRankBuffer.cpp
         src/mtf/buffer/MTFRankBuffer.h
+        src/mtf/mtftable/MTFBlockWorker.cpp
+        src/mtf/mtftable/MTFBlockWorker.h
         src/mtf/mtftable/MTFHashTable.cpp
         src/mtf/mtftable/MTFHashTable.h
         src/mtf/mtftable/MTFHashTableBlock.cpp
@@ -38,6 +43,8 @@ set(SOURCE_FILES
         src/mtf/mtftable/MTFHashTableStream.h
         src/mtf/MTF.cpp
         src/mtf/MTF.h
+        src/mtf/MTFHashCompressor.cpp
+        src/mtf/MTFHashCompressor.h
         src/stream/ibitstream/ibitstream.cpp
         src/stream/ibitstream/ibitstream.h
         src/stream/ibitstream/ibufbitstream.cpp
@@ -52,13 +59,9 @@ set(SOURCE_FILES
         src/stream/obitstream/ofbitstream.h
         )
 
-set(HEADER_FILES
-        src/MTFBlockWorker.h
-        src/MTFHashCompressor.h)
-
 enable_testing()
 
-add_library(MTF_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
+add_library(MTF_lib STATIC ${SOURCE_FILES})
 include_directories(src)
 include_directories(src/hash)
 

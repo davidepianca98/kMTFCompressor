@@ -12,6 +12,7 @@
 #include "Identity.h"
 
 #define MTF_RANK
+#define MTF_STATS
 
 template <typename HASH, typename T>
 class MTFHashTable {
@@ -23,7 +24,6 @@ protected:
     std::vector<MTFBuffer<T>> hash_table;
 #endif
     HASH hash_function;
-    Identity counter_hash;
 
     // Size of the block
     int block_size;
@@ -31,6 +31,7 @@ protected:
     bool doubling = false;
 
     uint64_t modulo_val;
+    int kmer_chars = 0;
 
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
@@ -48,6 +49,8 @@ protected:
 
     // Statistics
     double used_cells = 0;
+
+#ifdef MTF_STATS
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + byte_size()] = { 0 };
@@ -60,9 +63,8 @@ protected:
     uint64_t zeros = 0;
     uint64_t ones = 0;
     uint64_t twos = 0;
-
-    int kmer_chars = 0;
-
+#endif
+    Identity counter_hash;
 
     uint32_t mtf_encode(uint8_t c);
 

@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <string>
 #include <iostream>
-#include "MTFHashCompressor.h"
+#include "mtf/MTFHashCompressor.h"
 #include "mtf/MTF.h"
 
 int main() {

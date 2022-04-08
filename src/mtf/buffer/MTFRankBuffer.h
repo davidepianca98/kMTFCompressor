@@ -8,7 +8,7 @@
 template <typename T>
 class MTFRankBuffer : public MTFBuffer<T> {
 
-    uint64_t counter[MTFBuffer<T>::byte_size()] = { 0 };
+    uint32_t counter[MTFBuffer<T>::byte_size()] = { 0 };
     int amount = 0;
 
     void normalize_rank_counter();

@@ -3,7 +3,8 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include "MTFHashCompressor.h"
+#include "mtf/MTFHashCompressor.h"
+#include "randomized/RabinKarp.h"
 
 int test_file(const std::string& path) {
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;

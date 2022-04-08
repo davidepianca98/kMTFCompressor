@@ -4,7 +4,9 @@
 
 template <typename HASH, typename T>
 uint32_t MTFHashTable<HASH, T>::mtf_encode(uint8_t c) {
+#ifdef MTF_STATS
     count_symbol_in(c);
+#endif
     uint32_t out;
 
     if (kmer_chars < hash_function.get_length()) {
@@ -16,13 +18,17 @@ uint32_t MTFHashTable<HASH, T>::mtf_encode(uint8_t c) {
         keep_track(buf);
         out = buf.encode(c);
 
+#ifdef MTF_STATS
         distinct_kmers.insert(counter_hash.get_hash());
+#endif
     }
 
     hash_function.update(c);
-    counter_hash.update(c);
 
+#ifdef MTF_STATS
+    counter_hash.update(c);
     count_symbol_out(out);
+#endif
 
     double_table();
     return out;
@@ -57,12 +63,15 @@ void MTFHashTable<HASH, T>::keep_track(MTFBuffer<T>& buf) {
 
 template <typename HASH, typename T>
 void MTFHashTable<HASH, T>::count_symbol_in(uint8_t c) {
+#ifdef MTF_STATS
     symbols_in[c]++;
     stream_length++;
+#endif
 }
 
 template <typename HASH, typename T>
 void MTFHashTable<HASH, T>::count_symbol_out(uint32_t i) {
+#ifdef MTF_STATS
     symbols_out[i]++;
     if (i != last_symbol_out) {
         runs++;
@@ -76,6 +85,7 @@ void MTFHashTable<HASH, T>::count_symbol_out(uint32_t i) {
     } else if (i == 2) {
         twos++;
     }
+#endif
 }
 
 template <typename HASH, typename T>
@@ -89,6 +99,7 @@ void MTFHashTable<HASH, T>::double_table() {
 
 template <typename HASH, typename T>
 double MTFHashTable<HASH, T>::calculate_entropy(const uint64_t symbols[], int length) {
+#ifdef MTF_STATS
     double entropy = 0.0;
     for (int i = 0; i < length; i++) {
         double p = (double) symbols[i] / stream_length;
@@ -97,11 +108,11 @@ double MTFHashTable<HASH, T>::calculate_entropy(const uint64_t symbols[], int le
         }
     }
     return entropy;
+#endif
 }
 
 template <typename HASH, typename T>
-MTFHashTable<HASH, T>::MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed),
-                                                                                counter_hash(k, seed) {
+MTFHashTable<HASH, T>::MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed), counter_hash(k, seed) {
     max_table_size = max_memory_usage / sizeof(MTFRankBuffer<T>);
     if (doubling) { // TODO set as parameter
         hash_table.resize(4096);
@@ -118,6 +129,7 @@ template <typename HASH, typename T>
 void MTFHashTable<HASH, T>::print_stats() {
     std::cout << "Used hash cells = " << used_cells << "/" << hash_table.size() << std::endl;
     std::cout << "Hash table load = " << used_cells / double(hash_table.size()) << std::endl;
+#ifdef MTF_STATS
     std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 
     std::cout << "Number of runs = " << runs << std::endl;
@@ -144,6 +156,7 @@ void MTFHashTable<HASH, T>::print_stats() {
     std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
     std::cout << "Max compression size RLE = " << (uint64_t) ((runs * entropy_out_rle) + (runs * ceil(2 * floor(log2(ceil(stream_length / runs)) + 1)))) / 8 << " bytes" << std::endl;
     std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
+#endif
 }
 
 template class MTFHashTable<RabinKarp, uint16_t>;

@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <string>
 #include <iostream>
-#include "MTFHashCompressor.h"
+#include "mtf/MTFHashCompressor.h"
 #include "hash/randomized/RabinKarp.h"
 #include "hash/randomized/LinearHash.h"
 #include "hash/randomized/TabulationHash.h"
