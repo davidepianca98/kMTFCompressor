@@ -8,9 +8,9 @@
 #include <future>
 #include "MTFHashTable.h"
 #include "MTFHashTableBlock.h"
-#include "stream/obufbitstream.h"
+#include "stream/obitstream/obufbitstream.h"
 #include "encoders/AdaptiveHuffman.h"
-#include "stream/ibufbitstream.h"
+#include "stream/ibitstream/ibufbitstream.h"
 
 template <typename HASH, typename T>
 class MTFBlockWorker {

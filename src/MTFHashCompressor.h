@@ -8,10 +8,10 @@
 #include "MTFHashCompressor.h"
 #include "MTFBlockWorker.h"
 #include "MTFHashTableStream.h"
-#include "RabinKarp.h"
+#include "hash/randomized/RabinKarp.h"
 #include "Identity.h"
-#include "stream/ofbitstream.h"
-#include "stream/ifbitstream.h"
+#include "stream/obitstream/ofbitstream.h"
+#include "stream/ibitstream/ifbitstream.h"
 
 class MTFHashCompressor {
 

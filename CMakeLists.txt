@@ -3,7 +3,24 @@ project(MTF CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mssse3")
+set(SOURCE_FILES
+        src/encoders/AdaptiveEliasGamma.cpp
+        src/encoders/AdaptiveHuffman.cpp
+        src/hash/randomized/LinearHash.cpp
+        src/hash/randomized/MinimiserHash.cpp
+        src/hash/randomized/RabinKarp.cpp
+        src/hash/randomized/TabulationHash.cpp
+        src/hash/Fnv1a.cpp
+        src/hash/Hash.cpp
+        src/hash/Identity.cpp
+        src/hash/VectorHash.cpp
+        src/stream/ibitstream/ibitstream.cpp
+        src/stream/ibitstream/ibufbitstream.cpp
+        src/stream/ibitstream/ifbitstream.cpp
+        src/stream/obitstream/obitstream.cpp
+        src/stream/obitstream/obufbitstream.cpp
+        src/stream/obitstream/ofbitstream.cpp
+        )
 
 set(HEADER_FILES
         src/MTFBuffer.h
@@ -16,27 +33,24 @@ set(HEADER_FILES
         src/MTFRankBuffer.h
         src/encoders/AdaptiveEliasGamma.h
         src/encoders/AdaptiveHuffman.h
-        src/hash/Adler32.h
-        src/hash/CRC.h
         src/hash/Fnv1a.h
         src/hash/Hash.h
         src/hash/Identity.h
-        src/hash/LinearHash.h
-        src/hash/MinimiserHash.h
-        src/hash/RabinKarp.h
-        src/hash/TabulationHash.h
+        src/hash/randomized/LinearHash.h
+        src/hash/randomized/MinimiserHash.h
+        src/hash/randomized/RabinKarp.h
+        src/hash/randomized/TabulationHash.h
         src/hash/VectorHash.h
-        src/stream/ibitstream.h
-        src/stream/ibufbitstream.h
-        src/stream/ifbitstream.h
-        src/stream/obitstream.h
-        src/stream/obufbitstream.h
-        src/stream/ofbitstream.h)
+        src/stream/ibitstream/ibitstream.h
+        src/stream/ibitstream/ibufbitstream.h
+        src/stream/ibitstream/ifbitstream.h
+        src/stream/obitstream/obitstream.h
+        src/stream/obitstream/obufbitstream.h
+        src/stream/obitstream/ofbitstream.h)
 
 enable_testing()
 
-add_library(MTF_lib STATIC ${HEADER_FILES})
-set_target_properties(MTF_lib PROPERTIES LINKER_LANGUAGE CXX)
+add_library(MTF_lib STATIC ${SOURCE_FILES} ${HEADER_FILES})
 include_directories(src)
 include_directories(src/hash)
 

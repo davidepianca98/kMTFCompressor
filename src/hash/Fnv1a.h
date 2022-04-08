@@ -2,7 +2,6 @@
 #ifndef MTF_FNV1A_H
 #define MTF_FNV1A_H
 
-#include <vector>
 #include "Hash.h"
 
 class Fnv1a : public Hash {
@@ -16,19 +15,9 @@ private:
     //static constexpr uint64_t PRIME = 1099511628211;
 
 public:
-    Fnv1a(int k, uint64_t seed) : Hash(k, seed) {}
+    Fnv1a(int k, uint64_t seed);
 
-    void update(uint8_t c) override {
-        // Update k-mer
-        kmer[i] = c;
-        i = (i + 1) % k;
-
-        uint32_t hash = BASE;
-        for (int j = 0; j < k; j++) {
-            hash = (hash ^ kmer[(i + j + 1) % k]) * PRIME;
-        }
-        Hash::hash = hash;
-    }
+    void update(uint8_t c) override;
 };
 
 #endif //MTF_FNV1A_H

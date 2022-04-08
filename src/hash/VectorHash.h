@@ -13,29 +13,10 @@ class VectorHash : public Hash {
 
     static constexpr uint64_t max_size = UINT64_MAX - 1;
 
-    void compute() {
-        // Sum is the dot product with the unit diagonal vector (1, ..., 1)
-        // k is the same as the dot product of the unit vector with itself
-        hash = (uint64_t) (((double) sum / (double) (k * 255)) * max_size);
-    }
-
 public:
-    VectorHash(int k, int size) : Hash(k, size) {}
+    VectorHash(int k, int size);
 
-    void update(uint8_t c) override {
-        // Update k-mer
-        uint8_t old = kmer[i];
-        kmer[i] = c;
-
-        // Faster than wrapping with modulo
-        i++;
-        if (i >= k) {
-            i = 0;
-        }
-        sum -= old;
-        sum += c;
-        compute();
-    }
+    void update(uint8_t c) override;
 };
 
 

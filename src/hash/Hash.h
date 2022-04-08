@@ -20,26 +20,17 @@ protected:
     std::mt19937_64 gen;
     std::uniform_int_distribution<uint64_t> dis;
 
-    static inline uint64_t fast_modulo(uint64_t val) {
-        uint64_t res = (val & M61) + (val >> 61);
-        return (res >= M61) ? res - M61 : res;
-    }
+    static inline uint64_t fast_modulo(uint64_t val);
 
 public:
 
-    Hash(uint64_t k, uint64_t seed) : k(k), kmer(k, 0), gen(seed), dis(0, 100000000) {}
+    Hash(uint64_t k, uint64_t seed);
 
-    virtual ~Hash() = default;
+    virtual void update(uint8_t c);
 
-    virtual void update(uint8_t c) {};
+    [[nodiscard]] virtual uint64_t get_hash() const;
 
-    [[nodiscard]] virtual uint64_t get_hash() const {
-        return hash;
-    };
-
-    [[nodiscard]] uint64_t get_length() const {
-        return k;
-    }
+    [[nodiscard]] uint64_t get_length() const;
 };
 
 

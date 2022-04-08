@@ -5,8 +5,8 @@
 
 #include "MTFHashTable.h"
 #include "encoders/AdaptiveHuffman.h"
-#include "stream/obitstream.h"
-#include "stream/ibitstream.h"
+#include "stream/obitstream/obitstream.h"
+#include "stream/ibitstream/ibitstream.h"
 
 template <typename HASH, typename T>
 class MTFHashTableStream : public MTFHashTable<HASH, T> {

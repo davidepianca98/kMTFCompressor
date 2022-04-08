@@ -25,11 +25,12 @@ protected:
     std::vector<MTFBuffer<T>> hash_table;
 #endif
     HASH hash_function;
+    Identity counter_hash;
 
     // Size of the block
     int block_size;
     uint64_t max_table_size;
-    bool doubling = true;
+    bool doubling = false;
 
     uint64_t modulo_val;
 
@@ -78,10 +79,11 @@ protected:
             keep_track(buf);
             out = buf.encode(c);
 
-            distinct_kmers.insert(hash_function.get_hash());
+            distinct_kmers.insert(counter_hash.get_hash());
         }
 
         hash_function.update(c);
+        counter_hash.update(c);
 
         count_symbol_out(out);
 
@@ -155,7 +157,8 @@ protected:
     }
 
 public:
-    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed) {
+    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : block_size(block_size), hash_function(k, seed),
+                                                                                    counter_hash(k, seed) {
         max_table_size = max_memory_usage / sizeof(MTFRankBuffer<T>);
         if (doubling) { // TODO set as parameter
             hash_table.resize(4096);
