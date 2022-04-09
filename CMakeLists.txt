@@ -29,21 +29,14 @@ set(SOURCE_FILES
         src/hash/Identity.h
         src/hash/VectorHash.cpp
         src/hash/VectorHash.h
-        src/mtf/buffer/MTFBuffer.cpp
         src/mtf/buffer/MTFBuffer.h
-        src/mtf/buffer/MTFRankBuffer.cpp
         src/mtf/buffer/MTFRankBuffer.h
-        src/mtf/mtftable/MTFBlockWorker.cpp
         src/mtf/mtftable/MTFBlockWorker.h
-        src/mtf/mtftable/MTFHashTable.cpp
         src/mtf/mtftable/MTFHashTable.h
-        src/mtf/mtftable/MTFHashTableBlock.cpp
         src/mtf/mtftable/MTFHashTableBlock.h
-        src/mtf/mtftable/MTFHashTableStream.cpp
         src/mtf/mtftable/MTFHashTableStream.h
         src/mtf/MTF.cpp
         src/mtf/MTF.h
-        src/mtf/MTFHashCompressor.cpp
         src/mtf/MTFHashCompressor.h
         src/stream/ibitstream/ibitstream.cpp
         src/stream/ibitstream/ibitstream.h

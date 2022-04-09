@@ -16,21 +16,69 @@ protected:
 
 public:
 
-    virtual void shift(uint8_t c, uint8_t i);
+    virtual void shift(uint8_t c, uint8_t i) {
+        // If the position is zero, no need to change the buffer
+        for (int j = i; j > 0; j--) {
+            buffer[j] = buffer[j - 1];
+        }
+        buffer[0] = c;
+    }
 
-    virtual void append(uint8_t c);
+    virtual void append(uint8_t c) {
+        if (symbols >= SIZE) {
+            symbols--;
+        }
+        for (int j = symbols; j > 0; j--) {
+            buffer[j] = buffer[j - 1];
+        }
+        buffer[0] = c;
+        symbols++;
+    }
 
-    uint8_t extract(uint8_t i);
+    uint8_t extract(uint8_t i) {
+        return buffer[i];
+    }
 
-    uint32_t encode(uint8_t c);
+    uint32_t encode(uint8_t c) {
+        for (uint8_t i = 0; i < symbols; i++) {
+            uint8_t extracted = extract(i);
+            if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
+                shift(c, i);
+                return i;
+            }
+        }
 
-    uint8_t decode(uint32_t symbol);
+        // Not found so add the symbol to the buffer
+        append(c);
 
-    bool visited();
+        // Sum size to differentiate between indexes on the MTF buffer and characters
+        return c + SIZE;
+    }
 
-    void set_visited(uint64_t hash);
+    uint8_t decode(uint32_t symbol) {
+        uint8_t c;
+        if (symbol >= SIZE) {
+            c = symbol - SIZE;
+            append(c);
+        } else {
+            c = extract(symbol);
+            shift(c, symbol);
+        }
+        return c;
+    }
 
-    uint64_t get_key();
+    bool visited() {
+        return is_visited;
+    }
+
+    void set_visited(uint64_t hash) {
+        is_visited = true;
+        key = hash;
+    }
+
+    uint64_t get_key() {
+        return key;
+    }
 
 };
 
