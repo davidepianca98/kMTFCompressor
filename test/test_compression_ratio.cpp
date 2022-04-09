@@ -33,7 +33,7 @@ int main() {
 
             //MTFHashCompressor::compress_block<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 8, ram);
+            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

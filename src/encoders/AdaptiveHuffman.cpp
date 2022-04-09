@@ -5,7 +5,7 @@
 #include "AdaptiveHuffman.h"
 
 AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): tree(alphabet_size * 2 + 1), nyt_node(0), next_free_slot(1),
-                                                    alphabet_size(alphabet_size), map(alphabet_size, -1) {
+                                                          alphabet_size(alphabet_size), map_leaf(alphabet_size, -1) {
     tree[0].symbol = alphabet_size;
     tree[0].number = alphabet_size * 2;
     tree[0].nyt = true;
@@ -59,10 +59,16 @@ void AdaptiveHuffman::swap(int& first, int& second) {
 
     // Assign new node index to the reverse map by symbol
     if (tree[first].symbol != alphabet_size) {
-        map[tree[first].symbol] = first;
+        map_leaf[tree[first].symbol] = first;
     }
     if (tree[second].symbol != alphabet_size) {
-        map[tree[second].symbol] = second;
+        map_leaf[tree[second].symbol] = second;
+    }
+}
+
+void AdaptiveHuffman::write_symbol(uint32_t bits, int length, obitstream& out) {
+    for (int i = 0; i < length; i++) {
+        out.write_bit((bits >> i) & 1);
     }
 }
 
@@ -80,10 +86,9 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
         n++;
         node = parent;
     }
+
     // Write out the bits in the opposite order, because they need to be from root to leaf
-    for (int i = 0; i < n; i++) {
-        out.write_bit((bits >> i) & 1);
-    }
+    write_symbol(bits, n, out);
 }
 
 void AdaptiveHuffman::slide_and_increment(int node) {
@@ -99,7 +104,7 @@ void AdaptiveHuffman::slide_and_increment(int node) {
 }
 
 void AdaptiveHuffman::update_tree(uint32_t symbol) {
-    if (map[symbol] == -1) {
+    if (map_leaf[symbol] == -1) {
         // First time the symbol has been seen, split the NYT node in a new NYT node and the symbol node
         tree[nyt_node].nyt = false;
         uint64_t number = tree[nyt_node].number;
@@ -120,17 +125,17 @@ void AdaptiveHuffman::update_tree(uint32_t symbol) {
 
         next_free_slot++;
 
-        map[symbol] = tree[nyt_node].right;
+        map_leaf[symbol] = tree[nyt_node].right;
         nyt_node = tree[nyt_node].left;
     }
 
-    slide_and_increment(map[symbol]);
+    slide_and_increment(map_leaf[symbol]);
 }
 
 void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     assert(symbol < alphabet_size);
-    if (map[symbol] != -1) {
-        write_symbol(map[symbol], out);
+    if (map_leaf[symbol] != -1) {
+        write_symbol(map_leaf[symbol], out);
     } else {
         // If the symbol hasn't been seen yet, write the NYT escape sequence
         write_symbol(nyt_node, out);

@@ -25,7 +25,7 @@ protected:
 
 public:
 
-    Hash(uint64_t k, uint64_t seed);
+    Hash(int k, uint64_t seed);
 
     virtual void update(uint8_t c);
 

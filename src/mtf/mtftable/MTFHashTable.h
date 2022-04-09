@@ -12,7 +12,7 @@
 #include "Identity.h"
 
 #define MTF_RANK
-#define MTF_STATS
+//#define MTF_STATS
 
 template <typename HASH, typename T>
 class MTFHashTable {
@@ -28,7 +28,7 @@ protected:
     // Size of the block
     int block_size;
     uint64_t max_table_size;
-    bool doubling = false;
+    bool doubling = true;
 
     uint64_t modulo_val;
     uint32_t kmer_chars = 0;
@@ -70,7 +70,7 @@ protected:
 
     uint8_t mtf_decode(uint32_t i);
 
-    void keep_track(MTFBuffer<T>& buf);
+    void keep_track(MTFBuffer<T>& buf, uint64_t hash);
 
     void count_symbol_in(uint8_t c);
 

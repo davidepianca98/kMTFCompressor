@@ -9,9 +9,6 @@ Identity::Identity(int k, uint64_t seed) : Hash(k, seed) {
 }
 
 void Identity::update(uint8_t c) {
-    kmer[i] = c;
-    i = (i + 1) % k;
-
     hash = (hash << 8) | c;
     hash &= sh;
 }

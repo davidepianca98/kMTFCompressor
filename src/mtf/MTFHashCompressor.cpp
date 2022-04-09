@@ -9,6 +9,8 @@
 #include "mtf/mtftable/MTFHashTableStream.h"
 #include "stream/ibitstream/ifbitstream.h"
 #include "randomized/RabinKarp.h"
+#include "randomized/LinearHash.h"
+#include "randomized/MinimiserHash.h"
 
 int MTFHashCompressor::get_cores() {
     int processor_count = (int) std::thread::hardware_concurrency();
@@ -137,6 +139,8 @@ int MTFHashCompressor::compress_stream(const std::string& path, const std::strin
 }
 
 template int MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<LinearHash, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
 
 template <typename HASH, typename T>
 int MTFHashCompressor::decompress_stream(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {

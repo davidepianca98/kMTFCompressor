@@ -37,7 +37,7 @@ void MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 
     hash = window_hashes2[min_index];
 
-    hash = (hash << 3) | (hash_window.get_hash() & 7);
+    hash = (hash << 5) | (hash_window.get_hash() & 31);
 
     i = (i + 1) % (k - sub_k + 1);
 }

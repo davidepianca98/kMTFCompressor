@@ -26,7 +26,7 @@ private:
     uint32_t alphabet_size;
     int log_alphabet_size;
 
-    std::vector<int> map; // gets the leaf representing the symbol, indexed by symbol
+    std::vector<int> map_leaf; // gets the leaf representing the symbol, indexed by symbol
 
 
     inline bool is_leaf(int node);
@@ -34,6 +34,8 @@ private:
     int get_block_leader(int node);
 
     void swap(int& first, int& second);
+
+    static void write_symbol(uint32_t bits, int length, obitstream& out);
 
     void write_symbol(int node, obitstream& out);
 

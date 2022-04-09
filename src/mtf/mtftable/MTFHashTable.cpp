@@ -1,6 +1,8 @@
 
 #include "MTFHashTable.h"
 #include "randomized/RabinKarp.h"
+#include "randomized/LinearHash.h"
+#include "randomized/MinimiserHash.h"
 
 template <typename HASH, typename T>
 uint32_t MTFHashTable<HASH, T>::mtf_encode(uint8_t c) {
@@ -15,7 +17,7 @@ uint32_t MTFHashTable<HASH, T>::mtf_encode(uint8_t c) {
     } else {
         uint64_t hash = hash_function.get_hash() & modulo_val;
         MTFBuffer<T>& buf = hash_table[hash];
-        keep_track(buf);
+        keep_track(buf, hash_function.get_hash());
         out = buf.encode(c);
 
 #ifdef MTF_STATS
@@ -43,7 +45,7 @@ uint8_t MTFHashTable<HASH, T>::mtf_decode(uint32_t i) {
     } else {
         uint64_t hash = hash_function.get_hash() & modulo_val;
         MTFBuffer<T> &buf = hash_table[hash];
-        keep_track(buf);
+        keep_track(buf, hash_function.get_hash());
 
         c = buf.decode(i);
     }
@@ -54,10 +56,10 @@ uint8_t MTFHashTable<HASH, T>::mtf_decode(uint32_t i) {
 }
 
 template <typename HASH, typename T>
-void MTFHashTable<HASH, T>::keep_track(MTFBuffer<T>& buf) {
+void MTFHashTable<HASH, T>::keep_track(MTFBuffer<T>& buf, uint64_t hash) {
     if (!buf.visited()) {
         used_cells++;
-        buf.set_visited();
+        buf.set_visited(hash);
     }
 }
 
@@ -91,9 +93,23 @@ void MTFHashTable<HASH, T>::count_symbol_out(uint32_t i) {
 template <typename HASH, typename T>
 void MTFHashTable<HASH, T>::double_table() {
     if (doubling && used_cells * 10 > hash_table.size() && hash_table.size() * 2 < max_table_size) {
-        hash_table.resize(hash_table.size() * 2);
+        // Allocate table double the size of the older one
+        std::vector<MTFRankBuffer<T>> hash_table_new(hash_table.size() * 2);
+        // Calculate the new modulo based on the size
+        modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_new.size()));
 
-        modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
+        // Rehashing approximation using the saved hash, it doesn't take into account the hash collisions that happened
+        // earlier, but the only other way is to restart parsing the whole stream which is not feasible
+        used_cells = 0;
+        for (auto buf : hash_table) {
+            if (buf.visited()) {
+                // The full hash is used to calculate the hash in the new bigger table with the new modulo
+                uint64_t hash = buf.get_key() & modulo_val;
+                hash_table_new[hash] = buf;
+                used_cells++;
+            }
+        }
+        hash_table = hash_table_new;
     }
 }
 
@@ -117,8 +133,8 @@ MTFHashTable<HASH, T>::MTFHashTable(int block_size, uint64_t max_memory_usage, i
     if (doubling) { // TODO set as parameter
         hash_table.resize(4096);
     } else {
-        hash_table.resize(max_table_size);
-        //hash_table.resize(524288);
+        //hash_table.resize(max_table_size);
+        hash_table.resize(524288 * 16);
         //hash_table.resize(4096);
     }
 
@@ -166,3 +182,6 @@ template class MTFHashTable<RabinKarp, boost::multiprecision::uint128_t>;
 template class MTFHashTable<RabinKarp, boost::multiprecision::uint256_t>;
 template class MTFHashTable<RabinKarp, boost::multiprecision::uint512_t>;
 template class MTFHashTable<RabinKarp, boost::multiprecision::uint1024_t>;
+
+template class MTFHashTable<LinearHash, uint64_t>;
+template class MTFHashTable<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>;

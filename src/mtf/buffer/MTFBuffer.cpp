@@ -67,8 +67,14 @@ bool MTFBuffer<T>::visited() {
 }
 
 template <typename T>
-void MTFBuffer<T>::set_visited() {
+void MTFBuffer<T>::set_visited(uint64_t hash) {
     is_visited = true;
+    key = hash;
+}
+
+template<typename T>
+uint64_t MTFBuffer<T>::get_key() {
+    return key;
 }
 
 template class MTFBuffer<uint16_t>;

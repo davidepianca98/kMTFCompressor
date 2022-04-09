@@ -3,6 +3,8 @@
 #include "MTFHashTableStream.h"
 #include "randomized/RabinKarp.h"
 #include "encoders/RunLength.h"
+#include "randomized/LinearHash.h"
+#include "randomized/MinimiserHash.h"
 
 template <typename HASH, typename T>
 MTFHashTableStream<HASH, T>::MTFHashTableStream(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, T>(block_size, max_memory_usage, k, seed) {
@@ -85,3 +87,6 @@ template class MTFHashTableStream<RabinKarp, boost::multiprecision::uint128_t>;
 template class MTFHashTableStream<RabinKarp, boost::multiprecision::uint256_t>;
 template class MTFHashTableStream<RabinKarp, boost::multiprecision::uint512_t>;
 template class MTFHashTableStream<RabinKarp, boost::multiprecision::uint1024_t>;
+
+template class MTFHashTableStream<LinearHash, uint64_t>;
+template class MTFHashTableStream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>;

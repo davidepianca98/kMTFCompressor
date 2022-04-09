@@ -13,6 +13,8 @@ protected:
     uint8_t symbols = 0;
     bool is_visited = false;
 
+    uint64_t key = 0;
+
 public:
     constexpr static uint8_t byte_size() noexcept {
         if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
@@ -42,7 +44,9 @@ public:
 
     bool visited();
 
-    void set_visited();
+    void set_visited(uint64_t hash);
+
+    uint64_t get_key();
 
 };
 

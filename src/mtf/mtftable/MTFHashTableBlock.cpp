@@ -1,6 +1,8 @@
 
 #include "MTFHashTableBlock.h"
 #include "randomized/RabinKarp.h"
+#include "randomized/LinearHash.h"
+#include "randomized/MinimiserHash.h"
 
 template <typename HASH, typename T>
 MTFHashTableBlock<HASH, T>::MTFHashTableBlock(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, T>(block_size, max_memory_usage, k, seed) {}
@@ -26,3 +28,6 @@ template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint128_t>;
 template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint256_t>;
 template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint512_t>;
 template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint1024_t>;
+
+template class MTFHashTableBlock<LinearHash, uint64_t>;
+template class MTFHashTableBlock<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>;
