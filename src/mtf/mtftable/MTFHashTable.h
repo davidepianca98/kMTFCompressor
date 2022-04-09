@@ -4,7 +4,6 @@
 
 #include <cstdint>
 #include <vector>
-#include <boost/multiprecision/cpp_int.hpp>
 #include <unordered_set>
 #include "Hash.h"
 #include "mtf/buffer/MTFBuffer.h"
@@ -14,12 +13,12 @@
 #define MTF_RANK
 //#define MTF_STATS
 
-template <typename HASH, typename T>
+template <typename HASH, uint32_t SIZE>
 class MTFHashTable {
 protected:
     // Hash table of MTF buffers
 #ifdef MTF_RANK
-    std::vector<MTFRankBuffer<T>> hash_table;
+    std::vector<MTFRankBuffer<SIZE>> hash_table;
 #else
     std::vector<MTFBuffer<T>> hash_table;
 #endif
@@ -33,28 +32,14 @@ protected:
     uint64_t modulo_val;
     uint32_t kmer_chars = 0;
 
-    constexpr static uint8_t byte_size() noexcept {
-        if (std::is_same<T, boost::multiprecision::uint128_t>::value) {
-            return 16;
-        } else if (std::is_same<T, boost::multiprecision::uint256_t>::value) {
-            return 32;
-        } else if (std::is_same<T, boost::multiprecision::uint512_t>::value) {
-            return 64;
-        } else if (std::is_same<T, boost::multiprecision::uint1024_t>::value) {
-            return 128;
-        } else {
-            return sizeof(T);
-        }
-    }
-
     // Statistics
     double used_cells = 0;
 
 #ifdef MTF_STATS
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
-    uint64_t symbols_out[256 + byte_size()] = { 0 };
-    uint64_t symbols_out_run[256 + byte_size()] = { 0 };
+    uint64_t symbols_out[256 + SIZE] = { 0 };
+    uint64_t symbols_out_run[256 + SIZE] = { 0 };
     uint64_t stream_length = 0;
     std::unordered_set<uint64_t> distinct_kmers;
     // Runs
@@ -70,7 +55,7 @@ protected:
 
     uint8_t mtf_decode(uint32_t i);
 
-    void keep_track(MTFBuffer<T>& buf, uint64_t hash);
+    void keep_track(MTFBuffer<SIZE>& buf, uint64_t hash);
 
     void count_symbol_in(uint8_t c);
 

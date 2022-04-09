@@ -4,30 +4,31 @@
 #include "randomized/LinearHash.h"
 #include "randomized/MinimiserHash.h"
 
-template <typename HASH, typename T>
-MTFHashTableBlock<HASH, T>::MTFHashTableBlock(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, T>(block_size, max_memory_usage, k, seed) {}
+template <typename HASH, uint32_t SIZE>
+MTFHashTableBlock<HASH, SIZE>::MTFHashTableBlock(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, SIZE>(block_size, max_memory_usage, k, seed) {}
 
-template <typename HASH, typename T>
-void MTFHashTableBlock<HASH, T>::encode(const uint8_t *block, long size, uint32_t *out_block) {
+template <typename HASH, uint32_t SIZE>
+void MTFHashTableBlock<HASH, SIZE>::encode(const uint8_t *block, long size, uint32_t *out_block) {
     for (int i = 0; i < size; i++) {
-        out_block[i] = MTFHashTable<HASH, T>::mtf_encode(block[i]);
+        out_block[i] = MTFHashTable<HASH, SIZE>::mtf_encode(block[i]);
     }
 }
 
-template <typename HASH, typename T>
-void MTFHashTableBlock<HASH, T>::decode(const uint32_t *block, long size, uint8_t *out_block) {
+template <typename HASH, uint32_t SIZE>
+void MTFHashTableBlock<HASH, SIZE>::decode(const uint32_t *block, long size, uint8_t *out_block) {
     for (int i = 0; i < size; i++) {
-        out_block[i] = MTFHashTable<HASH, T>::mtf_decode(block[i]);
+        out_block[i] = MTFHashTable<HASH, SIZE>::mtf_decode(block[i]);
     }
 }
 
-template class MTFHashTableBlock<RabinKarp, uint16_t>;
-template class MTFHashTableBlock<RabinKarp, uint32_t>;
-template class MTFHashTableBlock<RabinKarp, uint64_t>;
-template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint128_t>;
-template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint256_t>;
-template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint512_t>;
-template class MTFHashTableBlock<RabinKarp, boost::multiprecision::uint1024_t>;
+template class MTFHashTableBlock<RabinKarp, 2>;
+template class MTFHashTableBlock<RabinKarp, 4>;
+template class MTFHashTableBlock<RabinKarp, 8>;
+template class MTFHashTableBlock<RabinKarp, 16>;
+template class MTFHashTableBlock<RabinKarp, 32>;
+template class MTFHashTableBlock<RabinKarp, 64>;
+template class MTFHashTableBlock<RabinKarp, 128>;
+template class MTFHashTableBlock<RabinKarp, 256>;
 
-template class MTFHashTableBlock<LinearHash, uint64_t>;
-template class MTFHashTableBlock<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>;
+template class MTFHashTableBlock<LinearHash, 8>;
+template class MTFHashTableBlock<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, 8>;

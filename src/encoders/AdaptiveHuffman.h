@@ -54,7 +54,9 @@ public:
 
     uint32_t decode(ibitstream& in, uint32_t *data, uint32_t length, uint32_t eof);
 
-    void normalizeWeights();
+    void normalize_weights();
+
+    uint64_t refresh_internal_weights(int node);
 };
 
 

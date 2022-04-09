@@ -4,8 +4,8 @@
 
 #include "MTFHashTable.h"
 
-template <typename HASH, typename T>
-class MTFHashTableBlock : public MTFHashTable<HASH, T> {
+template <typename HASH, uint32_t SIZE>
+class MTFHashTableBlock : public MTFHashTable<HASH, SIZE> {
 
 public:
     MTFHashTableBlock(int block_size, uint64_t max_memory_usage, int k, uint64_t seed);

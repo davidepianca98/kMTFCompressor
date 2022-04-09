@@ -33,8 +33,8 @@ int test_file(const std::string& path) {
 }
 
 int main() {
-    std::string path = "../../test/resources/calgarycorpus";
-    //std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/calgarycorpus";
+    std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/pizzachilirep";
     //std::string path = "../../test/resources/mio";
 

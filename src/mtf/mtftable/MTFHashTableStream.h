@@ -8,8 +8,8 @@
 #include "stream/obitstream/obitstream.h"
 #include "stream/ibitstream/ibitstream.h"
 
-template <typename HASH, typename T>
-class MTFHashTableStream : public MTFHashTable<HASH, T> {
+template <typename HASH, uint32_t SIZE>
+class MTFHashTableStream : public MTFHashTable<HASH, SIZE> {
 
     std::vector<uint8_t> byte_array;
     std::vector<uint32_t> int_array;

@@ -24,7 +24,7 @@ uint64_t MTFHashCompressor::generate_seed() {
     return std::chrono::system_clock::now().time_since_epoch().count();
 }
 
-template <typename HASH, typename T>
+template <typename HASH, uint32_t SIZE>
 int MTFHashCompressor::compress_block(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
@@ -40,20 +40,20 @@ int MTFHashCompressor::compress_block(const std::string& path, const std::string
 
     int block_size = 4 * 1024 * 1024; // 1 MB block size
 
-    std::vector<MTFBlockWorker<HASH, T>> workers;
+    std::vector<MTFBlockWorker<HASH, SIZE>> workers;
     for (int i = 0; i < core_number; i++) {
         workers.emplace_back(k, seed, block_size, block_size * 4 + 1024, max_memory_usage / core_number);
     }
 
     while (in_file.good()) {
-        for (MTFBlockWorker<HASH, T>& worker: workers) {
+        for (MTFBlockWorker<HASH, SIZE>& worker: workers) {
             in_file.read(reinterpret_cast<char *>(worker.get_in_block()), worker.get_in_block_size());
             long read_bytes = in_file.gcount();
 
             worker.startCompression(read_bytes);
         }
 
-        for (MTFBlockWorker<HASH, T>& worker: workers) {
+        for (MTFBlockWorker<HASH, SIZE>& worker: workers) {
             uint32_t compressed_block_size = worker.get();
             if (compressed_block_size > 0) {
                 uint32_t be_compressed_block_size = htobe32(compressed_block_size);
@@ -69,7 +69,9 @@ int MTFHashCompressor::compress_block(const std::string& path, const std::string
     return 0;
 }
 
-template <typename HASH, typename T>
+template int MTFHashCompressor::compress_block<RabinKarp, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+
+template <typename HASH, uint32_t SIZE>
 int MTFHashCompressor::decompress_block(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
@@ -86,13 +88,13 @@ int MTFHashCompressor::decompress_block(const std::string& path, const std::stri
     // Needs max block size as the block size is read after the allocation of these buffers
     int max_block_size = 1024 * 1024 * 10;
 
-    std::vector<MTFBlockWorker<HASH, T>> workers;
+    std::vector<MTFBlockWorker<HASH, SIZE>> workers;
     for (int i = 0; i < core_number; i++) {
         workers.emplace_back(k, seed, max_block_size, max_block_size * 4 + 1024, max_memory_usage / core_number);
     }
 
     while (in_file.good()) {
-        for (MTFBlockWorker<HASH, T>& worker: workers) {
+        for (MTFBlockWorker<HASH, SIZE>& worker: workers) {
             uint32_t block_size;
             in_file.read(reinterpret_cast<char *>(&block_size), 4);
             block_size = be32toh(block_size);
@@ -103,7 +105,7 @@ int MTFHashCompressor::decompress_block(const std::string& path, const std::stri
             worker.startDecompression(read_bytes);
         }
 
-        for (MTFBlockWorker<HASH, T>& worker: workers) {
+        for (MTFBlockWorker<HASH, SIZE>& worker: workers) {
             uint32_t decompressed_block_size = worker.get();
             if (decompressed_block_size > 0) {
                 out_file.write(reinterpret_cast<const char *>(worker.get_out_block()), decompressed_block_size);
@@ -117,7 +119,9 @@ int MTFHashCompressor::decompress_block(const std::string& path, const std::stri
     return 0;
 }
 
-template <typename HASH, typename T>
+template int MTFHashCompressor::decompress_block<RabinKarp, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+
+template <typename HASH, uint32_t SIZE>
 int MTFHashCompressor::compress_stream(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
     std::ifstream in_file(path, std::ios::binary);
     if (in_file.fail()) {
@@ -129,7 +133,7 @@ int MTFHashCompressor::compress_stream(const std::string& path, const std::strin
     uint64_t be_seed = htobe64(seed);
     out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
 
-    MTFHashTableStream<HASH, T> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
+    MTFHashTableStream<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
     mtf.encode(in_file, out_file);
 
     in_file.close();
@@ -138,11 +142,13 @@ int MTFHashCompressor::compress_stream(const std::string& path, const std::strin
     return 0;
 }
 
-template int MTFHashCompressor::compress_stream<RabinKarp, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
-template int MTFHashCompressor::compress_stream<LinearHash, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
-template int MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<RabinKarp, 6>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<RabinKarp, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<RabinKarp, 256>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<LinearHash, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
 
-template <typename HASH, typename T>
+template <typename HASH, uint32_t SIZE>
 int MTFHashCompressor::decompress_stream(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage) {
     ifbitstream in_file(path);
     if (in_file.fail()) {
@@ -154,7 +160,7 @@ int MTFHashCompressor::decompress_stream(const std::string& path, const std::str
     in_file.read(reinterpret_cast<char *>(&be_seed), 8);
     uint64_t seed = be64toh(be_seed);
 
-    MTFHashTableStream<HASH, T> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
+    MTFHashTableStream<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
     mtf.decode(in_file, out_file);
 
     in_file.close();
@@ -163,4 +169,4 @@ int MTFHashCompressor::decompress_stream(const std::string& path, const std::str
     return 0;
 }
 
-template int MTFHashCompressor::decompress_stream<RabinKarp, uint64_t>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);
+template int MTFHashCompressor::decompress_stream<RabinKarp, 8>(const std::string& path, const std::string& out_path, int k, uint64_t max_memory_usage);

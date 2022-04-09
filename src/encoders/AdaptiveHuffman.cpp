@@ -206,8 +206,24 @@ uint32_t AdaptiveHuffman::decode(ibitstream& in, uint32_t *data, uint32_t length
     return decompressed_size;
 }
 
-void AdaptiveHuffman::normalizeWeights() {
-    for (auto & node : tree) {
-        node.weight = (uint64_t) log2((double) (node.weight + 1)); // TODO this generates infinite loop in write_symbol in big files, probably doesn't preserve the sum of children weights in parent weight, so apply log to leaves and then set internal nodes weights
+void AdaptiveHuffman::normalize_weights() {
+    for (auto leaf : map_leaf) {
+        if (leaf != -1) {
+            tree[leaf].weight = (uint64_t) log2((double) (tree[leaf].weight + 1));
+        }
+    }
+    refresh_internal_weights(0);
+}
+
+uint64_t AdaptiveHuffman::refresh_internal_weights(int node) {
+    if (node == -1) {
+        return 0;
+    } else if (is_leaf(node)) {
+        return tree[node].weight;
+    } else {
+        uint64_t left_weight = refresh_internal_weights(tree[node].left);
+        uint64_t right_weight = refresh_internal_weights(tree[node].right);
+        tree[node].weight = left_weight + right_weight;
+        return tree[node].weight;
     }
 }

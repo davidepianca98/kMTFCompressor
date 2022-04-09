@@ -5,10 +5,10 @@
 #include <cstdint>
 #include "MTFBuffer.h"
 
-template <typename T>
-class MTFRankBuffer : public MTFBuffer<T> {
+template <uint32_t SIZE>
+class MTFRankBuffer : public MTFBuffer<SIZE> {
 
-    uint32_t counter[MTFBuffer<T>::byte_size()] = { 0 };
+    uint32_t counter[SIZE] = { 0 };
     int amount = 0;
 
     void normalize_rank_counter();
