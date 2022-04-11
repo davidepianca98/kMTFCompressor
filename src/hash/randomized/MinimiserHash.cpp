@@ -9,12 +9,12 @@ MinimiserHash<HASH1, HASH2, HASH3>::MinimiserHash(int k, uint64_t seed) : Hash(k
                                                     hash_window(k, seed), filled(0), min_index(0), minimum(UINT64_MAX) {}
 
 template <typename HASH1, typename HASH2, typename HASH3>
-void MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
+uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
     hash1.update(c);
     hash2.update(c);
     window_hashes1[i] = hash1.get_hash();
     window_hashes2[i] = hash2.get_hash();
-    hash_window.update(c);
+    uint8_t old = hash_window.update(c);
 
     if (filled < k - sub_k + 1) {
         filled++;
@@ -40,6 +40,8 @@ void MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
     hash = (hash << 5) | (hash_window.get_hash() & 31);
 
     i = (i + 1) % (k - sub_k + 1);
+
+    return old;
 }
 
 template class MinimiserHash<RabinKarp, LinearHash, RabinKarp>;

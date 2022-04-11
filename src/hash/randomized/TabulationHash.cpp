@@ -17,16 +17,8 @@ TabulationHash::~TabulationHash() {
     delete[] T;
 }
 
-void TabulationHash::update(uint8_t c) {
-    // Update k-mer
-    uint8_t old = kmer[i];
-    kmer[i] = c;
-
-    // Faster than wrapping with modulo
-    i++;
-    if (i >= k) {
-        i = 0;
-    }
+uint8_t TabulationHash::update(uint8_t c) {
+    uint8_t old = Hash::update(c);
 
     kmer_hash -= old << ((k - 1) * 8);
     kmer_hash = (kmer_hash << 8) | c;
@@ -35,4 +27,5 @@ void TabulationHash::update(uint8_t c) {
     for (uint64_t j = 0; j < t; j++) {
         hash ^= T[j * len + ((kmer_hash >> (r * j)) & 0xFF)]; // TODO instead of FF should be r ones
     }
+    return old;
 }

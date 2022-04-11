@@ -11,7 +11,7 @@ private:
 public:
     Identity(int k, uint64_t seed);
 
-    void update(uint8_t c) override;
+    uint8_t update(uint8_t c) override;
 };
 
 #endif //MTF_IDENTITY_H

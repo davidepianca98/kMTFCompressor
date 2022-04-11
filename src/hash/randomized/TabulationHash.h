@@ -24,7 +24,7 @@ public:
 
     ~TabulationHash();
 
-    void update(uint8_t c) override;
+    uint8_t update(uint8_t c) override;
 };
 
 #endif //MTF_TABULATIONHASH_H

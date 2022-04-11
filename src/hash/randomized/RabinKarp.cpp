@@ -11,16 +11,8 @@ RabinKarp::RabinKarp(int k, uint64_t seed) : Hash(k, seed) {
     }
 }
 
-void RabinKarp::update(uint8_t c) {
-    // Update k-mer
-    uint8_t old = kmer[i];
-    kmer[i] = c;
-
-    // Faster than wrapping with modulo
-    i++;
-    if (i >= k) {
-        i = 0;
-    }
+uint8_t RabinKarp::update(uint8_t c) {
+    uint8_t old = Hash::update(c);
 
     // Remove the leftmost character using the multiplier
     hash = (hash - ((xk * old) % M61)) % M61;
@@ -28,4 +20,5 @@ void RabinKarp::update(uint8_t c) {
     hash = (hash * base) % M61;
     // Push the new character to the right
     hash = (hash + c) % M61;
+    return old;
 }

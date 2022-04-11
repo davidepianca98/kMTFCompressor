@@ -27,7 +27,7 @@ public:
 
     Hash(int k, uint64_t seed);
 
-    virtual void update(uint8_t c);
+    virtual uint8_t update(uint8_t c);
 
     [[nodiscard]] virtual uint64_t get_hash() const;
 
