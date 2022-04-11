@@ -2,7 +2,7 @@
 #include <cstdio>
 #include "ibitstream.h"
 
-ibitstream::ibitstream() : std::istream(nullptr), bitset(1024 * 1024), byte_pos(0), pos(0) {}
+ibitstream::ibitstream() : std::istream(nullptr), bitset(4 * 1024 * 1024), byte_pos(0), pos(0) {}
 
 int ibitstream::read_bit() {
     if (byte_pos == 0 && pos == 0) {
@@ -32,7 +32,7 @@ int ibitstream::read_bit() {
 }
 
 bool ibitstream::remaining() {
-    if (!good() && byte_pos >= bitset.size()) {
+    if (!good() && byte_pos == 0 && pos == 0) {
         return false;
     }
     return true;

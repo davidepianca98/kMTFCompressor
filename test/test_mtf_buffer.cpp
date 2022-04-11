@@ -1,5 +1,4 @@
 
-#include <cstdint>
 #include <iostream>
 #include <vector>
 #include "mtf/buffer/MTFBuffer.h"
@@ -7,50 +6,58 @@
 
 
 int main() {
-    MTFBuffer<uint64_t> buf;
-    buf.append(0x01);
-    buf.append(0x02);
-    buf.append(0x03);
-    buf.append(0x04);
-    buf.append(0x05);
-    buf.append(0x06);
-    buf.append(0x07);
-    buf.append(0x08);
-    buf.shift(0x03, 5);
-    std::cout << std::hex << buf.get_buf() << std::endl;
+    MTFBuffer<8> buf;
+    buf.append(1);
+    buf.append(2);
+    buf.append(3);
+    buf.append(4);
+    buf.append(5);
+    buf.append(6);
+    buf.append(7);
+    buf.append(8);
+    buf.shift(5);
+    if (buf.extract(0) != 3) {
+        return 1;
+    }
 
-    buf.append(0x09);
-    std::cout << std::hex << buf.get_buf() << std::endl;
+    buf.append(9);
+    if (buf.extract(0) != 9) {
+        return 1;
+    }
+    if (buf.extract(1) != 3) {
+        return 1;
+    }
 
-    std::cout << (uint64_t) buf.extract(1) << std::endl << std::endl;
 
+    MTFRankBuffer<8> buf2;
+    buf2.append(8);
+    buf2.append(7);
+    buf2.append(6);
+    buf2.append(5);
+    buf2.append(4);
+    buf2.append(3);
+    buf2.append(2);
+    buf2.append(1);
 
-    MTFRankBuffer<uint64_t> buf2;
-    buf2.append(0x08);
-    buf2.append(0x07);
-    buf2.append(0x06);
-    buf2.append(0x05);
-    buf2.append(0x04);
-    buf2.append(0x03);
-    buf2.append(0x02);
-    buf2.append(0x01);
+    buf2.shift(0);
+    buf2.shift(0);
+    buf2.shift(1);
+    if (buf2.extract(0) != 8) {
+        return 1;
+    }
+    if (buf2.extract(1) != 7) {
+        return 1;
+    }
 
-    buf2.shift(0x08, 0);
-    buf2.shift(0x08, 0);
-    buf2.shift(0x07, 1);
-    std::cout << std::hex << buf2.get_buf() << std::endl;
+    buf2.shift(5);
+    if (buf2.extract(2) != 3) {
+        return 1;
+    }
 
-    buf2.shift(0x03, 5);
-    std::cout << std::hex << buf2.get_buf() << std::endl;
+    buf2.append(9);
+    if (buf2.extract(7) != 9) {
+        return 1;
+    }
 
-    buf2.append(0x09);
-    std::cout << std::hex << buf2.get_buf() << std::endl;
-
-    /*uint64_t t = 0x0000030405060708;
-    count[6] = 0;
-    count[7] = 0;
-    mtfAppendRank(t, count, 0x09);
-    std::cout << std::hex << t << std::endl;
-
-    std::cout << (uint64_t) mtfExtract(t, 7) << std::endl;*/
+    return 0;
 }

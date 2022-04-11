@@ -5,10 +5,11 @@
 #include "AdaptiveHuffman.h"
 
 AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): tree(alphabet_size * 2 + 1), nyt_node(0), next_free_slot(1),
-                                                          alphabet_size(alphabet_size), map_leaf(alphabet_size, -1) {
-    tree[0].symbol = alphabet_size;
-    tree[0].number = alphabet_size * 2;
-    tree[0].nyt = true;
+                                                          alphabet_size(alphabet_size), map_leaf(alphabet_size, -1),
+                                                          eof(false) {
+    tree[nyt_node].symbol = alphabet_size;
+    tree[nyt_node].number = alphabet_size * 2;
+    tree[nyt_node].nyt = true;
 
     log_alphabet_size = (int) log2(alphabet_size);
 }
@@ -18,6 +19,8 @@ inline bool AdaptiveHuffman::is_leaf(int node) {
 }
 
 int AdaptiveHuffman::get_block_leader(int node) {
+    assert(node >= 0 && node < next_free_slot);
+
     // Find the highest number node in nodes of same weight, the nodes are ordered by decreasing number and weight
     int leader = node;
     for (int i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
@@ -30,6 +33,10 @@ int AdaptiveHuffman::get_block_leader(int node) {
 }
 
 void AdaptiveHuffman::swap(int& first, int& second) {
+    assert(first >= 0 && first < next_free_slot);
+    assert(second >= 0 && second < next_free_slot);
+    assert(first != second);
+
     int first_parent = tree[first].parent;
     int second_parent = tree[second].parent;
     if (first_parent == -1 || second_parent == -1 || first_parent == second || second_parent == first) {
@@ -66,14 +73,18 @@ void AdaptiveHuffman::swap(int& first, int& second) {
     }
 }
 
-void AdaptiveHuffman::write_symbol(uint32_t bits, int length, obitstream& out) {
+void AdaptiveHuffman::write_symbol(uint64_t bits, int length, obitstream& out) {
+    assert(length >= 0 && length <= 64);
+
     for (int i = 0; i < length; i++) {
         out.write_bit((bits >> i) & 1);
     }
 }
 
 void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
-    uint32_t bits = 0; // List of bits that represent the symbol
+    assert(node >= 0 && node < next_free_slot);
+
+    uint64_t bits = 0; // List of bits that represent the symbol
     int n = 0;
     // Traverse the tree from the leaf until the node before the root is reached
     while (node != -1 && tree[node].parent != -1) {
@@ -93,6 +104,8 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
 
 void AdaptiveHuffman::slide_and_increment(int node) {
     while (node != -1) {
+        assert(node >= -1 && node < next_free_slot);
+
         int leader = get_block_leader(node);
         if (leader != node) {
             swap(leader, node);
@@ -104,6 +117,8 @@ void AdaptiveHuffman::slide_and_increment(int node) {
 }
 
 void AdaptiveHuffman::update_tree(uint32_t symbol) {
+    assert(symbol < alphabet_size);
+
     if (map_leaf[symbol] == -1) {
         // First time the symbol has been seen, split the NYT node in a new NYT node and the symbol node
         tree[nyt_node].nyt = false;
@@ -134,6 +149,7 @@ void AdaptiveHuffman::update_tree(uint32_t symbol) {
 
 void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     assert(symbol < alphabet_size);
+
     if (map_leaf[symbol] != -1) {
         write_symbol(map_leaf[symbol], out);
     } else {
@@ -148,13 +164,22 @@ void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     update_tree(symbol);
 }
 
-void AdaptiveHuffman::encode(const uint32_t *data, uint32_t length, obitstream& out) {
-    for (uint32_t i = 0; i < length; i++) {
+void AdaptiveHuffman::encode_array(const uint32_t *data, int length, obitstream& out) {
+    for (int i = 0; i < length; i++) {
         encode(data[i], out);
     }
 }
 
+void AdaptiveHuffman::encode_end(uint32_t eof_symbol, obitstream& out) {
+    assert(eof_symbol < alphabet_size);
+    encode(eof_symbol, out);
+    eof = true;
+}
+
 int AdaptiveHuffman::decode(ibitstream& in) {
+    if (eof) {
+        return -1;
+    }
     int node = 0;
 
     // Traverse the tree until a leaf is reached
@@ -165,6 +190,7 @@ int AdaptiveHuffman::decode(ibitstream& in) {
         } else if (bit == 1) {
             node = tree[node].right;
         } else {
+            eof = true;
             return -1;
         }
     }
@@ -176,6 +202,7 @@ int AdaptiveHuffman::decode(ibitstream& in) {
             number <<= 1;
             int bit = in.read_bit();
             if (bit == -1) {
+                eof = true;
                 return -1;
             }
             number |= bit;
@@ -183,25 +210,23 @@ int AdaptiveHuffman::decode(ibitstream& in) {
     } else {
         number = tree[node].symbol;
     }
-    if (number >= alphabet_size) {
-        return -1;
-    }
+    assert(number < alphabet_size);
     update_tree(number);
     return (int) number;
 }
 
-uint32_t AdaptiveHuffman::decode(ibitstream& in, uint32_t *data, uint32_t length, uint32_t eof) {
-    uint32_t decompressed_size = 0;
+int AdaptiveHuffman::decode_array(ibitstream& in, uint32_t *data, int length, uint32_t eof_symbol) {
+    if (eof) {
+        return 0;
+    }
+    int decompressed_size = 0;
     while (decompressed_size < length) {
         int value = decode(in);
-        if (value == -1) {
-            break;
+        if (value == -1 || value == (int) eof_symbol) {
+            eof = true;
+            return decompressed_size;
         }
-        data[decompressed_size] = value;
-        if (data[decompressed_size] == eof) {
-            break;
-        }
-        decompressed_size++;
+        data[decompressed_size++] = value;
     }
     return decompressed_size;
 }

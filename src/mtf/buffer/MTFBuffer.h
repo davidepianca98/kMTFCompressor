@@ -16,7 +16,8 @@ protected:
 
 public:
 
-    virtual void shift(uint8_t c, uint8_t i) {
+    virtual void shift(uint8_t i) {
+        uint8_t c = buffer[i];
         // If the position is zero, no need to change the buffer
         for (int j = i; j > 0; j--) {
             buffer[j] = buffer[j - 1];
@@ -43,7 +44,7 @@ public:
         for (uint8_t i = 0; i < symbols; i++) {
             uint8_t extracted = extract(i);
             if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
-                shift(c, i);
+                shift(i);
                 return i;
             }
         }
@@ -61,8 +62,7 @@ public:
             c = symbol - SIZE;
             append(c);
         } else {
-            c = extract(symbol);
-            shift(c, symbol);
+            shift(symbol);
         }
         return c;
     }

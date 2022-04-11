@@ -9,38 +9,57 @@
 
 
 int main() {
-    std::ifstream ifs("../../test/resources/calgarycorpus/bib", std::ios::binary);
-    //std::ifstream ifs("../../test/resources/pizzachili/pitches", std::ios::binary);
+    std::string path = "../../test/resources/pizzachili/english";
+    //std::string path = "../../test/resources/calgarycorpus/bib";
+    std::ifstream in(path, std::ios::binary);
+    std::ofstream out(path + ".mtfb", std::ios::binary);
 
-    ifs.seekg(0, std::ios::end);
-    size_t file_size = ifs.tellg();
-    std::vector<char> data;
-    data.resize(file_size);
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(&data[0], file_size);
-
-    ifs.close();
-
-    std::vector<uint32_t> out_data(file_size);
+    std::vector<uint8_t> data(1024 * 1024);
+    std::vector<uint32_t> out_data(1024 * 1024);
 
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
-    MTFHashTableBlock<RabinKarp, uint64_t> mtf(1024 * 1024, ram, 3, 1);
+    MTFHashTableBlock<RabinKarp, 8> mtf(1024 * 1024, ram, 3, 256334);
+    long read_bytes;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    mtf.encode(reinterpret_cast<const uint8_t *>(data.data()), file_size, out_data.data());
+    do {
+        // Read block
+        in.read(reinterpret_cast<char *>(data.data()), 1024 * 1024);
+        read_bytes = in.gcount();
+        mtf.encode(data.data(), read_bytes, out_data.data());
+        out.write(reinterpret_cast<char *>(out_data.data()), read_bytes * 4);
+    } while (read_bytes > 0);
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-    //for (auto c: out_data) {
-        //std::cout << c << " ";
-    //}
+    in.close();
+    out.close();
 
     mtf.print_stats();
     std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms" << std::endl;
-    
-    MTFHashTableBlock<RabinKarp, uint64_t> mtf2(1024 * 1024, ram, 3, 1);
-    mtf2.decode(out_data.data(), file_size, reinterpret_cast<uint8_t *>(out_data.data()));
 
-    if (memcmp(data.data(), out_data.data(), file_size) != 0) {
+
+    std::ifstream in2(path + ".mtfb", std::ios::binary);
+    std::ofstream out2(path + ".mtf.orig", std::ios::binary);
+
+    MTFHashTableBlock<RabinKarp, 8> mtf2(1024 * 1024, ram, 3, 256334);
+    do {
+        // Read block
+        in2.read(reinterpret_cast<char *>(out_data.data()), 1024 * 1024 * 4);
+        read_bytes = in2.gcount();
+        mtf2.decode(out_data.data(), read_bytes / 4, data.data());
+        out2.write(reinterpret_cast<char *>(data.data()), read_bytes / 4);
+    } while (read_bytes > 0);
+
+    in2.close();
+    out2.close();
+
+    std::ifstream f1(path, std::ifstream::binary);
+    std::ifstream f2(path + ".mtf.orig", std::ifstream::binary);
+
+    if (!std::equal(std::istreambuf_iterator<char>(f1.rdbuf()),
+                    std::istreambuf_iterator<char>(),
+                    std::istreambuf_iterator<char>(f2.rdbuf()))) {
+        std::cout << "ERR" << std::endl;
         return 1;
     }
 

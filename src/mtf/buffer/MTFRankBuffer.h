@@ -3,6 +3,7 @@
 #define MTF_MTFRANKBUFFER_H
 
 #include <cstdint>
+#include <cmath>
 #include "MTFBuffer.h"
 
 template <uint32_t SIZE>
@@ -23,7 +24,7 @@ class MTFRankBuffer : public MTFBuffer<SIZE> {
 
 public:
 
-    void shift(uint8_t c, uint8_t i) override {
+    void shift(uint8_t i) override {
         counter[i]++;
 
         for (int j = i - 1; j >= 0; j--) {
@@ -42,17 +43,19 @@ public:
 
     void append(uint8_t c) override {
         uint32_t i;
-        for (i = 0; i < SIZE - 1; i++) {
-            if (counter[i] < 1) {
-                break;
+        if (MTFBuffer<SIZE>::symbols < SIZE) {
+            MTFBuffer<SIZE>::symbols++;
+            for (i = 0; i < SIZE - 1; i++) {
+                if (counter[i] < 1) {
+                    break;
+                }
             }
+        } else {
+            i = SIZE - 1;
         }
 
         counter[i] = 1;
         MTFBuffer<SIZE>::buffer[i] = c;
-        if (MTFBuffer<SIZE>::symbols < SIZE) {
-            MTFBuffer<SIZE>::symbols++;
-        }
 
         normalize_rank_counter();
     }

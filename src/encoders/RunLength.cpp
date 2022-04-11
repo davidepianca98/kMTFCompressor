@@ -33,9 +33,10 @@ void RunLength::encode_end(uint32_t eof_symbol, obitstream& out) {
         counter = 0;
     }
     ah.encode(eof_symbol, out);
+    eof = true;
 }
 
-int RunLength::decode_array(ibitstream& in, uint32_t *data, int length, uint32_t eof_symbol) { // TODO not working with english
+int RunLength::decode_array(ibitstream& in, uint32_t *data, int length, uint32_t eof_symbol) {
     if (eof) {
         return 0;
     }

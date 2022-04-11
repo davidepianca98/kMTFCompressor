@@ -159,17 +159,15 @@ protected:
         }
     }
 
-    double calculate_entropy(const uint64_t symbols[], int length) {
-#ifdef MTF_STATS
+    double calculate_entropy(const uint64_t symbols[], int symbols_amount, int length) {
         double entropy = 0.0;
-        for (int i = 0; i < length; i++) {
-            double p = (double) symbols[i] / stream_length;
+        for (int i = 0; i < symbols_amount; i++) {
+            double p = (double) symbols[i] / length;
             if (p > 0) {
                 entropy -= p * log2(p);
             }
         }
         return entropy;
-#endif
     }
 
 public:
@@ -192,27 +190,27 @@ public:
 #ifdef MTF_STATS
         std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 
-    std::cout << "Number of runs = " << runs << std::endl;
-    std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
-    std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
+        std::cout << "Number of runs = " << runs << std::endl;
+        std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
+        std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
 
-    double entropy_in = calculate_entropy(symbols_in, 256);
-    double entropy_out = calculate_entropy(symbols_out, 256 + SIZE);
+        double entropy_in = calculate_entropy(symbols_in, 256, stream_length);
+        double entropy_out = calculate_entropy(symbols_out, 256 + SIZE, stream_length);
 
-    for (uint32_t i : symbols_in) {
-        std::cout << i << ",";
-    }
-    std::cout << std::endl;
-    for (uint32_t i : symbols_out) {
-        std::cout << i << ",";
-    }
-    std::cout << std::endl;
+        for (uint32_t i : symbols_in) {
+            std::cout << i << ",";
+        }
+        std::cout << std::endl;
+        for (uint32_t i : symbols_out) {
+            std::cout << i << ",";
+        }
+        std::cout << std::endl;
 
-    std::cout << "Entropy original = " << entropy_in << std::endl;
-    std::cout << "Entropy MTF = " << entropy_out << std::endl;
+        std::cout << "Entropy original = " << entropy_in << std::endl;
+        std::cout << "Entropy MTF = " << entropy_out << std::endl;
 
-    std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
-    std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
+        std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
+        std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
 #endif
     }
 

@@ -23,7 +23,11 @@ public:
 
     void encode(uint32_t symbol, obitstream& out);
 
+    void encode_array(const uint32_t *data, int size, obitstream& out);
+
     int decode(ibitstream& in);
+
+    int decode_array(ibitstream& in, uint32_t *data, int size);
 
     void elias_gamma_encode(uint32_t symbol, obitstream& out);
 

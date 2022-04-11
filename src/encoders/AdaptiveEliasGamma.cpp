@@ -34,6 +34,12 @@ void AdaptiveEliasGamma::encode(uint32_t symbol, obitstream& out) {
     update_frequencies(symbol);
 }
 
+void AdaptiveEliasGamma::encode_array(const uint32_t *data, int size, obitstream& out) {
+    for (int i = 0; i < size; i++) {
+        encode(data[i] + 1, out);
+    }
+}
+
 int AdaptiveEliasGamma::decode(ibitstream& in) {
     int symbol = elias_gamma_decode(in);
     if (symbol < 0) {
@@ -46,6 +52,18 @@ int AdaptiveEliasGamma::decode(ibitstream& in) {
     update_frequencies(val - 1);
 
     return val;
+}
+
+int AdaptiveEliasGamma::decode_array(ibitstream& in, uint32_t *data, int size) {
+    int decompressed_size = 0;
+    while (decompressed_size < size) {
+        int value = decode(in);
+        if (value == -1) {
+            return decompressed_size;
+        }
+        data[decompressed_size++] = value - 1;
+    }
+    return decompressed_size;
 }
 
 void AdaptiveEliasGamma::elias_gamma_encode(uint32_t symbol, obitstream& out) {
@@ -70,7 +88,11 @@ int AdaptiveEliasGamma::elias_gamma_decode(ibitstream& in) {
     }
     for (int j = 0; j < n; j++) {
         symbol <<= 1;
-        symbol |= in.read_bit();
+        int bit = in.read_bit();
+        if (bit == -1) {
+            return -1;
+        }
+        symbol |= bit;
     }
 
     return symbol;
@@ -100,13 +122,21 @@ int AdaptiveEliasGamma::elias_delta_decode(ibitstream& in) {
     }
     for (int j = 0; j < length_of_len; j++) {
         len <<= 1;
-        if (in.read_bit() == 1)
-            len |= 1;
+        int bit = in.read_bit();
+        if (bit == -1) {
+            return -1;
+        } else {
+            len |= bit;
+        }
     }
     for (int j = 0; j < len - 1; j++) {
         symbol <<= 1;
-        if (in.read_bit() == 1)
-            symbol |= 1;
+        int bit = in.read_bit();
+        if (bit == -1) {
+            return -1;
+        } else {
+            len |= bit;
+        }
     }
     return symbol;
 }

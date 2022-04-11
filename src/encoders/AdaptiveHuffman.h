@@ -11,7 +11,7 @@ private:
     struct TreeNode {
         uint32_t symbol = 0;
         uint64_t weight = 0; // Number of times the symbol has been seen
-        uint64_t number = 0;
+        uint32_t number = 0;
 
         int parent = -1;
         int left = -1;
@@ -28,6 +28,8 @@ private:
 
     std::vector<int> map_leaf; // gets the leaf representing the symbol, indexed by symbol
 
+    bool eof;
+
 
     inline bool is_leaf(int node);
 
@@ -35,7 +37,7 @@ private:
 
     void swap(int& first, int& second);
 
-    static void write_symbol(uint32_t bits, int length, obitstream& out);
+    static void write_symbol(uint64_t bits, int length, obitstream& out);
 
     void write_symbol(int node, obitstream& out);
 
@@ -48,11 +50,13 @@ public:
 
     void encode(uint32_t symbol, obitstream& out);
 
-    void encode(const uint32_t *data, uint32_t length, obitstream& out);
+    void encode_array(const uint32_t *data, int length, obitstream& out);
+
+    void encode_end(uint32_t eof_symbol, obitstream& out);
 
     int decode(ibitstream& in);
 
-    uint32_t decode(ibitstream& in, uint32_t *data, uint32_t length, uint32_t eof);
+    int decode_array(ibitstream& in, uint32_t *data, int length, uint32_t eof_symbol);
 
     void normalize_weights();
 

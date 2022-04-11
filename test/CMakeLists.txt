@@ -20,3 +20,7 @@ add_test(classic_mtf test_classic_mtf)
 add_executable(test_mtf_buffer test_mtf_buffer.cpp)
 target_link_libraries(test_mtf_buffer MTF_lib)
 add_test(mtf_buffer test_mtf_buffer)
+
+add_executable(test_rle test_rle.cpp)
+target_link_libraries(test_rle MTF_lib)
+add_test(rle test_rle)
