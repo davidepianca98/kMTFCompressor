@@ -2,6 +2,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cassert>
+#include <cstring>
 #include "AdaptiveHuffman.h"
 
 AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free_slot(1), alphabet_size(alphabet_size),
@@ -21,9 +22,8 @@ AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free
 }
 
 void AdaptiveHuffman::invalidate_cache() {
-    for (int16_t & len : map_code_length) {
-        len = -1;
-    }
+    // Sets all the bits to 1 which is equivalent to setting every 16 bit int to -1
+    memset(map_code_length, 0xFF, MAX_ALPHA_SIZE * 2);
 }
 
 inline bool AdaptiveHuffman::is_leaf(int node) {

@@ -6,11 +6,14 @@
 #include "mtf/mtftable/MTFHashTable.h"
 #include "mtf/mtftable/MTFHashTableBlock.h"
 #include "hash/randomized/RabinKarp.h"
+#include "randomized/LinearHash.h"
+#include "randomized/MinimiserHash.h"
+#include "randomized/TabulationHash.h"
 
 
 int main() {
-    std::string path = "../../test/resources/pizzachili/english";
-    //std::string path = "../../test/resources/calgarycorpus/bib";
+    //std::string path = "../../test/resources/pizzachili/english";
+    std::string path = "../../test/resources/calgarycorpus/bib";
     std::ifstream in(path, std::ios::binary);
     std::ofstream out(path + ".mtfb", std::ios::binary);
 
@@ -19,7 +22,10 @@ int main() {
 
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
+    std::cout << sizeof(MTFBuffer<7>) << std::endl;
+
     MTFHashTableBlock<RabinKarp, 8> mtf(1024 * 1024, ram, 3, 256334);
+    //MTFHashTableBlock<MinimiserHash<TabulationHash, LinearHash, RabinKarp>, 7> mtf(1024 * 1024, ram, 3, 256334);
     long read_bytes;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     do {

@@ -12,9 +12,9 @@
 //#include "MTF.h"
 
 int main() {
-    std::string path = "../../test/resources/calgarycorpus";
+    //std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
-    //std::string path = "../../test/resources/pizzachili";
+    std::string path = "../../test/resources/pizzachili";
     //std::string path = "../../test/resources/pizzachilirep";
     //std::string path = "../../test/resources/mio";
     //std::string path = "../../test/resources/maximumcompression";
@@ -25,6 +25,9 @@ int main() {
 
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
+    std::cout << sizeof(MTFBuffer<8>) << std::endl;
+    std::cout << sizeof(MTFRankBuffer<8>) << std::endl;
+
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -33,7 +36,7 @@ int main() {
 
             //MTFHashCompressor::compress_block<RabinKarp, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             MTFHashCompressor::compress_stream<RabinKarp, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, RabinKarp>, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
+            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, TabulationHash>, 8>(entry.path().string(), entry.path().string() + ".mtf", 4, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

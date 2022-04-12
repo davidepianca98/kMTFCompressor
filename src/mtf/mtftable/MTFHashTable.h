@@ -68,7 +68,7 @@ protected:
             uint32_t i = 0;
             do {
                 MTFBuffer<SIZE>& buf = hash_table[(hash + i) & modulo_val];
-                if (!buf.visited() || buf.get_key() == key) {
+                if (buf.get_key() == key || !buf.visited()) {
                     keep_track(buf, key);
                     out = buf.encode(c);
                     break;
@@ -104,7 +104,7 @@ protected:
             uint32_t j = 0;
             do {
                 MTFBuffer<SIZE> &buf = hash_table[(hash + j) & modulo_val];
-                if (!buf.visited() || buf.get_key() == key) {
+                if (buf.get_key() == key || !buf.visited()) {
                     keep_track(buf, key);
                     c = buf.decode(i);
                     break;

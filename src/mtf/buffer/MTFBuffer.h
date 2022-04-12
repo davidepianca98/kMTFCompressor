@@ -35,14 +35,13 @@ public:
         symbols++;
     }
 
-    uint8_t extract(uint8_t i) {
+    inline uint8_t extract(uint8_t i) {
         return buffer[i];
     }
 
     uint32_t encode(uint8_t c) {
         for (uint8_t i = 0; i < symbols; i++) {
-            uint8_t extracted = extract(i);
-            if (extracted == c) { // Check if the character in the i-th position from the right is equal to c
+            if (extract(i) == c) { // Check if the character in the i-th position from the right is equal to c
                 shift(i);
                 return i;
             }
