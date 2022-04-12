@@ -3,7 +3,6 @@
 #ifndef MTF_VECTORHASH_H
 #define MTF_VECTORHASH_H
 
-#include <vector>
 #include "Hash.h"
 
 class VectorHash : public Hash {

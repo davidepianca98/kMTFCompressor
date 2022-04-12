@@ -7,7 +7,9 @@
 
 class obitstream: public std::ostream {
 private:
-    std::vector<uint8_t> bitset;
+    static constexpr int SIZE = 4 * 1024 * 1024;
+
+    uint8_t bitset[SIZE] = { 0 };
     uint64_t byte_pos;
     uint64_t pos;
 

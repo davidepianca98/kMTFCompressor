@@ -8,25 +8,27 @@
 class AdaptiveHuffman {
 private:
 
+    static constexpr int MAX_ALPHA_SIZE = 256 + 256;
+
     struct TreeNode {
         uint32_t symbol = 0;
         uint64_t weight = 0; // Number of times the symbol has been seen
-        uint32_t number = 0;
+        uint16_t number = 0;
 
-        int parent = -1;
-        int left = -1;
-        int right = -1;
+        int16_t parent = -1;
+        int16_t left = -1;
+        int16_t right = -1;
 
         bool nyt = false; // true if not yet transmitted node
     };
 
-    std::vector<TreeNode> tree;
+    TreeNode tree[MAX_ALPHA_SIZE * 2 + 1];
     int nyt_node;
     int next_free_slot;
     uint32_t alphabet_size;
     int log_alphabet_size;
 
-    std::vector<int> map_leaf; // gets the leaf representing the symbol, indexed by symbol
+    int map_leaf[MAX_ALPHA_SIZE]; // gets the leaf representing the symbol, indexed by symbol
 
     bool eof;
 

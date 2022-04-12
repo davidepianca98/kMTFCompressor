@@ -4,12 +4,16 @@
 #include <cassert>
 #include "AdaptiveHuffman.h"
 
-AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): tree(alphabet_size * 2 + 1), nyt_node(0), next_free_slot(1),
-                                                          alphabet_size(alphabet_size), map_leaf(alphabet_size, -1),
+AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free_slot(1), alphabet_size(alphabet_size),
                                                           eof(false) {
+    assert(alphabet_size <= MAX_ALPHA_SIZE);
     tree[nyt_node].symbol = alphabet_size;
     tree[nyt_node].number = alphabet_size * 2;
     tree[nyt_node].nyt = true;
+
+    for (int & i : map_leaf) {
+        i = -1;
+    }
 
     log_alphabet_size = (int) log2(alphabet_size);
 }
@@ -87,8 +91,8 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
     uint64_t bits = 0; // List of bits that represent the symbol
     int n = 0;
     // Traverse the tree from the leaf until the node before the root is reached
-    while (node != -1 && tree[node].parent != -1) {
-        int parent = tree[node].parent;
+    int parent = tree[node].parent;
+    while (parent != -1) {
         bits <<= 1;
         // Append 1 if we came from the right, otherwise leave it as 0
         if (tree[parent].right == node) {
@@ -96,6 +100,7 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
         }
         n++;
         node = parent;
+        parent = tree[node].parent;
     }
 
     // Write out the bits in the opposite order, because they need to be from root to leaf
@@ -103,9 +108,8 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
 }
 
 void AdaptiveHuffman::slide_and_increment(int node) {
+    assert(node >= -1 && node < next_free_slot);
     while (node != -1) {
-        assert(node >= -1 && node < next_free_slot);
-
         int leader = get_block_leader(node);
         if (leader != node) {
             swap(leader, node);

@@ -2,17 +2,16 @@
 #include <cstdio>
 #include "ibitstream.h"
 
-ibitstream::ibitstream() : std::istream(nullptr), bitset(4 * 1024 * 1024), byte_pos(0), pos(0) {}
+ibitstream::ibitstream() : std::istream(nullptr), byte_pos(0), pos(0), read_bytes(0) {}
 
 int ibitstream::read_bit() {
     if (byte_pos == 0 && pos == 0) {
-        read(reinterpret_cast<char *>(bitset.data()), (long) bitset.size());
-        long read_bytes = gcount();
+        read(reinterpret_cast<char *>(bitset), (long) SIZE);
+        read_bytes = gcount();
         if (read_bytes <= 0) {
             return EOF;
         }
 
-        bitset.resize(read_bytes);
         byte_pos = 0;
         pos = 0;
     }
@@ -23,7 +22,7 @@ int ibitstream::read_bit() {
         byte_pos++;
         pos = 0;
 
-        if (byte_pos >= bitset.size()) {
+        if (byte_pos >= read_bytes) {
             byte_pos = 0;
         }
     }

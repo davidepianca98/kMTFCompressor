@@ -19,10 +19,11 @@ class MTFHashTable {
 protected:
     // Hash table of MTF buffers
 #ifdef MTF_RANK
-    std::vector<MTFRankBuffer<SIZE>> hash_table;
+    MTFRankBuffer<SIZE> *hash_table;
 #else
-    std::vector<MTFBuffer<T>> hash_table;
+    MTFBuffer<SIZE> *hash_table;
 #endif
+    uint32_t hash_table_size;
     HASH hash_function;
 
     // Size of the block
@@ -62,10 +63,18 @@ protected:
             kmer_chars++;
             out = (uint32_t) c + SIZE;
         } else {
-            uint64_t hash = hash_function.get_hash() & modulo_val;
-            MTFBuffer<SIZE>& buf = hash_table[hash];
-            keep_track(buf, hash_function.get_hash());
-            out = buf.encode(c);
+            uint64_t key = hash_function.get_hash();
+            uint64_t hash = key & modulo_val;
+            uint32_t i = 0;
+            do {
+                MTFBuffer<SIZE>& buf = hash_table[(hash + i) & modulo_val];
+                if (!buf.visited() || buf.get_key() == key) {
+                    keep_track(buf, key);
+                    out = buf.encode(c);
+                    break;
+                }
+                i++;
+            } while (i < hash_table_size);
 
 #ifdef MTF_STATS
             distinct_kmers.insert(counter_hash.get_hash());
@@ -89,11 +98,19 @@ protected:
             kmer_chars++;
             c = (uint8_t) (i - SIZE);
         } else {
-            uint64_t hash = hash_function.get_hash() & modulo_val;
-            MTFBuffer<SIZE> &buf = hash_table[hash];
-            keep_track(buf, hash_function.get_hash());
+            uint64_t key = hash_function.get_hash();
+            uint64_t hash = key & modulo_val;
 
-            c = buf.decode(i);
+            uint32_t j = 0;
+            do {
+                MTFBuffer<SIZE> &buf = hash_table[(hash + j) & modulo_val];
+                if (!buf.visited() || buf.get_key() == key) {
+                    keep_track(buf, key);
+                    c = buf.decode(i);
+                    break;
+                }
+                j++;
+            } while (j < hash_table_size);
         }
         hash_function.update(c);
 
@@ -134,28 +151,42 @@ protected:
     }
 
     void double_table() {
-        if (doubling && used_cells * 10 > hash_table.size() && hash_table.size() * 2 < max_table_size) {
+        uint32_t new_size = hash_table_size * 2;
+        if (doubling && used_cells * 10 > hash_table_size && new_size < max_table_size) {
             // Allocate table double the size of the older one
 #ifdef MTF_RANK
-            std::vector<MTFRankBuffer<SIZE>> hash_table_new(hash_table.size() * 2);
+            auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
 #else
-            std::vector<MTFBuffer<SIZE>> hash_table_new(hash_table.size() * 2);
+            auto *hash_table_new = new MTFBuffer<SIZE>[new_size];
 #endif
             // Calculate the new modulo based on the size
-            modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_new.size()));
+            modulo_val = UINT64_MAX >> (64 - (int) log2(new_size));
 
             // Rehashing approximation using the saved hash, it doesn't take into account the hash collisions that happened
             // earlier, but the only other way is to restart parsing the whole stream which is not feasible
             used_cells = 0;
-            for (auto buf : hash_table) {
+            for (uint32_t i = 0; i < hash_table_size; i++) {
+                MTFBuffer<SIZE>& buf = hash_table[i];
                 if (buf.visited()) {
                     // The full hash is used to calculate the hash in the new bigger table with the new modulo
                     uint64_t hash = buf.get_key() & modulo_val;
-                    hash_table_new[hash] = buf;
+
+                    uint32_t j = 0;
+                    do {
+                        MTFBuffer<SIZE> &new_buf = hash_table_new[(hash + j) & modulo_val];
+                        if (!new_buf.visited()) {
+                            new_buf = buf;
+                            break;
+                        }
+                        j++;
+                    } while (j < new_size);
+
                     used_cells++;
                 }
             }
+            delete[] hash_table;
             hash_table = hash_table_new;
+            hash_table_size = new_size;
         }
     }
 
@@ -174,19 +205,28 @@ public:
     MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed), block_size(block_size), counter_hash(k, seed) {
         max_table_size = max_memory_usage / sizeof(MTFRankBuffer<SIZE>);
         if (doubling) { // TODO set as parameter
-            hash_table.resize(4096);
+            hash_table_size = 4096;
         } else {
-            //hash_table.resize(max_table_size);
-            hash_table.resize(524288 * 16);
-            //hash_table.resize(4096);
+            //hash_table_size = max_table_size;
+            hash_table_size = 524288 * 16;
+            //hash_table_size = 4096;
         }
+#ifdef MTF_RANK
+        hash_table = new MTFRankBuffer<SIZE>[hash_table_size];
+#else
+        hash_table = new MTFBuffer<SIZE>[hash_table_size];
+#endif
 
-        modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table.size()));
+        modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_size));
+    }
+
+    ~MTFHashTable() {
+        delete[] hash_table;
     }
 
     void print_stats() {
-        std::cout << "Used hash cells = " << used_cells << "/" << hash_table.size() << std::endl;
-        std::cout << "Hash table load = " << used_cells / double(hash_table.size()) << std::endl;
+        std::cout << "Used hash cells = " << used_cells << "/" << hash_table_size << std::endl;
+        std::cout << "Hash table load = " << used_cells / double(hash_table_size) << std::endl;
 #ifdef MTF_STATS
         std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 

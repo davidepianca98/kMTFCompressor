@@ -11,11 +11,7 @@ uint8_t Hash::update(uint8_t c) {
     uint8_t old = kmer[i];
     kmer[i] = c;
 
-    // Faster than wrapping with modulo
-    i++;
-    if (i >= k) {
-        i = 0;
-    }
+    i = (i + 1) % k;
     return old;
 }
 
