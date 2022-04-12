@@ -39,7 +39,7 @@ uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 
     hash = window_hashes2[min_index];
 
-    hash = (hash << 1) | (hash_window.get_hash() & 1);
+    hash = (hash << 2) | (hash_window.get_hash() & 3);
 
     i = (i + 1) % (k - sub_k + 1);
 
@@ -49,3 +49,4 @@ uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 template class MinimiserHash<RabinKarp, LinearHash, RabinKarp>;
 template class MinimiserHash<RabinKarp, LinearHash, Fnv1a>;
 template class MinimiserHash<RabinKarp, LinearHash, TabulationHash>;
+template class MinimiserHash<TabulationHash, LinearHash, RabinKarp>;

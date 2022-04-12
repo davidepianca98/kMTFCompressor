@@ -67,15 +67,15 @@ public:
         return c;
     }
 
-    bool visited() {
+    inline bool visited() {
         return symbols > 0;
     }
 
-    void set_visited(uint64_t hash) {
+    inline void set_visited(uint64_t hash) {
         key = hash;
     }
 
-    uint64_t get_key() {
+    inline uint64_t get_key() {
         return key;
     }
 

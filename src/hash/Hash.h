@@ -34,9 +34,13 @@ public:
 
     virtual uint8_t update(uint8_t c);
 
-    [[nodiscard]] virtual uint64_t get_hash() const;
+    [[nodiscard]] inline uint64_t get_hash() const {
+        return hash;
+    }
 
-    [[nodiscard]] uint64_t get_length() const;
+    [[nodiscard]] inline uint64_t get_length() const {
+        return k;
+    }
 };
 
 

@@ -14,11 +14,3 @@ uint8_t Hash::update(uint8_t c) {
     i = (i + 1) % k;
     return old;
 }
-
-uint64_t Hash::get_hash() const {
-    return hash;
-}
-
-uint64_t Hash::get_length() const {
-    return k;
-}

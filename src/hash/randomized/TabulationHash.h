@@ -22,7 +22,7 @@ private:
 public:
     TabulationHash(int k, uint64_t seed);
 
-    ~TabulationHash();
+    ~TabulationHash() override;
 
     uint8_t update(uint8_t c) override;
 };

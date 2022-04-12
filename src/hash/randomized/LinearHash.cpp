@@ -14,7 +14,8 @@ uint8_t LinearHash::update(uint8_t c) {
     kmer_hash -= old << ((k - 1) * 8);
     kmer_hash = (kmer_hash << 8) | c;
 
-    hash = (a * kmer_hash + b) % M61;
+    hash = fast_modulo(a * kmer_hash);
+    hash = fast_modulo(hash + b);
 
     return old;
 }
