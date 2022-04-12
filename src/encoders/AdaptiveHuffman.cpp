@@ -11,11 +11,19 @@ AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free
     tree[nyt_node].number = alphabet_size * 2;
     tree[nyt_node].nyt = true;
 
-    for (int & i : map_leaf) {
-        i = -1;
+    for (int & leaf : map_leaf) {
+        leaf = -1;
     }
 
+    invalidate_cache();
+
     log_alphabet_size = (int) log2(alphabet_size);
+}
+
+void AdaptiveHuffman::invalidate_cache() {
+    for (int16_t & len : map_code_length) {
+        len = -1;
+    }
 }
 
 inline bool AdaptiveHuffman::is_leaf(int node) {
@@ -40,12 +48,6 @@ void AdaptiveHuffman::swap(int& first, int& second) {
     assert(first >= 0 && first < next_free_slot);
     assert(second >= 0 && second < next_free_slot);
     assert(first != second);
-
-    int first_parent = tree[first].parent;
-    int second_parent = tree[second].parent;
-    if (first_parent == -1 || second_parent == -1 || first_parent == second || second_parent == first) {
-        return;
-    }
 
     // Assign children parents to the other parent's index as they are about to be swapped
     if (tree[first].left != -1) {
@@ -88,6 +90,8 @@ void AdaptiveHuffman::write_symbol(uint64_t bits, int length, obitstream& out) {
 void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
     assert(node >= 0 && node < next_free_slot);
 
+    uint32_t symbol = tree[node].symbol;
+
     uint64_t bits = 0; // List of bits that represent the symbol
     int n = 0;
     // Traverse the tree from the leaf until the node before the root is reached
@@ -105,18 +109,30 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
 
     // Write out the bits in the opposite order, because they need to be from root to leaf
     write_symbol(bits, n, out);
+
+    map_code[symbol] = bits;
+    map_code_length[symbol] = n;
 }
 
 void AdaptiveHuffman::slide_and_increment(int node) {
     assert(node >= -1 && node < next_free_slot);
+    bool swapped = false;
     while (node != -1) {
         int leader = get_block_leader(node);
         if (leader != node) {
-            swap(leader, node);
+            int first_parent = tree[leader].parent;
+            int second_parent = tree[node].parent;
+            if (first_parent != -1 && second_parent != -1 && first_parent != node && second_parent != leader) {
+                swap(leader, node);
+                swapped = true;
+            }
         }
 
         tree[node].weight++;
         node = tree[node].parent;
+    }
+    if (swapped) {
+        invalidate_cache();
     }
 }
 
@@ -155,7 +171,11 @@ void AdaptiveHuffman::encode(uint32_t symbol, obitstream& out) {
     assert(symbol < alphabet_size);
 
     if (map_leaf[symbol] != -1) {
-        write_symbol(map_leaf[symbol], out);
+        if (map_code_length[symbol] != -1) {
+            write_symbol(map_code[symbol], map_code_length[symbol], out);
+        } else {
+            write_symbol(map_leaf[symbol], out);
+        }
     } else {
         // If the symbol hasn't been seen yet, write the NYT escape sequence
         write_symbol(nyt_node, out);

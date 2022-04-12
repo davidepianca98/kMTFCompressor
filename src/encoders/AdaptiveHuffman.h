@@ -2,13 +2,14 @@
 #ifndef MTF_ADAPTIVEHUFFMAN_H
 #define MTF_ADAPTIVEHUFFMAN_H
 
+#include <iostream>
 #include "stream/ibitstream/ibitstream.h"
 #include "stream/obitstream/obitstream.h"
 
 class AdaptiveHuffman {
 private:
 
-    static constexpr int MAX_ALPHA_SIZE = 256 + 256;
+    static constexpr int MAX_ALPHA_SIZE = 256 + 128;
 
     struct TreeNode {
         uint32_t symbol = 0;
@@ -29,9 +30,12 @@ private:
     int log_alphabet_size;
 
     int map_leaf[MAX_ALPHA_SIZE]; // gets the leaf representing the symbol, indexed by symbol
+    uint64_t map_code[MAX_ALPHA_SIZE]; // gets the code and its length representing the symbol, indexed by symbol
+    int16_t map_code_length[MAX_ALPHA_SIZE]; // gets the code and its length representing the symbol, indexed by symbol
 
     bool eof;
 
+    void invalidate_cache();
 
     inline bool is_leaf(int node);
 
