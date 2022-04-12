@@ -21,11 +21,16 @@ protected:
     std::mt19937_64 gen;
     std::uniform_int_distribution<uint64_t> dis;
 
-    static inline uint64_t fast_modulo(uint64_t val);
+    static inline uint64_t fast_modulo(uint64_t val) {
+        uint64_t res = (val & M61) + (val >> 61);
+        return (res >= M61) ? res - M61 : res;
+    }
 
 public:
 
     Hash(int k, uint64_t seed);
+
+    virtual ~Hash() = default;
 
     virtual uint8_t update(uint8_t c);
 

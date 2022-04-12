@@ -10,7 +10,6 @@ protected:
     uint8_t buffer[SIZE] = { 0 };
 
     uint8_t symbols = 0;
-    bool is_visited = false;
 
     uint64_t key = 0;
 
@@ -62,17 +61,17 @@ public:
             c = symbol - SIZE;
             append(c);
         } else {
+            c = extract(symbol);
             shift(symbol);
         }
         return c;
     }
 
     bool visited() {
-        return is_visited;
+        return symbols > 0;
     }
 
     void set_visited(uint64_t hash) {
-        is_visited = true;
         key = hash;
     }
 

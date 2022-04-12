@@ -9,16 +9,17 @@
 template <uint32_t SIZE>
 class MTFRankBuffer : public MTFBuffer<SIZE> {
 
-    uint32_t counter[SIZE] = { 0 };
-    int amount = 0;
+    uint16_t counter[SIZE] = { 0 };
+    uint16_t amount = 0;
 
     void normalize_rank_counter() {
         amount++;
         if (amount >= 4096) {
-            for (auto & c : counter) {
-                c = (uint64_t) log2((double) (c + 1));
-            }
             amount = 0;
+            for (auto & c : counter) {
+                c = (uint16_t) log2((double) (c + 1));
+                amount += c;
+            }
         }
     }
 
@@ -54,6 +55,7 @@ public:
             i = SIZE - 1;
         }
 
+        amount -= counter[i];
         counter[i] = 1;
         MTFBuffer<SIZE>::buffer[i] = c;
 

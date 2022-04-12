@@ -2,6 +2,7 @@
 #include "MinimiserHash.h"
 #include "RabinKarp.h"
 #include "LinearHash.h"
+#include "Fnv1a.h"
 
 template <typename HASH1, typename HASH2, typename HASH3>
 MinimiserHash<HASH1, HASH2, HASH3>::MinimiserHash(int k, uint64_t seed) : Hash(k, seed), window_hashes1(k - sub_k + 1),
@@ -37,7 +38,7 @@ uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 
     hash = window_hashes2[min_index];
 
-    hash = (hash << 5) | (hash_window.get_hash() & 31);
+    hash = (hash << 1) | (hash_window.get_hash() & 1);
 
     i = (i + 1) % (k - sub_k + 1);
 
@@ -45,3 +46,4 @@ uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 }
 
 template class MinimiserHash<RabinKarp, LinearHash, RabinKarp>;
+template class MinimiserHash<RabinKarp, LinearHash, Fnv1a>;
