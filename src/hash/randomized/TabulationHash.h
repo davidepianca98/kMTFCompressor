@@ -7,22 +7,19 @@
 class TabulationHash : public Hash {
 private:
     uint64_t kmer_hash = 0;
+    uint8_t *kmer_hash_p = reinterpret_cast<uint8_t *>(&kmer_hash);
+    int last_index;
 
-    // Number of bits in the key to be hashed
-    uint64_t p = 0;
-    // Block size (r <= p)
-    uint64_t r = 8;
-    // Number of blocks to represent a key
-    uint64_t t = 0;
+    static constexpr int MAX_KMER = 8;
+    static constexpr int LEN = 256;
+
     // Table of random numbers
-    uint64_t *T;
+    uint64_t T[MAX_KMER][LEN] = { { 0 } };
 
-    int len;
+    uint64_t get_random_uint64();
 
 public:
     TabulationHash(int k, uint64_t seed);
-
-    ~TabulationHash() override;
 
     uint8_t update(uint8_t c) override;
 };
