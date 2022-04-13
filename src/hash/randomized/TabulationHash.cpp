@@ -29,5 +29,6 @@ uint8_t TabulationHash::update(uint8_t c) {
     for (int j = 0; j < k; j++) {
         hash ^= T[j][kmer_hash_p[last_index - j]];
     }
+    hash &= 0x7FFFFFFFFFFFFFFFull;
     return old;
 }

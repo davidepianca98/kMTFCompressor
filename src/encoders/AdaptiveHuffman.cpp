@@ -12,9 +12,7 @@ AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free
     tree[nyt_node].number = alphabet_size * 2;
     tree[nyt_node].nyt = true;
 
-    for (int & leaf : map_leaf) {
-        leaf = -1;
-    }
+    memset(map_leaf, 0xFF, MAX_ALPHA_SIZE * 4);
 
     invalidate_cache();
 

@@ -11,8 +11,6 @@ protected:
 
     uint8_t symbols = 0;
 
-    uint64_t key = 0;
-
 public:
 
     virtual void shift(uint8_t i) {
@@ -64,18 +62,6 @@ public:
             shift(symbol);
         }
         return c;
-    }
-
-    inline bool visited() {
-        return symbols > 0;
-    }
-
-    inline void set_visited(uint64_t hash) {
-        key = hash;
-    }
-
-    inline uint64_t get_key() {
-        return key;
     }
 
 };
