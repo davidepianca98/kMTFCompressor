@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_set>
 #include <cstring>
+#include <cassert>
 #include "Hash.h"
 #include "mtf/buffer/MTFBuffer.h"
 #include "mtf/buffer/MTFRankBuffer.h"
@@ -43,7 +44,6 @@ protected:
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + SIZE] = { 0 };
-    uint64_t symbols_out_run[256 + SIZE] = { 0 };
     uint64_t stream_length = 0;
     std::unordered_set<uint64_t> distinct_kmers;
     // Runs
@@ -68,52 +68,6 @@ protected:
         } while (i < table_size);
     }
 
-    uint32_t mtf_encode(uint8_t c) {
-#ifdef MTF_STATS
-        count_symbol_in(c);
-#endif
-        uint32_t out;
-
-        if (kmer_chars < hash_function.get_length()) {
-            kmer_chars++;
-            out = (uint32_t) c + SIZE;
-        } else {
-            uint64_t key = hash_function.get_hash();
-            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
-            out = hash_table[index].encode(c);
-            keep_track(index, key);
-
-#ifdef MTF_STATS
-            distinct_kmers.insert(counter_hash.get_hash());
-#endif
-        }
-
-        hash_function.update(c);
-
-#ifdef MTF_STATS
-        counter_hash.update(c);
-        count_symbol_out(out);
-#endif
-
-        return out;
-    }
-
-    uint8_t mtf_decode(uint32_t i) {
-        uint8_t c;
-        if (kmer_chars < hash_function.get_length()) {
-            kmer_chars++;
-            c = (uint8_t) (i - SIZE);
-        } else {
-            uint64_t key = hash_function.get_hash();
-            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
-            c = hash_table[index].decode(i);
-            keep_track(index, key);
-        }
-        hash_function.update(c);
-
-        return c;
-    }
-
     inline void keep_track(uint32_t index, int64_t key) {
         if (hash_table_keys[index] == -1) {
             used_cells++;
@@ -134,7 +88,6 @@ protected:
         symbols_out[i]++;
         if (i != last_symbol_out) {
             runs++;
-            symbols_out_run[i]++;
         }
         last_symbol_out = i;
         if (i == 0) {
@@ -219,6 +172,64 @@ public:
     ~MTFHashTable() {
         delete[] hash_table;
         delete[] hash_table_keys;
+    }
+
+    uint32_t mtf_encode(uint8_t c) {
+#ifdef MTF_STATS
+        count_symbol_in(c);
+#endif
+        uint32_t out;
+
+        if (kmer_chars < hash_function.get_length()) {
+            kmer_chars++;
+            out = (uint32_t) c + SIZE;
+        } else {
+            uint64_t key = hash_function.get_hash();
+            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
+            out = hash_table[index].encode(c);
+            keep_track(index, key);
+
+#ifdef MTF_STATS
+            distinct_kmers.insert(counter_hash.get_hash());
+#endif
+        }
+
+        hash_function.update(c);
+
+#ifdef MTF_STATS
+        counter_hash.update(c);
+        count_symbol_out(out);
+#endif
+
+        return out;
+    }
+
+    uint8_t mtf_decode(uint32_t i) {
+        uint8_t c;
+        if (kmer_chars < hash_function.get_length()) {
+            kmer_chars++;
+            c = (uint8_t) (i - SIZE);
+        } else {
+            uint64_t key = hash_function.get_hash();
+            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
+            c = hash_table[index].decode(i);
+            keep_track(index, key);
+        }
+        hash_function.update(c);
+
+        return c;
+    }
+
+    void encode(const uint8_t *block, long size, uint32_t *out_block) {
+        for (int i = 0; i < size; i++) {
+            out_block[i] = mtf_encode(block[i]);
+        }
+    }
+
+    void decode(const uint32_t *block, long size, uint8_t *out_block) {
+        for (int i = 0; i < size; i++) {
+            out_block[i] = mtf_decode(block[i]);
+        }
     }
 
     void print_stats() {

@@ -10,6 +10,7 @@
 #include "mtf/mtftable/MTFBlockWorker.h"
 #include "stream/obitstream/ofbitstream.h"
 #include "mtf/mtftable/MTFHashTableStream.h"
+#include "mtf/mtftable/MTFHashContext.h"
 #include "stream/ibitstream/ifbitstream.h"
 
 class MTFHashCompressor {
@@ -133,6 +134,7 @@ public:
         out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
 
         MTFHashTableStream<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
+        //MTFHashContext<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
         mtf.encode(in_file, out_file);
 
         in_file.close();

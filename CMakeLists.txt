@@ -32,8 +32,8 @@ set(SOURCE_FILES
         src/mtf/buffer/MTFBuffer.h
         src/mtf/buffer/MTFRankBuffer.h
         src/mtf/mtftable/MTFBlockWorker.h
+        src/mtf/mtftable/MTFHashContext.h
         src/mtf/mtftable/MTFHashTable.h
-        src/mtf/mtftable/MTFHashTableBlock.h
         src/mtf/mtftable/MTFHashTableStream.h
         src/mtf/MTF.cpp
         src/mtf/MTF.h

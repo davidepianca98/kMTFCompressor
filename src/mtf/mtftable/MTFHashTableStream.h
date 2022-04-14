@@ -35,8 +35,6 @@ public:
         auto *out_block1 = new uint32_t[MTFHashTable<HASH, SIZE>::block_size];
 
         RunLength rle(256 + SIZE + 1);
-        AdaptiveHuffman ah(256 + SIZE + 1);
-        AdaptiveEliasGamma aeg(256 + SIZE);
         long read_bytes;
         do {
             // Read block
@@ -54,14 +52,11 @@ public:
 
             memcpy(out_block1, int_array.data(), read_bytes * 4);
             future = std::async(std::launch::async, &RunLength::encode_array, &rle, out_block1, read_bytes, std::ref(out));
-            //future = std::async(std::launch::async, &AdaptiveHuffman::encode_array, &ah, out_block1, read_bytes, std::ref(out));
-            //future = std::async(std::launch::async, &AdaptiveEliasGamma::encode_array, &aeg, out_block1, read_bytes, std::ref(out));
         } while (read_bytes > 0);
         if (future.valid()) {
             future.wait();
         }
         rle.encode_end(256 + SIZE, out);
-        //ah.encode_end(256 + SIZE, out);
         out.flush_remaining();
 
         MTFHashTable<HASH, SIZE>::print_stats();
@@ -73,14 +68,10 @@ public:
         auto *out_block1 = new uint32_t[MTFHashTable<HASH, SIZE>::block_size];
 
         RunLength rle(256 + SIZE + 1);
-        AdaptiveHuffman ah(256 + SIZE + 1);
-        AdaptiveEliasGamma aeg(256 + SIZE);
         int read;
 
         do {
             read = rle.decode_array(in, out_block1, MTFHashTable<HASH, SIZE>::block_size, 256 + SIZE);
-            //read = ah.decode_array(in, out_block1, MTFHashTable<HASH, SIZE>::block_size, 256 + SIZE);
-            //read = aeg.decode_array(in, out_block1, MTFHashTable<HASH, SIZE>::block_size);
             if (future.valid()) {
                 future.wait();
             }

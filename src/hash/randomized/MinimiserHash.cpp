@@ -50,3 +50,4 @@ template class MinimiserHash<RabinKarp, LinearHash, RabinKarp>;
 template class MinimiserHash<RabinKarp, LinearHash, Fnv1a>;
 template class MinimiserHash<RabinKarp, LinearHash, TabulationHash>;
 template class MinimiserHash<TabulationHash, LinearHash, RabinKarp>;
+template class MinimiserHash<TabulationHash, TabulationHash, TabulationHash>;

@@ -6,6 +6,8 @@
 #include <cmath>
 #include "MTFBuffer.h"
 
+#define LOG2(X) ((uint32_t) (8 * sizeof(uint32_t) - __builtin_clz((uint32_t) X) - 1))
+
 template <uint32_t SIZE>
 class MTFRankBuffer : public MTFBuffer<SIZE> {
 
@@ -18,6 +20,7 @@ class MTFRankBuffer : public MTFBuffer<SIZE> {
             amount = 0;
             for (auto & c : counter) {
                 c = (uint16_t) log2((double) (c + 1));
+                //c = (uint16_t) LOG2(c + 1);
                 amount += c;
             }
         }
