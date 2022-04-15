@@ -3,7 +3,7 @@ project(MTF CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -Wextra -pedantic -flto -DNDEBUG")
 
 set(SOURCE_FILES
@@ -21,14 +21,10 @@ set(SOURCE_FILES
         src/hash/randomized/RabinKarp.h
         src/hash/randomized/TabulationHash.cpp
         src/hash/randomized/TabulationHash.h
-        src/hash/Fnv1a.cpp
-        src/hash/Fnv1a.h
         src/hash/Hash.cpp
         src/hash/Hash.h
         src/hash/Identity.cpp
         src/hash/Identity.h
-        src/hash/VectorHash.cpp
-        src/hash/VectorHash.h
         src/mtf/buffer/MTFBuffer.h
         src/mtf/buffer/MTFRankBuffer.h
         src/mtf/mtftable/MTFBlockWorker.h

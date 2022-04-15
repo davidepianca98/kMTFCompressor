@@ -63,7 +63,7 @@ public:
         int best_k = context;
         for (int i = 1; i <= k; i++) {
             if (i != context) {
-                uint32_t symbol = tables[i - 1]->mtf_encode(c);
+                uint32_t symbol = tables[i - 1]->mtf_encode(c); // TODO thread pool
                 uint32_t new_cost = cost(symbol, i);
                 if (new_cost < min && switch_allowed) {
                     best_symbol = symbol;

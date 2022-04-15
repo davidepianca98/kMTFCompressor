@@ -2,7 +2,6 @@
 #include "MinimiserHash.h"
 #include "RabinKarp.h"
 #include "LinearHash.h"
-#include "Fnv1a.h"
 #include "TabulationHash.h"
 
 template <typename HASH1, typename HASH2, typename HASH3>
@@ -47,7 +46,6 @@ uint8_t MinimiserHash<HASH1, HASH2, HASH3>::update(uint8_t c) {
 }
 
 template class MinimiserHash<RabinKarp, LinearHash, RabinKarp>;
-template class MinimiserHash<RabinKarp, LinearHash, Fnv1a>;
 template class MinimiserHash<RabinKarp, LinearHash, TabulationHash>;
 template class MinimiserHash<TabulationHash, LinearHash, RabinKarp>;
 template class MinimiserHash<TabulationHash, TabulationHash, TabulationHash>;

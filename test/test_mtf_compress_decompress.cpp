@@ -4,7 +4,6 @@
 #include <fstream>
 #include <cstring>
 #include "mtf/mtftable/MTFHashTable.h"
-#include "mtf/mtftable/MTFHashTableBlock.h"
 #include "hash/randomized/RabinKarp.h"
 #include "randomized/LinearHash.h"
 #include "randomized/MinimiserHash.h"
@@ -13,7 +12,7 @@
 
 int main() {
     //std::string path = "../../test/resources/pizzachili/english";
-    std::string path = "../../test/resources/calgarycorpus/bib";
+    std::string path = "../../test/resources/calgarycorpus/obj1";
     std::ifstream in(path, std::ios::binary);
     std::ofstream out(path + ".mtfb", std::ios::binary);
 
@@ -24,7 +23,7 @@ int main() {
 
     std::cout << sizeof(MTFBuffer<7>) << std::endl;
 
-    MTFHashTableBlock<RabinKarp, 8> mtf(1024 * 1024, ram, 3, 256334);
+    MTFHashTable<TabulationHash, 8> mtf(1024 * 1024, ram, 3, 256334);
     //MTFHashTableBlock<MinimiserHash<TabulationHash, LinearHash, RabinKarp>, 7> mtf(1024 * 1024, ram, 3, 256334);
     long read_bytes;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -47,7 +46,7 @@ int main() {
     std::ifstream in2(path + ".mtfb", std::ios::binary);
     std::ofstream out2(path + ".mtf.orig", std::ios::binary);
 
-    MTFHashTableBlock<RabinKarp, 8> mtf2(1024 * 1024, ram, 3, 256334);
+    MTFHashTable<TabulationHash, 8> mtf2(1024 * 1024, ram, 3, 256334);
     do {
         // Read block
         in2.read(reinterpret_cast<char *>(out_data.data()), 1024 * 1024 * 4);

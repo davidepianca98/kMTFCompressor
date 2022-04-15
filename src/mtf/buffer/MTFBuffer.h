@@ -13,7 +13,7 @@ protected:
 
 public:
 
-    virtual void shift(uint8_t i) {
+    void shift(uint8_t i) {
         uint8_t c = buffer[i];
         // If the position is zero, no need to change the buffer
         for (int j = i; j > 0; j--) {
@@ -22,7 +22,7 @@ public:
         buffer[0] = c;
     }
 
-    virtual void append(uint8_t c) {
+    void append(uint8_t c) {
         if (symbols >= SIZE) {
             symbols--;
         }

@@ -6,9 +6,6 @@
 #include "hash/randomized/RabinKarp.h"
 #include "hash/randomized/LinearHash.h"
 #include "hash/randomized/TabulationHash.h"
-#include "Fnv1a.h"
-#include "VectorHash.h"
-#include "hash/randomized/MinimiserHash.h"
 //#include "MTF.h"
 
 int main() {
@@ -25,9 +22,6 @@ int main() {
 
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
-    std::cout << sizeof(MTFBuffer<8>) << std::endl;
-    std::cout << sizeof(MTFRankBuffer<8>) << std::endl;
-
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
             std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -35,8 +29,7 @@ int main() {
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
             //MTFHashCompressor::compress_block<RabinKarp, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            MTFHashCompressor::compress_stream<RabinKarp, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            //MTFHashCompressor::compress_stream<MinimiserHash<RabinKarp, LinearHash, TabulationHash>, 8>(entry.path().string(), entry.path().string() + ".mtf", 4, ram);
+            MTFHashCompressor::compress_stream<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 4, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
