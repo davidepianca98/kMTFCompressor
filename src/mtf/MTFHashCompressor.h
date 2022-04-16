@@ -21,8 +21,8 @@ class MTFHashCompressor {
 
 public:
     static int get_cores() {
-        int processor_count = (int) std::thread::hardware_concurrency();
-        if (processor_count == 0) {
+        int processor_count = (int) std::thread::hardware_concurrency() - 2;
+        if (processor_count <= 0) {
             processor_count = 1;
         }
         return processor_count;
@@ -42,7 +42,7 @@ public:
 
         int core_number = get_cores() - 2;
 
-        int block_size = 4 * 1024 * 1024; // 1 MB block size
+        int block_size = 8 * 1024 * 1024; // 4 MB block size
 
         std::vector<MTFBlockWorker<HASH, SIZE>> workers;
         for (int i = 0; i < core_number; i++) {
@@ -85,7 +85,7 @@ public:
         in_file.read(reinterpret_cast<char *>(&be_seed), 8);
         uint64_t seed = be64toh(be_seed);
 
-        int core_number = get_cores() - 2;
+        int core_number = get_cores();
 
         // Needs max block size as the block size is read after the allocation of these buffers
         int max_block_size = 1024 * 1024 * 10;

@@ -3,8 +3,7 @@
 #include "TabulationHash.h"
 
 uint64_t TabulationHash::get_random_uint64() {
-    return
-            (((uint64_t) dis(gen) <<  0) & 0x000000000000FFFFull) |
+    return (((uint64_t) dis(gen) <<  0) & 0x000000000000FFFFull) |
             (((uint64_t) dis(gen) << 16) & 0x00000000FFFF0000ull) |
             (((uint64_t) dis(gen) << 32) & 0x0000FFFF00000000ull) |
             (((uint64_t) dis(gen) << 48) & 0xFFFF000000000000ull);

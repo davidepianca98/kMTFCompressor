@@ -28,8 +28,8 @@ int main() {
 
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
-            //MTFHashCompressor::compress_block<RabinKarp, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
-            MTFHashCompressor::compress_stream<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 4, ram);
+            //MTFHashCompressor::compress_block<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
+            MTFHashCompressor::compress_stream<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 

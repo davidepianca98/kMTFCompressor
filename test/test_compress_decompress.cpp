@@ -4,18 +4,18 @@
 #include <iostream>
 #include <fstream>
 #include "mtf/MTFHashCompressor.h"
-#include "randomized/RabinKarp.h"
+#include "randomized/TabulationHash.h"
 
 int test_file(const std::string& path) {
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
     std::cout << path << std::endl;
-    MTFHashCompressor::compress_stream<RabinKarp, 8>(path, path + ".mtf", 3, ram);
-    //MTFHashCompressor::compress_block<RabinKarp, 8>(path, path + ".mtf", 3, ram);
+    MTFHashCompressor::compress_stream<TabulationHash, 8>(path, path + ".mtf", 3, ram);
+    //MTFHashCompressor::compress_block<TabulationHash, 8>(path, path + ".mtf", 3, ram);
     std::filesystem::path compressed(path + ".mtf");
 
-    MTFHashCompressor::decompress_stream<RabinKarp, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
-    //MTFHashCompressor::decompress_block<RabinKarp, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
+    MTFHashCompressor::decompress_stream<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
+    //MTFHashCompressor::decompress_block<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
 
     std::ifstream f1(path, std::ifstream::binary);
     std::ifstream f2(compressed.string() + ".orig", std::ifstream::binary);

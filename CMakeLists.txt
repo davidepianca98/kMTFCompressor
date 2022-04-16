@@ -55,9 +55,6 @@ include_directories(src)
 include_directories(src/hash)
 
 
-FIND_PACKAGE(Boost 1.71 COMPONENTS program_options REQUIRED)
-target_link_libraries(MTF_lib ${Boost_LIBRARIES})
-
 target_link_libraries(MTF_lib pthread)
 
 add_subdirectory(test)
