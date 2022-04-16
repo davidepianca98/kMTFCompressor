@@ -26,7 +26,9 @@ protected:
 #else
     MTFBuffer<SIZE> *hash_table;
 #endif
-    int64_t *hash_table_keys;
+    typedef int32_t key_type;
+
+    key_type *hash_table_keys;
     uint32_t hash_table_size;
     HASH hash_function;
 
@@ -56,47 +58,49 @@ protected:
 #endif
     Identity counter_hash;
 
-    uint32_t linear_probe_simd(const int64_t *keys, uint32_t table_size, int64_t key) {
+    uint32_t linear_probe_simd(const key_type *keys, uint32_t table_size, key_type key) {
         uint64_t hash = key & modulo_val;
-        uint64_t mod = (modulo_val >> 2) << 2;
-        int off = (0b1111 >> (hash & 3)) << (hash & 3);
+        uint64_t mod = (modulo_val >> 3) << 3;
+        int off = (0b11111111 >> (hash & 15)) << (hash & 15);
 
         uint32_t i = 0;
         // Load key 4 times in vector
-        const __m256d key_vec = _mm256_set1_pd(*((double *) &key));
+        const __m256i key_vec = _mm256_set1_epi32(key);
         do {
             uint32_t index = (hash + i) & mod;
 
             // Load array into vector
-            __m256d vec = _mm256_load_pd((const double *) &keys[index]);
+            __m256i vec = _mm256_load_si256((const __m256i *) &keys[index]);
 
             // Compare key with vector of keys
-            __m256d eq = _mm256_cmp_pd(vec, key_vec, _CMP_EQ_OQ);
-            int mask = _mm256_movemask_pd(eq);
+            __m256i eq = _mm256_cmpeq_epi32(vec, key_vec);
+            int mask = _mm256_movemask_ps(_mm256_castsi256_ps(eq));
             if (mask != 0) {
                 uint32_t offset = _tzcnt_u32(mask);
                 return index + offset;
             }
 
-            // Set corresponding bit in mask if most significant bit of 64 bit integer is set, which means a negative
+            // Set corresponding bit in mask if most significant bit of 32 bit integer is set, which means a negative
             // number, where only -1 is valid, so not found
-            mask = _mm256_movemask_pd(vec) & off;
+            mask = _mm256_movemask_ps(_mm256_castsi256_ps(vec)) & off;
             if (mask != 0) {
                 uint32_t offset = _tzcnt_u32(mask);
                 return index + offset;
             }
 
-            i += 4;
-            off = 0b1111;
+            i += 8;
+            off = 0b11111111;
         } while (i < table_size);
+
+        throw std::runtime_error("No more space in the Hash Table");
     }
 
-    uint32_t linear_probe(const int64_t *keys, uint32_t table_size, int64_t key) {
+    uint32_t linear_probe(const key_type *keys, uint32_t table_size, key_type key) {
         uint64_t hash = key & modulo_val;
         uint32_t i = 0;
         do {
             uint32_t index = (hash + i) & modulo_val;
-            int64_t j = keys[index];
+            key_type j = keys[index];
             if (j == -1 || j == key) {
                 return index;
             }
@@ -106,7 +110,7 @@ protected:
         throw std::runtime_error("No more space in the Hash Table");
     }
 
-    inline void keep_track(uint32_t index, int64_t key) {
+    inline void keep_track(uint32_t index, key_type key) {
         if (hash_table_keys[index] == -1) {
             used_cells++;
             hash_table_keys[index] = key;
@@ -148,8 +152,8 @@ protected:
             auto *hash_table_new = new MTFBuffer<SIZE>[new_size];
 #endif
             // Align at 32 byte for SIMD
-            auto *hash_table_keys_new = new (std::align_val_t(32)) int64_t[new_size];
-            memset(hash_table_keys_new, 0xFF, new_size * 8);
+            auto *hash_table_keys_new = new (std::align_val_t(32)) key_type[new_size];
+            memset(hash_table_keys_new, 0xFF, new_size * sizeof(key_type));
 
             // Calculate the new modulo based on the size
             modulo_val = UINT64_MAX >> (64 - (int) log2(new_size));
@@ -158,7 +162,7 @@ protected:
             // earlier, but the only other way is to restart parsing the whole stream which is not feasible
             used_cells = 0;
             for (uint32_t i = 0; i < hash_table_size; i++) {
-                int64_t key = hash_table_keys[i];
+                key_type key = hash_table_keys[i];
                 if (key != -1) {
                     // The full hash is used to calculate the hash in the new bigger table with the new modulo
                     uint32_t index = linear_probe(hash_table_keys_new, new_size, key);
@@ -202,8 +206,8 @@ public:
 #else
         hash_table = new MTFBuffer<SIZE>[hash_table_size];
 #endif
-        hash_table_keys = new (std::align_val_t(32)) int64_t[hash_table_size];
-        memset(hash_table_keys, 0xFF, hash_table_size * 8);
+        hash_table_keys = new (std::align_val_t(32)) key_type[hash_table_size];
+        memset(hash_table_keys, 0xFF, hash_table_size * sizeof(key_type));
 
         modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_size));
     }
