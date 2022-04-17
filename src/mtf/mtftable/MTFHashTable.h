@@ -55,53 +55,65 @@ protected:
     uint64_t zeros = 0;
     uint64_t ones = 0;
     uint64_t twos = 0;
+    uint64_t probes = 0;
+    uint64_t probe_count = 0;
 #endif
     Identity counter_hash;
 
     uint32_t linear_probe_simd(const key_type *keys, uint32_t table_size, key_type key) {
+#ifdef MTF_STATS
+        probe_count++;
+#endif
         uint64_t hash = key & modulo_val;
-        uint64_t mod = (modulo_val >> 3) << 3;
-        int off = (0b11111111 >> (hash & 15)) << (hash & 15);
 
         uint32_t i = 0;
-        // Load key 4 times in vector
+        // Load key 8 times in vector
         const __m256i key_vec = _mm256_set1_epi32(key);
         do {
-            uint32_t index = (hash + i) & mod;
+            uint32_t index = (hash + i) & modulo_val;
 
             // Load array into vector
-            __m256i vec = _mm256_load_si256((const __m256i *) &keys[index]);
+            __m256i vec = _mm256_loadu_si256((const __m256i *) &keys[index]);
 
             // Compare key with vector of keys
             __m256i eq = _mm256_cmpeq_epi32(vec, key_vec);
-            int mask = _mm256_movemask_ps(_mm256_castsi256_ps(eq));
-            if (mask != 0) {
-                uint32_t offset = _tzcnt_u32(mask);
-                return index + offset;
-            }
+            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a match has
+            // been found
+            int mask_match = _mm256_movemask_ps(_mm256_castsi256_ps(eq));
+            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a negative
+            // number, where only -1 is valid, so the slot is empty
+            int mask_empty = _mm256_movemask_ps(_mm256_castsi256_ps(vec));
 
-            // Set corresponding bit in mask if most significant bit of 32 bit integer is set, which means a negative
-            // number, where only -1 is valid, so not found
-            mask = _mm256_movemask_ps(_mm256_castsi256_ps(vec)) & off;
+            int mask = mask_match | mask_empty;
             if (mask != 0) {
                 uint32_t offset = _tzcnt_u32(mask);
-                return index + offset;
+                if (index + offset < table_size) {
+#ifdef MTF_STATS
+                    probes += (i / 8) + 1;
+#endif
+                    return index + offset;
+                }
             }
 
             i += 8;
-            off = 0b11111111;
         } while (i < table_size);
 
         throw std::runtime_error("No more space in the Hash Table");
     }
 
     uint32_t linear_probe(const key_type *keys, uint32_t table_size, key_type key) {
+#ifdef MTF_STATS
+        probe_count++;
+#endif
         uint64_t hash = key & modulo_val;
         uint32_t i = 0;
         do {
             uint32_t index = (hash + i) & modulo_val;
             key_type j = keys[index];
             if (j == -1 || j == key) {
+#ifdef MTF_STATS
+                probes += i + 1;
+#endif
                 return index;
             }
             i++;
@@ -144,7 +156,7 @@ protected:
 
     void double_table() {
         uint32_t new_size = hash_table_size * 2;
-        if (doubling && used_cells * 1.25 > hash_table_size && new_size < max_table_size) {
+        if (doubling && used_cells * 1.3 > hash_table_size && new_size < max_table_size) {
             // Allocate table double the size of the older one
 #ifdef MTF_RANK
             auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
@@ -279,6 +291,7 @@ public:
         std::cout << "Used hash cells = " << used_cells << "/" << hash_table_size << std::endl;
         std::cout << "Hash table load = " << used_cells / double(hash_table_size) << std::endl;
 #ifdef MTF_STATS
+        std::cout << "Average probes = " << probes / double(probe_count) << std::endl;
         std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 
         std::cout << "Number of runs = " << runs << std::endl;
