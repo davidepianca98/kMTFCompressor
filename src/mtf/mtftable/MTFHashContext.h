@@ -18,9 +18,10 @@ class MTFHashContext {
     static constexpr uint32_t CONTEXT_DOWN = 256 + SIZE + 1;
 
     int context = 1;
-    MTFHashTable<HASH, SIZE> *tables[5];
-    int block_size;
+    MTFHashTable<HASH, SIZE> *tables[6];
+    uint64_t block_size;
     int k;
+    int cur_k = 0;
 
     uint64_t symbols_out[256 + SIZE + 2] = { 0 };
 
@@ -31,13 +32,13 @@ public:
 
         context = k;
 
-        for (int i = 0; i < k; i++) {
-            tables[i] = new MTFHashTable<HASH, SIZE>(block_size, max_memory_usage / 3, i + 1, seed);
+        for (int i = 0; i <= k; i++) {
+            tables[i] = new MTFHashTable<HASH, SIZE>(block_size, max_memory_usage, i, seed);
         }
     }
 
     ~MTFHashContext() {
-        for (int i = 0; i < k; i++) {
+        for (int i = cur_k; i <= k; i++) {
             delete tables[i];
         }
     }
@@ -94,37 +95,50 @@ public:
 
     void encode(std::istream& in, obitstream& out) {
         std::future<void> future;
-        auto *out_block1 = new uint32_t[block_size * 3];
+        auto *out_block1 = new uint32_t[block_size];
 
-        RunLength rle(256 + SIZE + 2 + 1);
+        RunLength rle(256 + SIZE + 1);
+        cur_k = 0;
+        uint64_t len = 32;
+        uint64_t read_size = 0;
         long read_bytes;
         do {
             // Read block
-            in.read(reinterpret_cast<char *>(byte_array.data()), block_size);
+            in.read(reinterpret_cast<char *>(byte_array.data()), std::min(len, block_size));
             read_bytes = in.gcount();
 
-            int out_i = 0;
-
             // Apply transformation
-            for (int i = 0; i < read_bytes; i++) {
-                encode(byte_array[i], int_array, out_i, (i % 100) == 0);
+            for (int j = cur_k; j <= k; j++) {
+                // TODO run thread for every j with following loop, while run in current thread the j==cur_k
+                for (int i = 0; i < read_bytes; i++) {
+                    uint32_t symbol = tables[j]->mtf_encode(byte_array[i]);
+                    if (j == cur_k) {
+                        int_array[i] = symbol;
+                    }
+                }
             }
 
             if (future.valid()) {
                 future.wait();
             }
 
-            memcpy(out_block1, int_array.data(), out_i * 4);
-            future = std::async(std::launch::async, &RunLength::encode_array, &rle, out_block1, out_i, std::ref(out));
+            memcpy(out_block1, int_array.data(), read_bytes * 4);
+            future = std::async(std::launch::async, &RunLength::encode_array, &rle, out_block1, read_bytes, std::ref(out));
 
+            read_size += read_bytes;
+            if (read_size >= len) {
+                if (cur_k < k) {
+                    len *= 32;
+                    delete tables[cur_k];
+                    cur_k++;
+                }
+            }
         } while (read_bytes > 0);
         if (future.valid()) {
             future.wait();
         }
-        rle.encode_end(256 + SIZE + 2, out);
+        rle.encode_end(256 + SIZE, out);
         out.flush_remaining();
-
-        print_stats();
 
         delete[] out_block1;
     }

@@ -73,18 +73,15 @@ protected:
             uint32_t index = (hash + i) & modulo_val;
 
             // Load array into vector
-            __m256i vec = _mm256_loadu_si256((const __m256i *) &keys[index]);
+            __m256i vec = _mm256_lddqu_si256((const __m256i *) &keys[index]);
 
             // Compare key with vector of keys
             __m256i eq = _mm256_cmpeq_epi32(vec, key_vec);
-            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a match has
-            // been found
-            int mask_match = _mm256_movemask_ps(_mm256_castsi256_ps(eq));
-            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a negative
-            // number, where only -1 is valid, so the slot is empty
-            int mask_empty = _mm256_movemask_ps(_mm256_castsi256_ps(vec));
 
-            int mask = mask_match | mask_empty;
+            __m256i res = _mm256_or_si256(eq, vec);
+            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a match or an
+            // empty slot has been found
+            int mask = _mm256_movemask_ps(_mm256_castsi256_ps(res));
             if (mask != 0) {
                 uint32_t offset = _tzcnt_u32(mask);
                 if (index + offset < table_size) {
@@ -96,6 +93,9 @@ protected:
             }
 
             i += 8;
+            if (i >= hash_table_size) {
+                i = 0;
+            }
         } while (i < table_size);
 
         throw std::runtime_error("No more space in the Hash Table");
