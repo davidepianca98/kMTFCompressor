@@ -9,10 +9,8 @@ AdaptiveHuffman::AdaptiveHuffman(uint32_t alphabet_size): nyt_node(0), next_free
                                                           eof(false) {
     assert(alphabet_size <= MAX_ALPHA_SIZE);
     tree[nyt_node].symbol = alphabet_size;
-    tree[nyt_node].number = alphabet_size * 2;
-    tree[nyt_node].nyt = true;
 
-    memset(map_leaf, 0xFF, MAX_ALPHA_SIZE * 4);
+    memset(map_leaf, 0xFF, MAX_ALPHA_SIZE * 2);
 
     invalidate_cache();
 
@@ -28,12 +26,13 @@ inline bool AdaptiveHuffman::is_leaf(int node) {
     return tree[node].left == -1 && tree[node].right == -1;
 }
 
-int AdaptiveHuffman::get_block_leader(int node) {
+int16_t AdaptiveHuffman::get_block_leader(int16_t node) {
     assert(node >= 0 && node < next_free_slot);
 
     // Find the highest number node in nodes of same weight, the nodes are ordered by decreasing number and weight
-    int leader = node;
-    for (int i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
+    int16_t leader = node;
+    // This loop takes constant time on average
+    for (int16_t i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
         if (i != tree[leader].parent) {
             leader = i;
         }
@@ -42,7 +41,7 @@ int AdaptiveHuffman::get_block_leader(int node) {
     return leader;
 }
 
-void AdaptiveHuffman::swap(int& first, int& second) {
+void AdaptiveHuffman::swap(int16_t& first, int16_t& second) {
     assert(first >= 0 && first < next_free_slot);
     assert(second >= 0 && second < next_free_slot);
     assert(first != second);
@@ -64,7 +63,6 @@ void AdaptiveHuffman::swap(int& first, int& second) {
     // Swap the nodes but keep the same parent and order number
     std::swap(tree[first], tree[second]);
     std::swap(tree[first].parent, tree[second].parent);
-    std::swap(tree[first].number, tree[second].number);
     // Swap indexes of the caller
     std::swap(first, second);
 
@@ -91,7 +89,7 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
     uint32_t symbol = tree[node].symbol;
 
     uint64_t bits = 0; // List of bits that represent the symbol
-    int n = 0;
+    int16_t n = 0;
     // Traverse the tree from the leaf until the node before the root is reached
     int parent = tree[node].parent;
     while (parent != -1) {
@@ -112,14 +110,15 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
     map_code_length[symbol] = n;
 }
 
-void AdaptiveHuffman::slide_and_increment(int node) {
+void AdaptiveHuffman::slide_and_increment(int16_t node) {
     assert(node >= -1 && node < next_free_slot);
     bool swapped = false;
     while (node != -1) {
-        int leader = get_block_leader(node);
+        int16_t leader = get_block_leader(node);
         if (leader != node) {
             int first_parent = tree[leader].parent;
             int second_parent = tree[node].parent;
+            // Don't swap if one of the nodes is the root and if parents aren't the other node
             if (first_parent != -1 && second_parent != -1 && first_parent != node && second_parent != leader) {
                 swap(leader, node);
                 swapped = true;
@@ -139,22 +138,17 @@ void AdaptiveHuffman::update_tree(uint32_t symbol) {
 
     if (map_leaf[symbol] == -1) {
         // First time the symbol has been seen, split the NYT node in a new NYT node and the symbol node
-        tree[nyt_node].nyt = false;
-        uint64_t number = tree[nyt_node].number;
+        tree[nyt_node].symbol = alphabet_size + 1;
 
         tree[nyt_node].right = next_free_slot;
         tree[next_free_slot].symbol = symbol;
-        tree[next_free_slot].number = number - 1;
         tree[next_free_slot].parent = nyt_node;
-        tree[next_free_slot].nyt = false;
 
         next_free_slot++;
 
         tree[nyt_node].left = next_free_slot;
         tree[next_free_slot].symbol = alphabet_size;
-        tree[next_free_slot].number = number - 2;
         tree[next_free_slot].parent = nyt_node;
-        tree[next_free_slot].nyt = true;
 
         next_free_slot++;
 
@@ -218,7 +212,7 @@ int AdaptiveHuffman::decode(ibitstream& in) {
     }
 
     uint32_t number = 0;
-    if (tree[node].nyt) {
+    if (tree[node].symbol == alphabet_size) {
         // If the leaf is the NYT node, read log_2(alphabet_size) + 1 bits
         for (int i = log_alphabet_size; i >= 0; i--) {
             number <<= 1;

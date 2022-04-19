@@ -5,10 +5,6 @@
 AdaptiveEliasGamma::AdaptiveEliasGamma(int symbols_amount) : count(symbols_amount, 0), rank(symbols_amount, 0), map(symbols_amount, 0) {
     std::iota(std::begin(rank), std::end(rank), 0);
     std::iota(std::begin(map), std::end(map), 0);
-
-    for (int i = 1; i <= symbols_amount; i++) {
-        length.push_back(1 + (int) floor(log2(i)));
-    }
 }
 
 void AdaptiveEliasGamma::update_frequencies(uint32_t symbol) {
@@ -67,7 +63,7 @@ int AdaptiveEliasGamma::decode_array(ibitstream& in, uint32_t *data, int size) {
 }
 
 void AdaptiveEliasGamma::elias_gamma_encode(uint32_t symbol, obitstream& out) {
-    int len = length[symbol - 1];
+    int len = 1 + fast_log2(symbol);
 
     for (int k = 0; k < len - 1; k++)
         out.write_bit(0);
@@ -99,8 +95,8 @@ int AdaptiveEliasGamma::elias_gamma_decode(ibitstream& in) {
 }
 
 void AdaptiveEliasGamma::elias_delta_encode(uint32_t symbol, obitstream& out) {
-    int len = length[symbol - 1];
-    int lengthOfLen = floor(log2(len));
+    int len = 1 + fast_log2(symbol);
+    int lengthOfLen = fast_log2(len);
 
     for (int k = lengthOfLen; k > 0; --k)
         out.write_bit(0);

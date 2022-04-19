@@ -10,28 +10,26 @@ class AdaptiveHuffman {
 private:
 
     static constexpr int MAX_ALPHA_SIZE = 256 + 128;
+    static constexpr int MAX_TREE_NODES = MAX_ALPHA_SIZE * 2 - 1;
 
     struct TreeNode {
-        uint32_t symbol = 0;
         uint64_t weight = 0; // Number of times the symbol has been seen
-        uint16_t number = 0;
+        uint16_t symbol = 0; // If is alphabet_size, this is the NYT node
 
         int16_t parent = -1;
         int16_t left = -1;
         int16_t right = -1;
-
-        bool nyt = false; // true if not yet transmitted node
     };
 
-    TreeNode tree[MAX_ALPHA_SIZE * 2 + 1];
-    int nyt_node;
-    int next_free_slot;
+    TreeNode tree[MAX_TREE_NODES];
+    int16_t nyt_node;
+    int16_t next_free_slot;
     uint32_t alphabet_size;
     int log_alphabet_size;
 
-    int map_leaf[MAX_ALPHA_SIZE]; // gets the leaf representing the symbol, indexed by symbol
-    uint64_t map_code[MAX_ALPHA_SIZE]; // gets the code and its length representing the symbol, indexed by symbol
-    int16_t map_code_length[MAX_ALPHA_SIZE]; // gets the code and its length representing the symbol, indexed by symbol
+    int16_t map_leaf[MAX_ALPHA_SIZE] = { 0 }; // gets the leaf representing the symbol, indexed by symbol
+    uint64_t map_code[MAX_ALPHA_SIZE] = { 0 }; // gets the code and its length representing the symbol, indexed by symbol
+    int16_t map_code_length[MAX_ALPHA_SIZE] = { 0 }; // gets the code and its length representing the symbol, indexed by symbol
 
     bool eof;
 
@@ -39,15 +37,15 @@ private:
 
     inline bool is_leaf(int node);
 
-    int get_block_leader(int node);
+    int16_t get_block_leader(int16_t node);
 
-    void swap(int& first, int& second);
+    void swap(int16_t& first, int16_t& second);
 
     static void write_symbol(uint64_t bits, int length, obitstream& out);
 
     void write_symbol(int node, obitstream& out);
 
-    void slide_and_increment(int node);
+    void slide_and_increment(int16_t node);
 
     void update_tree(uint32_t symbol);
 
