@@ -21,7 +21,7 @@ TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed), last_index
 
 uint8_t TabulationHash::update(uint8_t c) {
     uint8_t old = kmer_hash_p[last_index];
-    kmer_hash -= old << (last_index * 8);
+    kmer_hash -= (uint64_t) old << (last_index * 8);
     kmer_hash = (kmer_hash << 8) | c;
 
     hash = 0;

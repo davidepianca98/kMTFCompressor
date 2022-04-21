@@ -24,3 +24,7 @@ add_test(mtf_buffer test_mtf_buffer)
 add_executable(test_rle test_rle.cpp)
 target_link_libraries(test_rle MTF_lib)
 add_test(rle test_rle)
+
+add_executable(test_tabulation_hash test_tabulation_hash.cpp)
+target_link_libraries(test_tabulation_hash MTF_lib)
+add_test(tabulation_hash test_tabulation_hash)
