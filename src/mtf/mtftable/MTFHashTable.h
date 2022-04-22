@@ -156,7 +156,7 @@ protected:
 
     void double_table() {
         uint32_t new_size = hash_table_size * 2;
-        if (doubling && used_cells * 1.3 > hash_table_size && new_size < max_table_size) {
+        if (doubling && used_cells * 1.1 > hash_table_size && new_size < max_table_size) {
             // Allocate table double the size of the older one
 #ifdef MTF_RANK
             auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
