@@ -15,7 +15,7 @@
 #include "Identity.h"
 
 #define MTF_RANK
-//#define MTF_STATS
+#define MTF_STATS
 
 template <typename HASH, uint32_t SIZE>
 class MTFHashTable {
@@ -35,7 +35,6 @@ protected:
     // Size of the block
     int block_size;
     uint64_t max_table_size;
-    static constexpr bool doubling = true;
 
     uint64_t modulo_val;
     uint32_t kmer_chars = 0;
@@ -48,17 +47,13 @@ protected:
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + SIZE] = { 0 };
     uint64_t stream_length = 0;
-    std::unordered_set<uint64_t> distinct_kmers;
     // Runs
     uint8_t last_symbol_out = 0;
     uint64_t runs = 1;
-    uint64_t zeros = 0;
-    uint64_t ones = 0;
-    uint64_t twos = 0;
+    uint64_t zero_runs = 0;
     uint64_t probes = 0;
     uint64_t probe_count = 0;
 #endif
-    Identity counter_hash;
 
     uint32_t linear_probe_simd(const key_type *keys, uint32_t table_size, key_type key) {
 #ifdef MTF_STATS
@@ -142,21 +137,17 @@ protected:
         symbols_out[i]++;
         if (i != last_symbol_out) {
             runs++;
+            if (i == 0) {
+                zero_runs++;
+            }
         }
         last_symbol_out = i;
-        if (i == 0) {
-            zeros++;
-        } else if (i == 1) {
-            ones++;
-        } else if (i == 2) {
-            twos++;
-        }
 #endif
     }
 
     void double_table() {
         uint32_t new_size = hash_table_size * 2;
-        if (doubling && used_cells * 1.1 > hash_table_size && new_size < max_table_size) {
+        if (used_cells * 1.1 > hash_table_size && new_size < max_table_size) {
             // Allocate table double the size of the older one
 #ifdef MTF_RANK
             auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
@@ -204,15 +195,9 @@ protected:
     }
 
 public:
-    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed), block_size(block_size), counter_hash(k, seed) {
+    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed), block_size(block_size) {
         max_table_size = max_memory_usage / sizeof(MTFRankBuffer<SIZE>);
-        if (doubling) { // TODO set as parameter
-            hash_table_size = 256;
-        } else {
-            //hash_table_size = max_table_size;
-            hash_table_size = 524288 * 16;
-            //hash_table_size = 256;
-        }
+        hash_table_size = 256;
 #ifdef MTF_RANK
         hash_table = new MTFRankBuffer<SIZE>[hash_table_size];
 #else
@@ -243,16 +228,11 @@ public:
             uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
             out = hash_table[index].encode(c);
             keep_track(index, key);
-
-#ifdef MTF_STATS
-            distinct_kmers.insert(counter_hash.get_hash());
-#endif
         }
 
         hash_function.update(c);
 
 #ifdef MTF_STATS
-        counter_hash.update(c);
         count_symbol_out(out);
 #endif
 
@@ -292,12 +272,8 @@ public:
         std::cout << "Hash table load = " << used_cells / double(hash_table_size) << std::endl;
 #ifdef MTF_STATS
         std::cout << "Average probes = " << probes / double(probe_count) << std::endl;
-        std::cout << "Number of distinct kmers = " << distinct_kmers.size() << ", Number of colliding kmers: " << distinct_kmers.size() - used_cells << std::endl;
 
-        std::cout << "Number of runs = " << runs << std::endl;
-        std::cout << "Number of zeros = " << zeros << ", Percentage of zeros = " << double(zeros) / double(stream_length) << std::endl;
-        std::cout << "Number of ones = " << ones << ", Number of twos = " << twos << ", Percentage of zeros, ones, twos = " << double(zeros + ones + twos) / double(stream_length) << std::endl;
-
+        std::cout << "Number of zeros = " << symbols_out[0] << ", Percentage of zeros = " << double(symbols_out[0]) / double(stream_length) << std::endl;
         double entropy_in = calculate_entropy(symbols_in, 256, stream_length);
         double entropy_out = calculate_entropy(symbols_out, 256 + SIZE, stream_length);
 
@@ -314,7 +290,8 @@ public:
         std::cout << "Entropy MTF = " << entropy_out << std::endl;
 
         std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
-        std::cout << "Average run length = " << double(stream_length) / double(runs) << std::endl;
+        std::cout << "Number of runs = " << runs << ", Average run length = " << double(stream_length) / double(runs) << std::endl;
+        std::cout << "Number of 0 runs = " << zero_runs << ", Average 0 run length = " << double(symbols_out[0]) / double(zero_runs) << std::endl;
 #endif
     }
 
