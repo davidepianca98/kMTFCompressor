@@ -9,9 +9,12 @@
 #include "stream/obitstream/obitstream.h"
 #include "stream/ibitstream/ibitstream.h"
 #include "encoders/AdaptiveEliasGamma.h"
+#include "encoders/AdaptiveArithmetic.h"
 
 template <typename HASH, uint32_t SIZE>
 class MTFHashTableStream : public MTFHashTable<HASH, SIZE> {
+
+    static constexpr int BLOCK_SIZE = 1024 * 1024;
 
     std::vector<uint8_t> byte_array;
     std::vector<uint32_t> int_array;
@@ -25,20 +28,20 @@ class MTFHashTableStream : public MTFHashTable<HASH, SIZE> {
     }
 
 public:
-    MTFHashTableStream(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, SIZE>(block_size, max_memory_usage, k, seed) {
-        byte_array.resize(MTFHashTable<HASH, SIZE>::block_size);
-        int_array.resize(MTFHashTable<HASH, SIZE>::block_size);
+    MTFHashTableStream(uint64_t max_memory_usage, int k, uint64_t seed) : MTFHashTable<HASH, SIZE>(max_memory_usage, k, seed) {
+        byte_array.resize(BLOCK_SIZE);
+        int_array.resize(BLOCK_SIZE);
     }
 
     void encode(std::istream& in, obitstream& out) {
         std::future<void> future;
-        auto *out_block1 = new uint32_t[MTFHashTable<HASH, SIZE>::block_size];
+        auto *out_block1 = new uint32_t[BLOCK_SIZE];
 
         RunLength rle(256 + SIZE + 1);
         long read_bytes;
         do {
             // Read block
-            in.read(reinterpret_cast<char *>(byte_array.data()), MTFHashTable<HASH, SIZE>::block_size);
+            in.read(reinterpret_cast<char *>(byte_array.data()), BLOCK_SIZE);
             read_bytes = in.gcount();
 
             // Apply transformation
@@ -65,13 +68,13 @@ public:
 
     void decode(ibitstream& in, std::ostream& out) {
         std::future<void> future;
-        auto *out_block1 = new uint32_t[MTFHashTable<HASH, SIZE>::block_size];
+        auto *out_block1 = new uint32_t[BLOCK_SIZE];
 
         RunLength rle(256 + SIZE + 1);
         int read;
 
         do {
-            read = rle.decode_array(in, out_block1, MTFHashTable<HASH, SIZE>::block_size, 256 + SIZE);
+            read = rle.decode_array(in, out_block1, BLOCK_SIZE, 256 + SIZE);
             if (future.valid()) {
                 future.wait();
             }

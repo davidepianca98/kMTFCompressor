@@ -24,5 +24,18 @@ int main() {
         return 1;
     }
 
+    uint64_t kmer = 0;
+    kmer = (kmer << 8) | 'a';
+    kmer = (kmer << 8) | 'b';
+    kmer = (kmer << 8) | 'c';
+    kmer = (kmer << 8) | 'd';
+    kmer = (kmer << 8) | 'e';
+
+    uint64_t h3 = hash.compute(kmer);
+
+    if (h2 != h3) {
+        return 1;
+    }
+
     return 0;
 }

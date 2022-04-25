@@ -15,25 +15,24 @@
 #include "Identity.h"
 
 #define MTF_RANK
-#define MTF_STATS
+//#define MTF_STATS
 
 template <typename HASH, uint32_t SIZE>
 class MTFHashTable {
 protected:
+    static constexpr float MAX_LOAD_FACTOR = 0.9;
+
     // Hash table of MTF buffers
 #ifdef MTF_RANK
     MTFRankBuffer<SIZE> *hash_table;
 #else
     MTFBuffer<SIZE> *hash_table;
 #endif
-    typedef int32_t key_type;
+    typedef uint64_t hash_type;
 
-    key_type *hash_table_keys;
     uint32_t hash_table_size;
     HASH hash_function;
 
-    // Size of the block
-    int block_size;
     uint64_t max_table_size;
 
     uint64_t modulo_val;
@@ -42,11 +41,13 @@ protected:
     // Statistics
     double used_cells = 0;
 
+    uint64_t last_increment_size;
+    uint64_t stream_length = 0;
+
 #ifdef MTF_STATS
     // Keep track of number of symbols
     uint64_t symbols_in[256] = { 0 };
     uint64_t symbols_out[256 + SIZE] = { 0 };
-    uint64_t stream_length = 0;
     // Runs
     uint8_t last_symbol_out = 0;
     uint64_t runs = 1;
@@ -55,7 +56,7 @@ protected:
     uint64_t probe_count = 0;
 #endif
 
-    uint32_t linear_probe_simd(const key_type *keys, uint32_t table_size, key_type key) {
+    uint32_t linear_probe_simd(const hash_type *keys, uint32_t table_size, hash_type key) {
 #ifdef MTF_STATS
         probe_count++;
 #endif
@@ -96,39 +97,93 @@ protected:
         throw std::runtime_error("No more space in the Hash Table");
     }
 
-    uint32_t linear_probe(const key_type *keys, uint32_t table_size, key_type key) {
+    uint32_t linear_probe(const MTFRankBuffer<SIZE> *table, uint32_t table_size, hash_type key_hash, uint64_t key) {
 #ifdef MTF_STATS
         probe_count++;
 #endif
-        uint64_t hash = key & modulo_val;
+        uint64_t hash = key_hash & modulo_val;
         uint32_t i = 0;
+        uint32_t index;
         do {
-            uint32_t index = (hash + i) & modulo_val;
-            key_type j = keys[index];
-            if (j == -1 || j == key) {
 #ifdef MTF_STATS
-                probes += i + 1;
+            probes++;
 #endif
+
+            index = (hash + i) & modulo_val;
+            if (!table[index].is_visited() || table[index].get_key() == key) {
                 return index;
             }
             i++;
-        } while (i < table_size);
+        } while (i < table_size && (i < 8 || used_cells < hash_table_size * MAX_LOAD_FACTOR));
 
-        throw std::runtime_error("No more space in the Hash Table");
+        return index;
     }
 
-    inline void keep_track(uint32_t index, key_type key) {
-        if (hash_table_keys[index] == -1) {
+    inline void keep_track(uint32_t index, hash_type key) {
+        if (!hash_table[index].is_visited()) {
             used_cells++;
-            hash_table_keys[index] = key;
+            hash_table[index].set_visited(key);
             double_table();
         }
+
+        if (kmer_chars < 6 && stream_length > 8 * last_increment_size) {
+            std::cout << "Incrementing k to " << kmer_chars + 1 << " at stream length " << stream_length << std::endl;
+            increment_k();
+            last_increment_size *= 8;
+        }
+    }
+
+    void increment_k() {
+        uint64_t old_modulo_val = modulo_val;
+        uint64_t new_modulo_val = modulo_val;
+
+        uint32_t new_size = hash_table_size;
+        while (new_size < used_cells * SIZE) {
+            new_size *= 2;
+            new_modulo_val = (new_modulo_val << 1) | 1;
+        }
+#ifdef MTF_RANK
+        auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
+#else
+        auto *hash_table_new = new MTFBuffer<SIZE>[new_size];
+#endif
+
+        hash_function.increment_k();
+
+        used_cells = 0;
+        for (uint32_t i = 0; i < hash_table_size; i++) {
+            if (hash_table[i].is_visited()) {
+                for (int j = 0; j < hash_table[i].get_size(); j++) {
+                    uint64_t new_key = hash_table[i].get_key() << 8 | hash_table[i].extract(j);
+                    hash_type new_hash = hash_function.compute(new_key);
+
+                    modulo_val = new_modulo_val;
+                    uint32_t index = linear_probe(hash_table_new, new_size, new_hash, new_key);
+
+                    modulo_val = old_modulo_val;
+                    uint64_t suffix_key = new_key & ((1 << (kmer_chars * 8)) - 1);
+                    uint32_t index_suffix = linear_probe(hash_table, hash_table_size, hash_function.compute(suffix_key), suffix_key);
+
+                    hash_table_new[index].set_visited(new_key);
+                    used_cells++;
+
+                    for (int k = 0; k < hash_table[index_suffix].get_size(); k++) {
+                        hash_table_new[index].append(hash_table[index_suffix].extract(k));
+                    }
+                }
+            }
+        }
+        delete[] hash_table;
+        hash_table = hash_table_new;
+        hash_table_size = new_size;
+        modulo_val = new_modulo_val;
+
+        kmer_chars++;
     }
 
     void count_symbol_in(uint8_t c) {
 #ifdef MTF_STATS
         symbols_in[c]++;
-        stream_length++;
 #endif
     }
 
@@ -147,38 +202,31 @@ protected:
 
     void double_table() {
         uint32_t new_size = hash_table_size * 2;
-        if (used_cells * 1.1 > hash_table_size && new_size < max_table_size) {
+        if (used_cells > hash_table_size * MAX_LOAD_FACTOR && new_size < max_table_size) {
             // Allocate table double the size of the older one
 #ifdef MTF_RANK
             auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
 #else
             auto *hash_table_new = new MTFBuffer<SIZE>[new_size];
 #endif
-            // Align at 32 byte for SIMD
-            auto *hash_table_keys_new = new (std::align_val_t(32)) key_type[new_size];
-            memset(hash_table_keys_new, 0xFF, new_size * sizeof(key_type));
 
             // Calculate the new modulo based on the size
-            modulo_val = UINT64_MAX >> (64 - (int) log2(new_size));
+            modulo_val = (modulo_val << 1) | 1;
 
             // Rehashing approximation using the saved hash, it doesn't take into account the hash collisions that happened
             // earlier, but the only other way is to restart parsing the whole stream which is not feasible
             used_cells = 0;
             for (uint32_t i = 0; i < hash_table_size; i++) {
-                key_type key = hash_table_keys[i];
-                if (key != -1) {
+                if (hash_table[i].is_visited()) {
                     // The full hash is used to calculate the hash in the new bigger table with the new modulo
-                    uint32_t index = linear_probe(hash_table_keys_new, new_size, key);
+                    uint32_t index = linear_probe(hash_table_new, new_size, hash_function.compute(hash_table[i].get_key()), hash_table[i].get_key());
                     hash_table_new[index] = hash_table[i];
-                    hash_table_keys_new[index] = key;
 
                     used_cells++;
                 }
             }
             delete[] hash_table;
-            delete[] hash_table_keys;
             hash_table = hash_table_new;
-            hash_table_keys = hash_table_keys_new;
             hash_table_size = new_size;
         }
     }
@@ -195,7 +243,7 @@ protected:
     }
 
 public:
-    MTFHashTable(int block_size, uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed), block_size(block_size) {
+    MTFHashTable(uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed) {
         max_table_size = max_memory_usage / sizeof(MTFRankBuffer<SIZE>);
         hash_table_size = 256;
 #ifdef MTF_RANK
@@ -203,29 +251,29 @@ public:
 #else
         hash_table = new MTFBuffer<SIZE>[hash_table_size];
 #endif
-        hash_table_keys = new (std::align_val_t(32)) key_type[hash_table_size];
-        memset(hash_table_keys, 0xFF, hash_table_size * sizeof(key_type));
 
         modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_size));
+
+        last_increment_size = 256 * 8 * 8 * 8;
     }
 
     ~MTFHashTable() {
         delete[] hash_table;
-        delete[] hash_table_keys;
     }
 
     uint32_t mtf_encode(uint8_t c) {
 #ifdef MTF_STATS
         count_symbol_in(c);
 #endif
+        stream_length++;
         uint32_t out;
 
         if (kmer_chars < hash_function.get_length()) {
             kmer_chars++;
             out = (uint32_t) c + SIZE;
         } else {
-            uint64_t key = hash_function.get_hash();
-            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
+            uint64_t key = hash_function.get_key();
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key);
             out = hash_table[index].encode(c);
             keep_track(index, key);
         }
@@ -240,13 +288,17 @@ public:
     }
 
     uint8_t mtf_decode(uint32_t i) {
+#ifdef MTF_STATS
+        count_symbol_in(i);
+#endif
+        stream_length++;
         uint8_t c;
         if (kmer_chars < hash_function.get_length()) {
             kmer_chars++;
             c = (uint8_t) (i - SIZE);
         } else {
-            uint64_t key = hash_function.get_hash();
-            uint32_t index = linear_probe(hash_table_keys, hash_table_size, key);
+            uint64_t key = hash_function.get_key();
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key);
             c = hash_table[index].decode(i);
             keep_track(index, key);
         }

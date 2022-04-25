@@ -7,13 +7,18 @@
 template <uint32_t SIZE>
 class MTFBuffer {
 protected:
+
     uint8_t buffer[SIZE] = { 0 };
 
     uint8_t symbols = 0;
 
+    uint64_t key = 0;
+
+    bool visited = false;
+
 public:
 
-    void shift(uint8_t i) {
+    virtual void shift(uint8_t i) {
         uint8_t c = buffer[i];
         // If the position is zero, no need to change the buffer
         for (int j = i; j > 0; j--) {
@@ -22,7 +27,7 @@ public:
         buffer[0] = c;
     }
 
-    void append(uint8_t c) {
+    virtual void append(uint8_t c) {
         if (symbols >= SIZE) {
             symbols--;
         }
@@ -62,6 +67,23 @@ public:
             shift(symbol);
         }
         return c;
+    }
+
+    [[nodiscard]] bool is_visited() const {
+        return visited;
+    }
+
+    void set_visited(uint64_t key) {
+        visited = true;
+        this->key = key;
+    }
+
+    [[nodiscard]] uint64_t get_key() const {
+        return key;
+    }
+
+    [[nodiscard]] uint8_t get_size() const {
+        return symbols;
     }
 
 };

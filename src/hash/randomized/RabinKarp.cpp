@@ -22,3 +22,12 @@ uint8_t RabinKarp::update(uint8_t c) {
     hash = fast_modulo(hash + c);
     return old;
 }
+
+uint64_t RabinKarp::compute(uint64_t key) {
+    uint64_t res = 0;
+    for (int j = 0; j < k; j++) {
+        res = fast_modulo(res * base);
+        res = fast_modulo(res + ((key >> (last_index - j) * 8) & 0xFF));
+    }
+    return res;
+}

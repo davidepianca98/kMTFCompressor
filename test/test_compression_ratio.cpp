@@ -4,7 +4,6 @@
 #include <iostream>
 #include "mtf/MTFHashCompressor.h"
 #include "hash/randomized/RabinKarp.h"
-#include "hash/randomized/LinearHash.h"
 #include "hash/randomized/TabulationHash.h"
 //#include "MTF.h"
 
@@ -12,6 +11,7 @@ int main() {
     //std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/canterbury";
     std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/pizzachilismall";
     //std::string path = "../../test/resources/pizzachilirep";
     //std::string path = "../../test/resources/mio";
     //std::string path = "../../test/resources/maximumcompression";
@@ -28,7 +28,7 @@ int main() {
 
             std::cout << "File name: " << entry.path() << ", Uncompressed file size: " << entry.file_size() << std::endl;
 
-            //MTFHashCompressor::compress_block<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
+            //MTFHashCompressor::compress_block<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 6, ram);
             MTFHashCompressor::compress_stream<TabulationHash, 8>(entry.path().string(), entry.path().string() + ".mtf", 3, ram);
             //MTF::compress(entry.path().string(), entry.path().string() + ".mtf", ram);
             std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();

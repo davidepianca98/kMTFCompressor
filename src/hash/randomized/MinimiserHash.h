@@ -22,7 +22,9 @@ class MinimiserHash : public Hash {
     int min_index;
     uint64_t minimum;
 
-    static constexpr int sub_k = 2;
+    int i = 0;
+
+    static constexpr int sub_k = 3;
 
 public:
     MinimiserHash(int k, uint64_t seed);

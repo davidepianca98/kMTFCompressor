@@ -133,8 +133,8 @@ public:
         uint64_t be_seed = htobe64(seed);
         out_file.write(reinterpret_cast<const char *>(&be_seed), 8);
 
-        MTFHashTableStream<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
-        //MTFHashContext<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
+        MTFHashTableStream<HASH, SIZE> mtf(max_memory_usage, k, seed);
+        //MTFHashContext<HASH, SIZE> mtf(max_memory_usage, k, seed);
         mtf.encode(in_file, out_file);
 
         in_file.close();
@@ -155,7 +155,7 @@ public:
         in_file.read(reinterpret_cast<char *>(&be_seed), 8);
         uint64_t seed = be64toh(be_seed);
 
-        MTFHashTableStream<HASH, SIZE> mtf(1024 * 1024, max_memory_usage, k, seed); // 1 MB block size
+        MTFHashTableStream<HASH, SIZE> mtf(max_memory_usage, k, seed);
         mtf.decode(in_file, out_file);
 
         in_file.close();

@@ -16,6 +16,8 @@ public:
     RabinKarp(int k, uint64_t seed);
 
     uint8_t update(uint8_t c) override;
+
+    uint64_t compute(uint64_t key) override;
 };
 
 

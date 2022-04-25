@@ -27,7 +27,7 @@ class MTFBlockWorker {
     uint32_t compressBlock(const uint8_t *in, int size, uint8_t *final_block) {
         auto *out_block1 = new uint32_t[size];
 
-        MTFHashTable<HASH, SIZE> mtf(size, max_memory_usage, k, seed);
+        MTFHashTable<HASH, SIZE> mtf(max_memory_usage, k, seed);
         mtf.encode(in, size, out_block1);
 
         obufbitstream buf(final_block, out_block.size());
@@ -48,7 +48,7 @@ class MTFBlockWorker {
         RunLength rle(256 + SIZE + 1);
         uint32_t decompressed_size = rle.decode_array(buf, out_block1, in_block.size(), 256 + SIZE);
 
-        MTFHashTable<HASH, SIZE> mtf(decompressed_size, max_memory_usage, k, seed);
+        MTFHashTable<HASH, SIZE> mtf(max_memory_usage, k, seed);
         mtf.decode(out_block1, (long) decompressed_size, final_block);
 
         delete[] out_block1;

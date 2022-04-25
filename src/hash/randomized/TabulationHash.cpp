@@ -9,10 +9,15 @@ uint64_t TabulationHash::get_random_uint64() {
             (((uint64_t) dis(gen) << 48) & 0xFFFF000000000000ull);
 }
 
-TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed), last_index(k - 1) {
+uint32_t TabulationHash::get_random_uint32() {
+    return (((uint32_t) dis(gen) <<  0) & 0x0000FFFFul) |
+           (((uint32_t) dis(gen) << 16) & 0xFFFF0000ul);
+}
+
+TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed) {
     assert(k <= MAX_KMER);
 
-    for (int j1 = 0; j1 < k; j1++) {
+    for (int j1 = 0; j1 < MAX_KMER; j1++) {
         for (int j2 = 0; j2 < LEN; j2++) {
             T[j1][j2] = get_random_uint64();
         }
@@ -20,15 +25,16 @@ TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed), last_index
 }
 
 uint8_t TabulationHash::update(uint8_t c) {
-    uint8_t old = kmer_hash_p[last_index];
-    kmer_hash -= (uint64_t) old << (last_index * 8);
-    kmer_hash = (kmer_hash << 8) | c;
+    uint8_t old = Hash::update(c);
 
-    hash = 0;
-    int j;
-    for (j = 0; j < k; j++) {
-        hash ^= T[j][kmer_hash_p[last_index - j]];
-    }
-    hash &= 0x7FFFFFFFull;
+    hash = compute(kmer_hash);
     return old;
+}
+
+uint64_t TabulationHash::compute(uint64_t key) {
+    uint64_t res = 0;
+    for (int j = 0; j < k; j++) {
+        res ^= T[j][(key >> (last_index - j) * 8) & 0xFF];
+    }
+    return res;
 }

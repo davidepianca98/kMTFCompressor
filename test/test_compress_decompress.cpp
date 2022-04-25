@@ -9,13 +9,17 @@
 int test_file(const std::string& path) {
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
-    std::cout << path << std::endl;
+    std::cout << "Compressing: " << path << std::endl;
     MTFHashCompressor::compress_stream<TabulationHash, 8>(path, path + ".mtf", 3, ram);
     //MTFHashCompressor::compress_block<TabulationHash, 8>(path, path + ".mtf", 3, ram);
     std::filesystem::path compressed(path + ".mtf");
 
+    std::cout << "Decompressing\n";
+
     MTFHashCompressor::decompress_stream<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
     //MTFHashCompressor::decompress_block<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
+
+    std::cout << "Checking\n";
 
     std::ifstream f1(path, std::ifstream::binary);
     std::ifstream f2(compressed.string() + ".orig", std::ifstream::binary);
@@ -26,6 +30,8 @@ int test_file(const std::string& path) {
         std::cout << "ERR" << std::endl;
         return 1;
     }
+
+    std::cout << "OK\n";
 
     //std::filesystem::remove(compressed);
     //std::filesystem::remove(compressed.string() + ".orig");
