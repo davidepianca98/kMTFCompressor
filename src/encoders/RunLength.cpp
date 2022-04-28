@@ -9,7 +9,7 @@ void RunLength::encode_array(const uint32_t *data, int length, obitstream& out) 
     for (int i = 0; i < length; i++) {
         if ((int) data[i] == last) {
             counter++;
-            if (counter >= 255) {
+            if (counter >= UINT8_MAX) {
                 ahrle.encode(counter - n, out);
                 counter = 0;
             } else if (counter <= n) {

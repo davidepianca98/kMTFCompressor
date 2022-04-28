@@ -8,17 +8,16 @@ template <uint32_t SIZE>
 class MTFBuffer {
 protected:
 
-    uint8_t buffer[SIZE] = { 0 };
-
-    uint8_t symbols = 0;
-
     uint64_t key = 0;
 
-    bool visited = false;
+    uint8_t buffer[SIZE] = { 0 };
+
+    // Leftmost bit is visited or not, remaining 7 bits are the amount of symbols in the buffer
+    uint8_t symbols = 0;
 
 public:
 
-    virtual void shift(uint8_t i) {
+    void shift(uint8_t i) {
         uint8_t c = buffer[i];
         // If the position is zero, no need to change the buffer
         for (int j = i; j > 0; j--) {
@@ -27,11 +26,11 @@ public:
         buffer[0] = c;
     }
 
-    virtual void append(uint8_t c) {
-        if (symbols >= SIZE) {
+    void append(uint8_t c) {
+        if (get_size() >= SIZE) {
             symbols--;
         }
-        for (int j = symbols; j > 0; j--) {
+        for (int j = get_size(); j > 0; j--) {
             buffer[j] = buffer[j - 1];
         }
         buffer[0] = c;
@@ -42,48 +41,21 @@ public:
         return buffer[i];
     }
 
-    uint32_t encode(uint8_t c) {
-        for (uint8_t i = 0; i < symbols; i++) {
-            if (extract(i) == c) { // Check if the character in the i-th position from the right is equal to c
-                shift(i);
-                return i;
-            }
-        }
-
-        // Not found so add the symbol to the buffer
-        append(c);
-
-        // Sum size to differentiate between indexes on the MTF buffer and characters
-        return c + SIZE;
-    }
-
-    uint8_t decode(uint32_t symbol) {
-        uint8_t c;
-        if (symbol >= SIZE) {
-            c = symbol - SIZE;
-            append(c);
-        } else {
-            c = extract(symbol);
-            shift(symbol);
-        }
-        return c;
-    }
-
-    [[nodiscard]] bool is_visited() const {
-        return visited;
+    [[nodiscard]] inline bool is_visited() const {
+        return (bool) (symbols >> 7);
     }
 
     void set_visited(uint64_t key) {
-        visited = true;
+        symbols |= (1 << 7);
         this->key = key;
     }
 
-    [[nodiscard]] uint64_t get_key() const {
+    [[nodiscard]] inline uint64_t get_key() const {
         return key;
     }
 
-    [[nodiscard]] uint8_t get_size() const {
-        return symbols;
+    [[nodiscard]] inline uint8_t get_size() const {
+        return symbols & 0x7F;
     }
 
 };

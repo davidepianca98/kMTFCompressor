@@ -7,6 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic -march=native")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto -DNDEBUG")
 
 set(SOURCE_FILES
+        src/encoders/AdaptiveArithmetic.cpp
+        src/encoders/AdaptiveArithmetic.h
         src/encoders/AdaptiveEliasGamma.cpp
         src/encoders/AdaptiveEliasGamma.h
         src/encoders/AdaptiveHuffman.cpp
@@ -26,9 +28,8 @@ set(SOURCE_FILES
         src/hash/Identity.cpp
         src/hash/Identity.h
         src/mtf/buffer/MTFBuffer.h
-        src/mtf/buffer/MTFRankBuffer.h
+        src/mtf/buffer/CountBuffer.h
         src/mtf/mtftable/MTFBlockWorker.h
-        src/mtf/mtftable/MTFHashContext.h
         src/mtf/mtftable/MTFHashTable.h
         src/mtf/mtftable/MTFHashTableStream.h
         src/mtf/MTF.cpp

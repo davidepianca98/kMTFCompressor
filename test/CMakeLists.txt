@@ -28,3 +28,7 @@ add_test(rle test_rle)
 add_executable(test_tabulation_hash test_tabulation_hash.cpp)
 target_link_libraries(test_tabulation_hash MTF_lib)
 add_test(tabulation_hash test_tabulation_hash)
+
+add_executable(test_adaptive_huffman test_adaptive_huffman.cpp)
+target_link_libraries(test_adaptive_huffman MTF_lib)
+add_test(adaptive_huffman test_adaptive_huffman)

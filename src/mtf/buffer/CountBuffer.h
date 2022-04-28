@@ -1,16 +1,24 @@
 
-#ifndef MTF_MTFRANKBUFFER_H
-#define MTF_MTFRANKBUFFER_H
+#ifndef MTF_COUNTBUFFER_H
+#define MTF_COUNTBUFFER_H
 
 #include <cstdint>
 #include <cmath>
 #include "MTFBuffer.h"
 
 template <uint32_t SIZE>
-class MTFRankBuffer : public MTFBuffer<SIZE> {
+class CountBuffer {
+
+    uint64_t key = 0;
+
+    uint8_t buffer[SIZE] = { 0 };
 
     uint16_t counter[SIZE] = { 0 };
     uint16_t amount = 0;
+
+    uint8_t symbols = 0;
+
+    bool visited = false;
 
     inline uint32_t fast_log2(uint32_t x) {
         return 31 - __builtin_clz(x);
@@ -29,13 +37,13 @@ class MTFRankBuffer : public MTFBuffer<SIZE> {
 
 public:
 
-    void shift(uint8_t i) override {
+    void shift(uint8_t i) {
         counter[i]++;
 
         for (int j = i - 1; j >= 0; j--) {
             if (counter[i] > counter[j]) {
                 std::swap(counter[i], counter[j]);
-                std::swap(MTFBuffer<SIZE>::buffer[i], MTFBuffer<SIZE>::buffer[j]);
+                std::swap(buffer[i], buffer[j]);
                 i = j;
             } else {
                 // Because the list is ordered
@@ -46,10 +54,10 @@ public:
         normalize_rank_counter();
     }
 
-    void append(uint8_t c) override {
+    void append(uint8_t c) {
         uint32_t i;
-        if (MTFBuffer<SIZE>::symbols < SIZE) {
-            MTFBuffer<SIZE>::symbols++;
+        if (symbols < SIZE) {
+            symbols++;
             for (i = 0; i < SIZE - 1; i++) {
                 if (counter[i] < 1) {
                     break;
@@ -61,11 +69,32 @@ public:
 
         amount -= counter[i];
         counter[i] = 1;
-        MTFBuffer<SIZE>::buffer[i] = c;
+        buffer[i] = c;
 
         normalize_rank_counter();
     }
 
+    inline uint8_t extract(uint8_t i) {
+        return buffer[i];
+    }
+
+    [[nodiscard]] bool is_visited() const {
+        return visited;
+    }
+
+    void set_visited(uint64_t key) {
+        visited = true;
+        this->key = key;
+    }
+
+    [[nodiscard]] uint64_t get_key() const {
+        return key;
+    }
+
+    [[nodiscard]] uint8_t get_size() const {
+        return symbols;
+    }
+
 };
 
-#endif //MTF_MTFRANKBUFFER_H
+#endif //MTF_COUNTBUFFER_H

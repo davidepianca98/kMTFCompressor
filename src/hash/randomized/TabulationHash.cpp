@@ -9,11 +9,6 @@ uint64_t TabulationHash::get_random_uint64() {
             (((uint64_t) dis(gen) << 48) & 0xFFFF000000000000ull);
 }
 
-uint32_t TabulationHash::get_random_uint32() {
-    return (((uint32_t) dis(gen) <<  0) & 0x0000FFFFul) |
-           (((uint32_t) dis(gen) << 16) & 0xFFFF0000ul);
-}
-
 TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed) {
     assert(k <= MAX_KMER);
 
@@ -27,10 +22,14 @@ TabulationHash::TabulationHash(int k, uint64_t seed) : Hash(k, seed) {
 uint8_t TabulationHash::update(uint8_t c) {
     uint8_t old = Hash::update(c);
 
-    hash = compute(kmer_hash);
+    hash = 0;
+    for (int j = 0; j < k; j++) {
+        hash ^= T[j][(kmer_hash >> (last_index - j) * 8) & 0xFF];
+    }
     return old;
 }
 
+// Duplicated because update is much faster without this function call
 uint64_t TabulationHash::compute(uint64_t key) {
     uint64_t res = 0;
     for (int j = 0; j < k; j++) {

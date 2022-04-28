@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include "mtf/buffer/MTFBuffer.h"
-#include "mtf/buffer/MTFRankBuffer.h"
+#include "mtf/buffer/CountBuffer.h"
 
 
 int main() {
@@ -29,7 +29,7 @@ int main() {
     }
 
 
-    MTFRankBuffer<8> buf2;
+    CountBuffer<8> buf2;
     buf2.append(8);
     buf2.append(7);
     buf2.append(6);

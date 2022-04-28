@@ -35,15 +35,17 @@ private:
 
     void invalidate_cache();
 
-    inline bool is_leaf(int node);
-
-    int16_t get_block_leader(int16_t node);
+    inline bool is_leaf(int node) {
+        return tree[node].left == -1 && tree[node].right == -1;
+    }
 
     void swap(int16_t& first, int16_t& second);
 
     static void write_symbol(uint64_t bits, int length, obitstream& out);
 
     void write_symbol(int node, obitstream& out);
+
+    int16_t get_block_leader(int16_t node);
 
     void slide_and_increment(int16_t node);
 
@@ -65,6 +67,36 @@ public:
     void normalize_weights();
 
     uint64_t refresh_internal_weights(int node);
+
+    void printBT(const std::string& prefix, int node, bool isRight) {
+        if (node != -1) {
+            std::cout << prefix;
+
+            std::cout << (isRight ? "├──" : "└──" );
+
+            // print the value of the node
+            if (is_leaf(node)) {
+                if (tree[node].symbol == alphabet_size) {
+                    std::cout << "NYT" << std::endl;
+                } else {
+                    std::cout << (char) tree[node].symbol << std::endl;
+                }
+            } else {
+                std::cout << tree[node].weight << std::endl;
+            }
+
+            printBT(prefix + (isRight ? "│   " : "    "), tree[node].right, true);
+            printBT(prefix + (isRight ? "│   " : "    "), tree[node].left, false);
+        }
+    }
+
+    void printBT(int node) {
+        printBT("", node, false);
+    }
+
+    void print_tree() {
+        printBT(0);
+    }
 };
 
 

@@ -22,25 +22,6 @@ void AdaptiveHuffman::invalidate_cache() {
     memset(map_code_length, 0xFF, MAX_ALPHA_SIZE * 2);
 }
 
-inline bool AdaptiveHuffman::is_leaf(int node) {
-    return tree[node].left == -1 && tree[node].right == -1;
-}
-
-int16_t AdaptiveHuffman::get_block_leader(int16_t node) {
-    assert(node >= 0 && node < next_free_slot);
-
-    // Find the highest number node in nodes of same weight, the nodes are ordered by decreasing number and weight
-    int16_t leader = node;
-    // This loop takes constant time on average
-    for (int16_t i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
-        if (i != tree[leader].parent) {
-            leader = i;
-        }
-    }
-
-    return leader;
-}
-
 void AdaptiveHuffman::swap(int16_t& first, int16_t& second) {
     assert(first >= 0 && first < next_free_slot);
     assert(second >= 0 && second < next_free_slot);
@@ -108,6 +89,21 @@ void AdaptiveHuffman::write_symbol(int node, obitstream& out) {
 
     map_code[symbol] = bits;
     map_code_length[symbol] = n;
+}
+
+int16_t AdaptiveHuffman::get_block_leader(int16_t node) {
+    assert(node >= 0 && node < next_free_slot);
+
+    // Find the highest number node in nodes of same weight, the nodes are ordered by decreasing number and weight
+    int16_t leader = node;
+    // This loop takes constant time on average
+    for (int16_t i = node - 1; i >= 0 && tree[i].weight == tree[leader].weight; i--) {
+        if (i != tree[leader].parent) {
+            leader = i;
+        }
+    }
+
+    return leader;
 }
 
 void AdaptiveHuffman::slide_and_increment(int16_t node) {

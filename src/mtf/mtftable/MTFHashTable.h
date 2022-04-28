@@ -11,27 +11,23 @@
 #include <immintrin.h>
 #include "Hash.h"
 #include "mtf/buffer/MTFBuffer.h"
-#include "mtf/buffer/MTFRankBuffer.h"
+#include "mtf/buffer/CountBuffer.h"
 #include "Identity.h"
+#include "randomized/TabulationHash.h"
 
-#define MTF_RANK
-//#define MTF_STATS
+#define MTF_STATS
 
-template <typename HASH, uint32_t SIZE>
+template <typename BUFFER, uint32_t SIZE>
 class MTFHashTable {
 protected:
     static constexpr float MAX_LOAD_FACTOR = 0.9;
 
     // Hash table of MTF buffers
-#ifdef MTF_RANK
-    MTFRankBuffer<SIZE> *hash_table;
-#else
-    MTFBuffer<SIZE> *hash_table;
-#endif
+    BUFFER *hash_table;
     typedef uint64_t hash_type;
 
     uint32_t hash_table_size;
-    HASH hash_function;
+    TabulationHash hash_function;
 
     uint64_t max_table_size;
 
@@ -56,57 +52,18 @@ protected:
     uint64_t probe_count = 0;
 #endif
 
-    uint32_t linear_probe_simd(const hash_type *keys, uint32_t table_size, hash_type key) {
+    uint32_t linear_probe(BUFFER *table, uint32_t table_size, hash_type key_hash, uint64_t key, bool count=false) {
 #ifdef MTF_STATS
-        probe_count++;
-#endif
-        uint64_t hash = key & modulo_val;
-
-        uint32_t i = 0;
-        // Load key 8 times in vector
-        const __m256i key_vec = _mm256_set1_epi32(key);
-        do {
-            uint32_t index = (hash + i) & modulo_val;
-
-            // Load array into vector
-            __m256i vec = _mm256_lddqu_si256((const __m256i *) &keys[index]);
-
-            // Compare key with vector of keys
-            __m256i eq = _mm256_cmpeq_epi32(vec, key_vec);
-
-            __m256i res = _mm256_or_si256(eq, vec);
-            // Set corresponding bit in mask if most significant bit of 32-bit integer is set, which means a match or an
-            // empty slot has been found
-            int mask = _mm256_movemask_ps(_mm256_castsi256_ps(res));
-            if (mask != 0) {
-                uint32_t offset = _tzcnt_u32(mask);
-                if (index + offset < table_size) {
-#ifdef MTF_STATS
-                    probes += (i / 8) + 1;
-#endif
-                    return index + offset;
-                }
-            }
-
-            i += 8;
-            if (i >= hash_table_size) {
-                i = 0;
-            }
-        } while (i < table_size);
-
-        throw std::runtime_error("No more space in the Hash Table");
-    }
-
-    uint32_t linear_probe(const MTFRankBuffer<SIZE> *table, uint32_t table_size, hash_type key_hash, uint64_t key) {
-#ifdef MTF_STATS
-        probe_count++;
+        if (count)
+            probe_count++;
 #endif
         uint64_t hash = key_hash & modulo_val;
         uint32_t i = 0;
         uint32_t index;
         do {
 #ifdef MTF_STATS
-            probes++;
+            if (count)
+                probes++;
 #endif
 
             index = (hash + i) & modulo_val;
@@ -115,6 +72,8 @@ protected:
             }
             i++;
         } while (i < table_size && (i < 8 || used_cells < hash_table_size * MAX_LOAD_FACTOR));
+
+        table[index].set_visited(key);
 
         return index;
     }
@@ -126,11 +85,11 @@ protected:
             double_table();
         }
 
-        if (kmer_chars < 6 && stream_length > 8 * last_increment_size) {
+        /*if (kmer_chars < 6 && stream_length > 8 * last_increment_size) {
             std::cout << "Incrementing k to " << kmer_chars + 1 << " at stream length " << stream_length << std::endl;
             increment_k();
             last_increment_size *= 8;
-        }
+        }*/
     }
 
     void increment_k() {
@@ -204,22 +163,18 @@ protected:
         uint32_t new_size = hash_table_size * 2;
         if (used_cells > hash_table_size * MAX_LOAD_FACTOR && new_size < max_table_size) {
             // Allocate table double the size of the older one
-#ifdef MTF_RANK
-            auto *hash_table_new = new MTFRankBuffer<SIZE>[new_size];
-#else
-            auto *hash_table_new = new MTFBuffer<SIZE>[new_size];
-#endif
+            auto *hash_table_new = new BUFFER[new_size];
 
             // Calculate the new modulo based on the size
             modulo_val = (modulo_val << 1) | 1;
 
-            // Rehashing approximation using the saved hash, it doesn't take into account the hash collisions that happened
-            // earlier, but the only other way is to restart parsing the whole stream which is not feasible
+            // Rehashing using the saved key
             used_cells = 0;
             for (uint32_t i = 0; i < hash_table_size; i++) {
                 if (hash_table[i].is_visited()) {
-                    // The full hash is used to calculate the hash in the new bigger table with the new modulo
-                    uint32_t index = linear_probe(hash_table_new, new_size, hash_function.compute(hash_table[i].get_key()), hash_table[i].get_key());
+                    // Compute the new hash and find the new position in the table
+                    hash_type hash = hash_function.compute(hash_table[i].get_key());
+                    uint32_t index = linear_probe(hash_table_new, new_size, hash, hash_table[i].get_key());
                     hash_table_new[index] = hash_table[i];
 
                     used_cells++;
@@ -242,15 +197,38 @@ protected:
         return entropy;
     }
 
+    uint32_t buffer_encode(BUFFER& buffer, uint8_t c) {
+        for (uint8_t i = 0; i < buffer.get_size(); i++) {
+            if (buffer.extract(i) == c) { // Check if the character in the i-th position from the right is equal to c
+                buffer.shift(i);
+                return i;
+            }
+        }
+
+        // Not found so add the symbol to the buffer
+        buffer.append(c);
+
+        // Sum size to differentiate between indexes on the MTF buffer and characters
+        return c + SIZE;
+    }
+
+    uint8_t buffer_decode(BUFFER& buffer, uint32_t symbol) {
+        uint8_t c;
+        if (symbol >= SIZE) {
+            c = symbol - SIZE;
+            buffer.append(c);
+        } else {
+            c = buffer.extract(symbol);
+            buffer.shift(symbol);
+        }
+        return c;
+    }
+
 public:
     MTFHashTable(uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed) {
-        max_table_size = max_memory_usage / sizeof(MTFRankBuffer<SIZE>);
+        max_table_size = max_memory_usage / sizeof(CountBuffer<SIZE>);
         hash_table_size = 256;
-#ifdef MTF_RANK
-        hash_table = new MTFRankBuffer<SIZE>[hash_table_size];
-#else
-        hash_table = new MTFBuffer<SIZE>[hash_table_size];
-#endif
+        hash_table = new BUFFER[hash_table_size];
 
         modulo_val = UINT64_MAX >> (64 - (int) log2(hash_table_size));
 
@@ -273,8 +251,8 @@ public:
             out = (uint32_t) c + SIZE;
         } else {
             uint64_t key = hash_function.get_key();
-            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key);
-            out = hash_table[index].encode(c);
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
+            out = buffer_encode(hash_table[index], c);
             keep_track(index, key);
         }
 
@@ -298,8 +276,8 @@ public:
             c = (uint8_t) (i - SIZE);
         } else {
             uint64_t key = hash_function.get_key();
-            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key);
-            c = hash_table[index].decode(i);
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
+            c = buffer_decode(hash_table[index], i);
             keep_track(index, key);
         }
         hash_function.update(c);
