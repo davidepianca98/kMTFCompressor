@@ -23,8 +23,7 @@ int main() {
 
     std::cout << sizeof(MTFBuffer<7>) << std::endl;
 
-    MTFHashTable<TabulationHash, 8> mtf(1024 * 1024, ram, 3, 256334);
-    //MTFHashTableBlock<MinimiserHash<TabulationHash, LinearHash, RabinKarp>, 7> mtf(1024 * 1024, ram, 3, 256334);
+    MTFHashTable<MTFBuffer<8>, 8> mtf(ram, 3, 256334);
     long read_bytes;
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     do {
@@ -46,7 +45,7 @@ int main() {
     std::ifstream in2(path + ".mtfb", std::ios::binary);
     std::ofstream out2(path + ".mtf.orig", std::ios::binary);
 
-    MTFHashTable<TabulationHash, 8> mtf2(1024 * 1024, ram, 3, 256334);
+    MTFHashTable<MTFBuffer<8>, 8> mtf2(ram, 3, 256334);
     do {
         // Read block
         in2.read(reinterpret_cast<char *>(out_data.data()), 1024 * 1024 * 4);

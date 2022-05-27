@@ -3,13 +3,13 @@
 #include <cassert>
 #include "RunLength.h"
 
-RunLength::RunLength(int alphabet_size, int n) : ahrle(UINT8_MAX + 1), ah(alphabet_size), n(n), counter(0), last(-1), remaining(0), eof(false) {}
+RunLength::RunLength(int alphabet_size, int n) : ahrle(256), ah(alphabet_size), n(n), counter(0), last(-1), remaining(0), eof(false) {}
 
 void RunLength::encode_array(const uint32_t *data, int length, obitstream& out) {
     for (int i = 0; i < length; i++) {
         if ((int) data[i] == last) {
             counter++;
-            if (counter >= UINT8_MAX) {
+            if (counter >= 255 + n) {
                 ahrle.encode(counter - n, out);
                 counter = 0;
             } else if (counter <= n) {

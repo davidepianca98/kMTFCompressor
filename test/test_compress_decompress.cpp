@@ -4,20 +4,19 @@
 #include <iostream>
 #include <fstream>
 #include "mtf/MTFHashCompressor.h"
-#include "randomized/TabulationHash.h"
 
 int test_file(const std::string& path) {
     uint64_t ram = (uint64_t) 4 * 1024 * 1024 * 1024;
 
     std::cout << "Compressing: " << path << std::endl;
-    MTFHashCompressor::compress_stream<TabulationHash, 8>(path, path + ".mtf", 3, ram);
-    //MTFHashCompressor::compress_block<TabulationHash, 8>(path, path + ".mtf", 3, ram);
+    MTFHashCompressor::compress_stream<MTFBuffer<8>, 8>(path, path + ".mtf", 3, ram);
+    //MTFHashCompressor::compress_block<MTFBuffer<8>, 8>(path, path + ".mtf", 3, ram);
     std::filesystem::path compressed(path + ".mtf");
 
     std::cout << "Decompressing\n";
 
-    MTFHashCompressor::decompress_stream<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
-    //MTFHashCompressor::decompress_block<TabulationHash, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
+    MTFHashCompressor::decompress_stream<MTFBuffer<8>, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
+    //MTFHashCompressor::decompress_block<MTFBuffer<8>, 8>(compressed.string(), compressed.string() + ".orig", 3, ram);
 
     std::cout << "Checking\n";
 
@@ -39,10 +38,11 @@ int test_file(const std::string& path) {
 }
 
 int main() {
-    std::string path = "../../test/resources/calgarycorpus";
+    //std::string path = "../../test/resources/calgarycorpus";
     //std::string path = "../../test/resources/mio";
     //std::string path = "../../test/resources/pizzachilirep";
-    //std::string path = "../../test/resources/pizzachili";
+    std::string path = "../../test/resources/pizzachili";
+    //std::string path = "../../test/resources/pizzachilismall";
 
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {

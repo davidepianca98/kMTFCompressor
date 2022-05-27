@@ -9,7 +9,7 @@
 class AdaptiveHuffman {
 private:
 
-    static constexpr int MAX_ALPHA_SIZE = 256 + 128;
+    static constexpr int MAX_ALPHA_SIZE = 256 + 256 + 1;
     static constexpr int MAX_TREE_NODES = MAX_ALPHA_SIZE * 2 - 1;
 
     struct TreeNode {

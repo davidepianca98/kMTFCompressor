@@ -9,16 +9,14 @@
 template <uint32_t SIZE>
 class CountBuffer {
 
-    uint64_t key = 0;
-
     uint8_t buffer[SIZE] = { 0 };
 
     uint16_t counter[SIZE] = { 0 };
     uint16_t amount = 0;
 
-    uint8_t symbols = 0;
+    uint32_t key = 0x80000000;
 
-    bool visited = false;
+    uint8_t symbols = 0;
 
     inline uint32_t fast_log2(uint32_t x) {
         return 31 - __builtin_clz(x);
@@ -79,11 +77,10 @@ public:
     }
 
     [[nodiscard]] bool is_visited() const {
-        return visited;
+        return !((bool) (key >> 31));
     }
 
     void set_visited(uint64_t key) {
-        visited = true;
         this->key = key;
     }
 

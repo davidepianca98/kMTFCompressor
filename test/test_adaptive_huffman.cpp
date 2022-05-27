@@ -14,6 +14,8 @@ int main() {
     //std::string s = "aa bbb c";
     //std::string s = "abb";
     //std::string s = "abcdefghijklmnopqrstuvwxyz";
+    //std::string s = "abbcccdddddeeeeeeeefffffffffffffggggggggggggggggggggg";
+    //std::string s = "abbcccdddddeeeeeeeefffffffffffffggggggggggggggggggggghhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii";
     for (int i = 0; i < s.length(); i++) {
         //std::cout << s[i] << " ";
         ah.print_tree();

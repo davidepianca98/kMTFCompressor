@@ -38,6 +38,7 @@ public:
 
         RunLength rle(256 + SIZE + 1);
         //AdaptiveArithmetic aa(256 + SIZE + 1);
+        //AdaptiveHuffman ah(256 + SIZE + 1);
         long read_bytes;
         do {
             // Read block
@@ -71,8 +72,10 @@ public:
         auto *out_block1 = new uint32_t[BLOCK_SIZE];
 
         RunLength rle(256 + SIZE + 1);
+        //AdaptiveArithmetic aa(256 + SIZE + 1);
         int read;
 
+        //aa.start_decode(in);
         do {
             read = rle.decode_array(in, out_block1, BLOCK_SIZE, 256 + SIZE);
             if (future.valid()) {

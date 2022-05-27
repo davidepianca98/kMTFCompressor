@@ -24,7 +24,7 @@ protected:
 
     // Hash table of MTF buffers
     BUFFER *hash_table;
-    typedef uint64_t hash_type;
+    typedef uint32_t hash_type;
 
     uint32_t hash_table_size;
     TabulationHash hash_function;
@@ -67,21 +67,21 @@ protected:
 #endif
 
             index = (hash + i) & modulo_val;
-            if (!table[index].is_visited() || table[index].get_key() == key) {
+            if (!table[index].is_visited() || table[index].get_key() == key_hash) {
                 return index;
             }
             i++;
         } while (i < table_size && (i < 8 || used_cells < hash_table_size * MAX_LOAD_FACTOR));
 
-        table[index].set_visited(key);
+        table[index].set_visited(key_hash);
 
         return index;
     }
 
-    inline void keep_track(uint32_t index, hash_type key) {
+    inline void keep_track(uint32_t index, hash_type key_hash) {
         if (!hash_table[index].is_visited()) {
             used_cells++;
-            hash_table[index].set_visited(key);
+            hash_table[index].set_visited(key_hash);
             double_table();
         }
 
@@ -92,6 +92,7 @@ protected:
         }*/
     }
 
+    // Needs the whole key in the buffer, not just the hash
     void increment_k() {
         uint64_t old_modulo_val = modulo_val;
         uint64_t new_modulo_val = modulo_val;
@@ -161,7 +162,7 @@ protected:
 
     void double_table() {
         uint32_t new_size = hash_table_size * 2;
-        if (used_cells > hash_table_size * MAX_LOAD_FACTOR && new_size < max_table_size) {
+        if (used_cells > hash_table_size * MAX_LOAD_FACTOR && new_size <= max_table_size) {
             // Allocate table double the size of the older one
             auto *hash_table_new = new BUFFER[new_size];
 
@@ -173,7 +174,7 @@ protected:
             for (uint32_t i = 0; i < hash_table_size; i++) {
                 if (hash_table[i].is_visited()) {
                     // Compute the new hash and find the new position in the table
-                    hash_type hash = hash_function.compute(hash_table[i].get_key());
+                    hash_type hash = hash_table[i].get_key();
                     uint32_t index = linear_probe(hash_table_new, new_size, hash, hash_table[i].get_key());
                     hash_table_new[index] = hash_table[i];
 
@@ -186,10 +187,10 @@ protected:
         }
     }
 
-    double calculate_entropy(const uint64_t symbols[], int symbols_amount, int length) {
+    double calculate_entropy(const uint64_t symbols[], int symbols_amount, uint64_t length) {
         double entropy = 0.0;
         for (int i = 0; i < symbols_amount; i++) {
-            double p = (double) symbols[i] / length;
+            double p = (double) symbols[i] / double(length);
             if (p > 0) {
                 entropy -= p * log2(p);
             }
@@ -198,7 +199,7 @@ protected:
     }
 
     uint32_t buffer_encode(BUFFER& buffer, uint8_t c) {
-        for (uint8_t i = 0; i < buffer.get_size(); i++) {
+        for (uint16_t i = 0; i < buffer.get_size(); i++) {
             if (buffer.extract(i) == c) { // Check if the character in the i-th position from the right is equal to c
                 buffer.shift(i);
                 return i;
@@ -226,7 +227,7 @@ protected:
 
 public:
     MTFHashTable(uint64_t max_memory_usage, int k, uint64_t seed) : hash_function(k, seed) {
-        max_table_size = max_memory_usage / sizeof(CountBuffer<SIZE>);
+        max_table_size = max_memory_usage / sizeof(BUFFER);
         hash_table_size = 256;
         hash_table = new BUFFER[hash_table_size];
 
@@ -253,7 +254,7 @@ public:
             uint64_t key = hash_function.get_key();
             uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
             out = buffer_encode(hash_table[index], c);
-            keep_track(index, key);
+            keep_track(index, hash_function.get_hash());
         }
 
         hash_function.update(c);
@@ -278,7 +279,7 @@ public:
             uint64_t key = hash_function.get_key();
             uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
             c = buffer_decode(hash_table[index], i);
-            keep_track(index, key);
+            keep_track(index, hash_function.get_hash());
         }
         hash_function.update(c);
 
@@ -298,6 +299,10 @@ public:
     }
 
     void print_stats() {
+
+        static uint64_t total = 0;
+        static uint64_t total_overhead = 0;
+
         std::cout << "Used hash cells = " << used_cells << "/" << hash_table_size << std::endl;
         std::cout << "Hash table load = " << used_cells / double(hash_table_size) << std::endl;
 #ifdef MTF_STATS
@@ -319,9 +324,24 @@ public:
         std::cout << "Entropy original = " << entropy_in << std::endl;
         std::cout << "Entropy MTF = " << entropy_out << std::endl;
 
+        total += entropy_out * stream_length;
+        std::cout << "Entropy sum MTF * |s| = " << total << std::endl;
+
         std::cout << "Max compression size Entropy Coding = " << (uint64_t) (stream_length * entropy_out) / 8 << " bytes" << std::endl;
         std::cout << "Number of runs = " << runs << ", Average run length = " << double(stream_length) / double(runs) << std::endl;
         std::cout << "Number of 0 runs = " << zero_runs << ", Average 0 run length = " << double(symbols_out[0]) / double(zero_runs) << std::endl;
+
+        uint64_t sum_of_symbols = 0;
+        for (uint32_t i = 0; i < hash_table_size; i++) {
+            sum_of_symbols += hash_table[i].get_size();
+
+            for (int j = 0; j < hash_table[i].get_size(); j++) {
+                uint16_t sym = hash_table[i].extract(j) + SIZE;
+                total_overhead += (uint64_t) floor(log2((double) sym)) + 2 * floor(log2(log2(sym) + 1)) + 1;
+            }
+        }
+        std::cout << "Sum of |w_s|/|s| = " << double(sum_of_symbols) / double(stream_length) << std::endl;
+        std::cout << "Total overhead in bits with Elias Delta = " << total_overhead << std::endl;
 #endif
     }
 

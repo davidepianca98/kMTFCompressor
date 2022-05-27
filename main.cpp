@@ -46,17 +46,17 @@ int main(int argc, char *argv[]) {
     } else if (compress) {
         std::cout << "Compressing\n";
         if (!multithreaded) {
-            MTFHashCompressor::compress_stream<TabulationHash, 8>(path, path + suffix, k, max_mem);
+            MTFHashCompressor::compress_stream<MTFBuffer<8>, 8>(path, path + suffix, k, max_mem);
         } else {
-            MTFHashCompressor::compress_block<TabulationHash, 8>(path, path + suffix, k, max_mem);
+            MTFHashCompressor::compress_block<MTFBuffer<8>, 8>(path, path + suffix, k, max_mem);
         }
     } else if (decompress) {
         std::cout << "Decompressing\n";
         std::string original_name = path.substr(0, path.length() - suffix.length());
         if (!multithreaded) {
-            MTFHashCompressor::decompress_stream<TabulationHash, 8>(path, original_name, k, max_mem);
+            MTFHashCompressor::decompress_stream<MTFBuffer<8>, 8>(path, original_name, k, max_mem);
         } else {
-            MTFHashCompressor::decompress_block<TabulationHash, 8>(path, original_name, k, max_mem);
+            MTFHashCompressor::decompress_block<MTFBuffer<8>, 8>(path, original_name, k, max_mem);
         }
     } else {
         throw std::runtime_error("Neither compression nor decompression selected");

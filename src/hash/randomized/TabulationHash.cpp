@@ -26,6 +26,7 @@ uint8_t TabulationHash::update(uint8_t c) {
     for (int j = 0; j < k; j++) {
         hash ^= T[j][(kmer_hash >> (last_index - j) * 8) & 0xFF];
     }
+    hash &= 0x7FFFFFFF;
     return old;
 }
 
@@ -35,5 +36,6 @@ uint64_t TabulationHash::compute(uint64_t key) {
     for (int j = 0; j < k; j++) {
         res ^= T[j][(key >> (last_index - j) * 8) & 0xFF];
     }
+    res &= 0x7FFFFFFF;
     return res;
 }

@@ -8,11 +8,10 @@ template <uint32_t SIZE>
 class MTFBuffer {
 protected:
 
-    uint64_t key = 0;
-
     uint8_t buffer[SIZE] = { 0 };
 
-    // Leftmost bit is visited or not, remaining 7 bits are the amount of symbols in the buffer
+    uint32_t key = 0x80000000;
+
     uint8_t symbols = 0;
 
 public:
@@ -42,11 +41,10 @@ public:
     }
 
     [[nodiscard]] inline bool is_visited() const {
-        return (bool) (symbols >> 7);
+        return !((bool) (key >> 31));
     }
 
     void set_visited(uint64_t key) {
-        symbols |= (1 << 7);
         this->key = key;
     }
 
@@ -54,8 +52,8 @@ public:
         return key;
     }
 
-    [[nodiscard]] inline uint8_t get_size() const {
-        return symbols & 0x7F;
+    [[nodiscard]] inline uint16_t get_size() const {
+        return symbols;
     }
 
 };
