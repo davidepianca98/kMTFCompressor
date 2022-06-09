@@ -52,7 +52,7 @@ protected:
     uint64_t probe_count = 0;
 #endif
 
-    uint32_t linear_probe(BUFFER *table, uint32_t table_size, hash_type key_hash, uint64_t key, bool count=false) {
+    uint32_t linear_probe(BUFFER *table, uint32_t table_size, hash_type key_hash, bool count=false) {
 #ifdef MTF_STATS
         if (count)
             probe_count++;
@@ -251,8 +251,7 @@ public:
             kmer_chars++;
             out = (uint32_t) c + SIZE;
         } else {
-            uint64_t key = hash_function.get_key();
-            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), true);
             out = buffer_encode(hash_table[index], c);
             keep_track(index, hash_function.get_hash());
         }
@@ -276,8 +275,7 @@ public:
             kmer_chars++;
             c = (uint8_t) (i - SIZE);
         } else {
-            uint64_t key = hash_function.get_key();
-            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), key, true);
+            uint32_t index = linear_probe(hash_table, hash_table_size, hash_function.get_hash(), true);
             c = buffer_decode(hash_table[index], i);
             keep_track(index, hash_function.get_hash());
         }
@@ -312,12 +310,16 @@ public:
         double entropy_in = calculate_entropy(symbols_in, 256, stream_length);
         double entropy_out = calculate_entropy(symbols_out, 256 + SIZE, stream_length);
 
+        int j = 0;
         for (uint32_t i : symbols_in) {
-            std::cout << i << ",";
+            std::cout << "(" << j << "," << i << ")";
+            j++;
         }
+        j = 0;
         std::cout << std::endl;
         for (uint32_t i : symbols_out) {
-            std::cout << i << ",";
+            std::cout << "(" << j << "," << i << ")";
+            j++;
         }
         std::cout << std::endl;
 
