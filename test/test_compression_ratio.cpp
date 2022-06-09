@@ -21,8 +21,6 @@ int main() {
     uint64_t ram = (uint64_t) 6 * 1024 * 1024 * 1024;
     //uint64_t ram = (uint64_t) 1024 * 1024 * sizeof(MTFBuffer<32>);
 
-    std::cout << sizeof(CountBuffer<8>) << std::endl;
-    std::cout << sizeof(MTFBuffer<8>) << std::endl;
 
     for (const auto & entry : std::filesystem::directory_iterator(path)) {
         if (entry.path().string().find(".mtf") == std::string::npos) {
